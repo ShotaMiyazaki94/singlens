@@ -19,6 +19,49 @@ posterior. These are sampled results, not error bounds for arbitrary events.
 Assess numerical differences relative to the measurement errors when fitting
 precise data.
 
+For a particular limb-darkened curve, compare resolutions at identical
+separations and parameters. The following also compares radius derivatives;
+the input positions remain fixed while `rho` is differentiated:
+
+```python
+import jax
+
+jax.config.update("jax_enable_x64", True)
+import jax.numpy as jnp
+import numpy as np
+import singlens as sl
+
+rho = 0.01
+u = rho * jnp.linspace(0.0, 3.0, 301)
+values, derivatives = {}, {}
+for bins in (2048, 4096, 8192):
+    model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=bins))
+
+    def curve(radius):
+        return model.magnification_at(u, rho=radius, a1=0.5)
+
+    values[bins] = np.asarray(jax.jit(curve)(rho))
+    derivatives[bins] = np.asarray(jax.jit(jax.jacfwd(curve))(rho))
+
+relative_change = np.max(np.abs(values[4096] / values[8192] - 1))
+slope_scale = np.max(np.abs(derivatives[8192]))
+slope_change = np.max(np.abs(derivatives[4096] - derivatives[8192])) / slope_scale
+print("Maximum relative magnification change:", relative_change)
+print("Derivative change / peak derivative:", slope_change)
+```
+
+This measures a change in the approximation, not an error against an exact
+answer. Compare to independent source integration when an accuracy reference
+is needed; [benchmarks](benchmarks.md#accuracy-versus-fft-bins) show that calculation.
+For a fit, `f_s * (A_4096 - A_8192) / flux_error` compares the curve difference
+to each observation's flux uncertainty. Small per-point differences can still
+accumulate in a likelihood, so examine posterior stability as well.
+
+Derivative differences are scaled by the largest reference derivative above;
+pointwise relative differences are unstable where a derivative crosses zero.
+Magnification error measurements do not guarantee the same accuracy for
+derivatives, especially near source contact.
+
 The default transform grid spans `u=1e-8` to `1e4`. This does not require
 observations at such large separations. The
 [original method](https://arxiv.org/html/2203.06637v1#S3) explains why small

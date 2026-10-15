@@ -2,11 +2,33 @@
 
 ## Event parameters → magnification
 
+The main entry point takes observation times and scalar event parameters.
+For example, evaluate a limb-darkened annual-parallax event:
+
 ```python
-A = sl.magnification(times, t0, u0, t_e, rho=rho, a1=a1)
-A = sl.magnification(times, t0, u0, t_e, rho=rho, a1=a1,
-                     parallax=geometry, pi_e_n=pi_e_n, pi_e_e=pi_e_e)
+import jax
+
+jax.config.update("jax_enable_x64", True)
+import jax.numpy as jnp
+import singlens as sl
+
+times = 8000.0 + jnp.linspace(-40.0, 40.0, 501)
+geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0)
+A = sl.magnification(
+    times,
+    t0=8000.0,
+    u0=0.005,
+    t_e=20.0,
+    rho=0.01,
+    a1=0.5,
+    parallax=geometry,
+    pi_e_n=0.2,
+    pi_e_e=-0.1,
+)
 ```
+
+`A.shape` is `(501,)`. Omit `rho` for a point source, or `a1` for a uniform
+disk. For a static event, omit the geometry and both parallax components.
 
 | Input | Meaning |
 | --- | --- |
@@ -47,10 +69,9 @@ Create the model and sky geometry before compiling its evaluation function:
 
 ```python
 model = sl.Model(source="linear", parallax=geometry)
-p = sl.Parameters(t0=8000., u0=.005, t_e=20., rho=.01, a1=.5,
-                  pi_e_n=.2, pi_e_e=-.1)
+p = sl.Parameters(t0=8000.0, u0=0.005, t_e=20.0, rho=0.01, a1=0.5, pi_e_n=0.2, pi_e_e=-0.1)
 A = jax.jit(model.magnification)(times, p)
-A_at_position = model.magnification_at(.01 + .002j, rho=.01, a1=.5)
+A_at_position = model.magnification_at(0.01 + 0.002j, rho=0.01, a1=0.5)
 ```
 
 `source` is `point`, `uniform`, `linear`, or `mu2`. The last is the pure
@@ -79,6 +100,18 @@ squares at fixed magnification; this profiles fluxes rather than marginalizing
 their uncertainty. Bayesian sampling should include flux priors, as in the
 [inference tutorial](tutorials/inference.ipynb). Gaussian-prior marginal
 likelihood helpers are available in `singlens.photometry`.
+
+With measured arrays `observed_flux` and `flux_error` at the same times:
+
+```python
+fit = sl.fit_flux(A, observed_flux, flux_error)
+fitted_flux = fit.f_s * A + fit.f_b
+chi2 = jnp.sum(((observed_flux - fitted_flux) / flux_error) ** 2)
+```
+
+`fit.chi2` gives the same weighted residual sum. Its flux uncertainties are
+conditional on this event curve; a joint posterior also propagates event
+and limb-darkening uncertainty.
 
 ```{eval-rst}
 .. autofunction:: singlens.fit_flux

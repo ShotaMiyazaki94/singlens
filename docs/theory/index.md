@@ -39,6 +39,32 @@ A_{\mathrm{linear}}=(1-\Gamma)A_{\mathrm{disk}}+\Gamma A_{\mu}.$$
 The coefficient $a_1$ is differentiable. `source="mu2"`
 means the pure $I(\mu)=\mu^2$ profile; it is not a two-coefficient quadratic law.
 
+For example, the profile and trajectory enter the same event-level call:
+
+```python
+import jax
+
+jax.config.update("jax_enable_x64", True)
+import jax.numpy as jnp
+import singlens as sl
+
+geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0)
+
+
+def event_magnification(times, t0, u0, t_e, rho, a1, pi_e_n, pi_e_e):
+    return sl.magnification(
+        times,
+        t0,
+        u0,
+        t_e,
+        rho=rho,
+        a1=a1,
+        parallax=geometry,
+        pi_e_n=pi_e_n,
+        pi_e_e=pi_e_e,
+    )
+```
+
 ## Flux, optimization, and probability
 
 For one dataset, $F_i=f_s A(t_i;\theta)+f_b$ with known independent Gaussian
@@ -55,6 +81,20 @@ For Bayesian inference, the log likelihood is
 $$\log p(F^{\mathrm{obs}}|\theta,f_s,f_b)=
 -\tfrac12\sum_i\left[\frac{(F_i^{\mathrm{obs}}-F_i)^2}{\sigma_i^2}
 +\log(2\pi\sigma_i^2)\right].$$
+
+In code, given measured `times`, `flux`, and `flux_error` arrays:
+
+```python
+def log_likelihood(event, f_s, f_b):
+    A = event_magnification(times, **event)
+    prediction = f_s * A + f_b
+    variance = flux_error**2
+    return -0.5 * jnp.sum((flux - prediction) ** 2 / variance + jnp.log(2 * jnp.pi * variance))
+```
+
+Here `event` is a dictionary containing the seven arguments after `times`
+in `event_magnification`. Add a log prior to obtain a log posterior. The
+normalization term is especially important when noise parameters are inferred.
 
 The HMC tutorial samples both fluxes with explicit priors. A profiled
 $-\chi^2/2$ alone does **not** integrate out flux uncertainty.

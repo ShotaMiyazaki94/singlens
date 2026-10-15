@@ -15,6 +15,13 @@ with the minimum supported JAX version. Optional example and reference-library
 dependencies are installed so those tests also run.
 
 Build documentation locally before submitting changes to docs or examples.
+Show the scientific calculation in tutorials: define the probability model,
+likelihood, sampler, and predictions directly. Keep file loading and global
+plot styling out of the rendered code. Saved long-run samples may supply figures;
+state which run they represent and keep its statistical model identical to
+the displayed one.
+Long sampling cells use `skip-execution` during documentation builds. Load
+saved draws only as a fallback, so an interactive run keeps its new samples.
 Sphinx executes three notebooks and treats warnings/errors as failures.
 `-E` also reruns notebooks whose imported helpers changed. Open
 `docs/_build/html/index.html`. Numerical diagnostics live in `tools/validation`;

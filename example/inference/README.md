@@ -35,8 +35,9 @@ RA 266°, Dec −29°, reference epoch 0. Injection and recovery use 4096 FFT bi
 All twelve event, parallax, limb-darkening, flux, and GP parameters are inferred. The selected
 `u0>0` branch does not explore all parallax degeneracies. The fit includes both fluxes and known white-noise variances.
 
-The [inference tutorial](../../docs/tutorials/inference.ipynb) gives the
-GP kernel, parameter priors, and recovery results. `gp_sigma` is in
+The [inference tutorial](../../docs/tutorials/inference.ipynb) writes out the
+GP kernel, NumPyro model and priors, NUTS sampling, conditional GP predictions,
+and posterior plots. `gp_sigma` is in
 unmagnified source-flux units; `gp_scale` and `gp_period` are the coherence
 time and rotation period in days.
 

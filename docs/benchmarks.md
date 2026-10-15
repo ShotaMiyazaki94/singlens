@@ -4,6 +4,19 @@ Three measurements on CPU, float64: **accuracy versus FFT bins**, **magnificatio
 runtime**, and **inference ESS/second**. FFT resolution and observation count
 are measured separately.
 
+The code below shows how each quantity is calculated. Install
+`.[examples,validation]` to include the reference packages, and enable float64:
+
+```python
+import jax
+
+jax.config.update("jax_enable_x64", True)
+import jax.numpy as jnp
+import numpy as np
+import matplotlib.pyplot as plt
+import singlens as sl
+```
+
 ## Accuracy versus FFT bins
 
 The reference is independent numerical source integration. Tightening its
@@ -12,6 +25,103 @@ Six source radii (`1e-6`, `1e-5`, `1e-4`, `.01`, `.1`, `1`) are evaluated at
 the same 105 `u/rho` values from 0 to 50 for every FFT size, with fine sampling
 near source contact. These are sampled errors,
 not a bound over all separations.
+
+### Independent source integration
+
+Integrate in lens-centered polar coordinates. The area element cancels the
+point-source magnification's $1/u$ singularity. Each ray intersects the source
+on a finite interval; the uniform part has an analytic radial integral and
+the limb-darkened part is integrated numerically. This avoids FFTs and
+microlensing lookup tables in the reference:
+
+```python
+from scipy.integrate import quad
+
+
+def reference_magnification(u, rho, a1=0.0, tolerance=1e-11):
+    ratio = abs(u) / rho
+
+    def angular(theta):
+        transverse = ratio * np.sin(theta)
+        half_chord = np.sqrt(max(0.0, 1 - transverse**2))
+        center = ratio * np.cos(theta)
+        lo, hi = max(0.0, center - half_chord), center + half_chord
+        p, q = rho * lo, rho * hi
+        hp, hq = np.hypot(p, 2.0), np.hypot(q, 2.0)
+        # Stable difference of the uniform radial antiderivative.
+        disk = 0.5 * (hi - lo) * (hq + p * (q + p) / (hq + hp))
+        if a1 == 0:
+            return disk
+
+        def radial(x):
+            mu = np.sqrt(max(0.0, 1 - (x - center) ** 2 - transverse**2))
+            return mu * ((rho * x) ** 2 + 2) / np.hypot(rho * x, 2.0)
+
+        limb = quad(radial, lo, hi, epsabs=0.01 * tolerance, epsrel=tolerance, limit=150)[0]
+        return (1 - a1) * disk + a1 * limb
+
+    upper = np.pi if ratio < 1 else np.arcsin(1 / ratio)
+    area_integral = quad(angular, 0.0, upper, epsabs=0.01 * tolerance, epsrel=tolerance, limit=150)[
+        0
+    ]
+    return 2 * area_integral / (np.pi * rho * (1 - a1 / 3))
+```
+
+For example, measure maximum relative error for `rho=.01`, `a1=.5`:
+
+```python
+ratios = np.unique(
+    np.r_[
+        0.0,
+        1e-6,
+        0.00999,
+        0.01,
+        0.01001,
+        0.1,
+        0.3,
+        0.5,
+        0.7,
+        0.85,
+        0.9,
+        0.95,
+        0.98,
+        0.99,
+        0.995,
+        1.0,
+        1.005,
+        1.01,
+        1.02,
+        1.05,
+        1.1,
+        1.2,
+        1.5,
+        2.0,
+        3.0,
+        5.0,
+        10.0,
+        19.99,
+        20.0,
+        20.01,
+        50.0,
+        np.linspace(0.98, 1.02, 81),
+    ]
+)
+rho, a1 = 0.01, 0.5
+u = jnp.asarray(ratios * rho)
+reference = np.array([reference_magnification(float(x), rho, a1) for x in u])
+bins = [512, 1024, 2048, 4096, 8192, 16384]
+errors = []
+for n_fft in bins:
+    model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=n_fft))
+    actual = np.asarray(jax.jit(model.magnification_at)(u, rho=rho, a1=a1))
+    errors.append(np.max(np.abs(actual / reference - 1)))
+```
+
+Repeat for the other radii. For a uniform source use `Model(source="uniform")`,
+omit `a1` in its evaluation, and set `a1=0` in the reference. Tightening
+the quadrature tolerance checks convergence of the reference; increasing
+FFT resolution checks the singlens approximation. The full figure collects
+these errors for all six radii:
 
 ```{image} ../example/compare-single-vbml/outputs/accuracy.png
 :alt: Maximum sampled relative error versus FFT bins for six source radii
@@ -112,6 +222,73 @@ trajectory calculation. Each timing is a median of 100 synchronized repeats afte
 Inputs and models are prepared before timing; intrinsic API conversions remain
 included. First-call initialization and compilation are recorded separately.
 
+### Time the same light curve
+
+The important distinction in JAX is between dispatching work and waiting for
+its result. Synchronize every measured evaluation, and warm up each input
+shape before collecting durations:
+
+```python
+from time import perf_counter
+
+
+def median_runtime(call, repeats=100):
+    for _ in range(3):
+        call()
+    durations = []
+    for _ in range(repeats):
+        start = perf_counter()
+        call()
+        durations.append(perf_counter() - start)
+    return np.median(durations)
+```
+
+Here is the linear limb-darkened case for all three native batch interfaces.
+Parameter conversions and input allocation happen before the timed calls:
+
+```python
+import VBMicrolensing
+import MulensModel as mm
+
+params = sl.Parameters(t0=0.0, u0=0.005, t_e=20.0, rho=0.01, a1=0.5)
+model = sl.Model(source="linear")
+evaluate = jax.jit(model.magnification)
+
+vbm = VBMicrolensing.VBMicrolensing()
+vbm.Tol = vbm.RelTol = 1e-3
+vbm.a1, vbm.minannuli = 0.5, 2
+# VBM's batch interface takes natural logs in this order.
+vbm_params = [np.log(0.005), np.log(20.0), 0.0, np.log(0.01)]
+
+mulens = mm.Model(dict(t_0=0.0, u_0=0.005, t_E=20.0, rho=0.01))
+mulens.default_magnification_method = "finite_source_LD_Yoo04"
+gamma = 2 * 0.5 / (3 - 0.5)
+
+counts = [10, 30, 100, 300, 1000]
+timings = {name: [] for name in ("singlens", "VBM", "MulensModel")}
+for count in counts:
+    times = np.linspace(-1.0, 1.0, count)
+    device_times = jax.block_until_ready(jnp.asarray(times))
+    vbm_times = times.tolist()
+    calls = {
+        "singlens": lambda: evaluate(device_times, params).block_until_ready(),
+        "VBM": lambda: vbm.ESPLLightCurve(vbm_params, vbm_times)[0],
+        "MulensModel": lambda: mulens.get_magnification(times, gamma=gamma),
+    }
+    for name, call in calls.items():
+        timings[name].append(median_runtime(call))
+
+fig, ax = plt.subplots(figsize=(14, 6), layout="constrained")
+for name, seconds in timings.items():
+    ax.loglog(counts, 1e6 * np.asarray(seconds), "o-", label=name)
+ax.set(xlabel="Finite-source evaluations per batch", ylabel="Total batch time [µs]")
+ax.legend()
+```
+
+The uniform comparison uses `source="uniform"`, VBM `a1=0`, and
+MulensModel's `finite_source_uniform_Gould94` method. The recorded experiment
+also shuffles measurement order; timing variation between machines is expected.
+
 Download {download}`timings <../example/compare-single-vbml/outputs/benchmark.json>`
 and {download}`raw repeats <../example/compare-single-vbml/outputs/benchmark.csv>`.
 
@@ -129,6 +306,20 @@ More FFT bins increase the cost of constructing and interpolating the
 magnification grid, even when N stays fixed. Read this plot together with
 the accuracy plot above to compare computational cost and numerical error.
 The default is **4096 bins**.
+
+Use the same timing function with a fixed 100-point input to measure the
+resolution cost separately from batch size:
+
+```python
+device_times = jax.block_until_ready(jnp.linspace(-1.0, 1.0, 100))
+seconds_by_bins = []
+for n_fft in bins:
+    model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=n_fft))
+    evaluate = jax.jit(model.magnification)
+    seconds_by_bins.append(
+        median_runtime(lambda: evaluate(device_times, params).block_until_ready())
+    )
+```
 
 Download the {download}`figure PDF <../example/compare-single-vbml/outputs/runtime_vs_bins.pdf>`,
 {download}`timing report <../example/compare-single-vbml/outputs/runtime_vs_bins.json>`,
@@ -171,6 +362,22 @@ Independent Gaussian priors are defined in these coordinates; logarithms are nat
 | `f_b` | 0 | 5 |
 | `pi_e_n`, `pi_e_e` | 0 | .5 each |
 | `logit(a1)` | 0 | 1 |
+
+For either magnification backend, the data term is the same independent
+Gaussian log likelihood:
+
+```python
+def white_log_likelihood(A, f_s, f_b, flux, flux_error):
+    prediction = f_s * A + f_b
+    variance = flux_error**2
+    return -0.5 * jnp.sum((flux - prediction) ** 2 / variance + jnp.log(2 * jnp.pi * variance))
+```
+
+Add the listed log priors to this quantity. `A` comes from singlens or VBM
+at the same event parameters and annual-parallax separations. The
+[NumPyro tutorial](tutorials/inference.ipynb) shows how to define the event
+priors and run NUTS; this benchmark uses the white-noise likelihood above
+without GP parameters or a latent source process.
 
 ```{image} ../example/compare-single-vbml/outputs/inference_recovery.png
 :alt: Independent-noise Roman-like data and both recovered lens curves over the season and peak
@@ -228,6 +435,51 @@ The common [autocorrelation estimator](https://emcee.readthedocs.io/en/stable/tu
 uses physical parameter series and `ESS = draws / tau`. The minimum over
 all nine parameters sets ESS/second. VBM uses `Tol=RelTol=1e-3` and
 `minannuli=2` for linear limb darkening.
+
+### Compute ESS per second
+
+Keep the time axis when estimating autocorrelation. For a physical parameter
+with $M$ streams and $N$ retained steps per stream,
+$\mathrm{ESS}=MN/\tau$, where $\tau$ is the integrated autocorrelation time.
+The following code uses exactly the same estimator for both samplers:
+
+```python
+import emcee
+
+
+def sampling_efficiency(chains, total_seconds):
+    # Shape: retained steps, streams, physical parameters.
+    tau = emcee.autocorr.integrated_time(chains, tol=0)
+    if np.any(~np.isfinite(tau)) or np.any(tau <= 0):
+        raise ValueError("Extend the chains before interpreting this ESS estimate.")
+    ess = chains.shape[0] * chains.shape[1] / tau
+    return ess, np.min(ess) / total_seconds
+
+
+names = ["t0", "u0", "t_e", "rho", "f_s", "f_b", "pi_e_n", "pi_e_e", "a1"]
+# nuts_draws[name]: (chains, steps)
+chains_nuts = np.stack([nuts_draws[name].T for name in names], axis=-1)
+# ensemble_draws: (independent ensembles, steps, walkers, physical parameters)
+steps = ensemble_draws.shape[1]
+chains_vbm = ensemble_draws.transpose(1, 0, 2, 3).reshape(steps, -1, len(names))
+
+ess_nuts, rate_nuts = sampling_efficiency(chains_nuts, nuts_total_seconds)
+ess_vbm, rate_vbm = sampling_efficiency(chains_vbm, vbm_total_seconds)
+```
+
+`nuts_draws` and `ensemble_draws` are the unthinned production arrays in the
+listed physical-parameter order;
+`nuts_total_seconds` and `vbm_total_seconds` include the measured common fit,
+compilation, warmup, and production. Reshape ensembles and walkers onto the
+**stream** axis, never the time axis. This calculation estimates ESS; the
+length/stability checks and independent-ensemble comparisons above are still
+needed. Emcee walkers within one ensemble are not independent chains for R̂.
+Negative autocorrelation can give $\tau<1$, so an ESS larger than the raw
+draw count is possible.
+
+The downloadable VBM samples are thinned by 10 for posterior plots. The
+reported ESS uses unthinned production chains; use those when reproducing
+the calculation above.
 
 ```{image} ../example/compare-single-vbml/outputs/inference_speed.png
 :alt: Minimum ESS against elapsed time and ESS per second for the nine inferred parameters
