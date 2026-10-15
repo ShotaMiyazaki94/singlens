@@ -1,0 +1,1327 @@
+{
+  "versions": {
+    "singlens": "0.1.0",
+    "jax": "0.11.2",
+    "jaxlib": "0.11.2",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "numpyro": "0.22.0"
+  },
+  "created_utc": "2026-10-15T04:46:23.853485+00:00",
+  "source_sha256": {
+    "__init__.py": "f1becf1f799a5451b59ab980584b77ecf2d9900b4b18a0684b69d786371e78b5",
+    "data/__init__.py": "d70619eabe4596e50812c14996eda1caf558d008f6ab25488a15d7dc6eede19d",
+    "lensing/__init__.py": "7c49194557741c22b6af1ccdc7d2946749bb256025e645ab500820b2dfc76f69",
+    "lensing/config.py": "334de73ceed35aaf113b3de277fc50c418fcb065ba2236bbe37394720b3925d2",
+    "lensing/finite.py": "e245eb418cd0642b0687ad23e84ea04ad610bab78d7c7fb1a4c0a35ccb512bd4",
+    "lensing/point.py": "8c1789dc00649749a27a13ae7578ff547ffbd6d2f2d709815852546173bac14e",
+    "lightcurve.py": "e6712c411124abce2ba1b9eadf542975da84b10338b72d64c1aa051a190c2d77",
+    "model.py": "fc97945c0c5fd0c739ce423aae7bf73217e76f70bc4b05b234d9a1e687b85f08",
+    "numerics/__init__.py": "8ff1c38fca896fab741a1b171ee779ff7148aa286680b5c2e83a98cac621197e",
+    "numerics/fftlog.py": "23b03ad8f8ce1bc0ca06ab4aee636a4030c2b64b23e1a72720f5926e21b772ab",
+    "numerics/interpolate.py": "a71f4b975d62da427f25b42c307d205d1aac785aa3f5a7a58807be9a7532f3dd",
+    "numerics/special.py": "82687c650342c2f91c2af498464549bcc7e5e8461a71e9c9d7e65feac040f3c5",
+    "parameters.py": "d059ac946d0f886842c1e513cdcb8901a0f0d457c173484c7cddda8d4d9ca0fe",
+    "photometry/__init__.py": "ae2a4fd28945dd30d8245da8d538c2ee84d9e8acd4ad1cfa0db970e85a861f85",
+    "photometry/fit.py": "f1d3a106c5fe40d7afc7ca501765f36f9674e7205f641636dcd4c1c3b73638cd",
+    "photometry/likelihood.py": "84fd9a38c9394e7ba7d860bf7eb77a463050de6eee18db3cd1cfbbd2728f79a9",
+    "trajectory/__init__.py": "25dbd3c6fc24dad2d83a178977857bdec2813bb2052d5c93c6f363898993eaab",
+    "trajectory/_geometry.py": "d7f85b30765e6a5be07cf3655bc9182c75c34cef008a879187e56476a3c3d627",
+    "trajectory/ephemeris.py": "38ad85b663f68810ac628ca9035b78d2735a39c8e1c5a8ff12879e339e5f2c83",
+    "trajectory/kepler.py": "055f8c6feb3ac98c3202f5117a939f4c7b15f054b85eab216b4872da35d1cda9",
+    "trajectory/parallax.py": "293229b92cc8226168969ca35c6ef7afe0a03232a6340a9dd5f2c98bd6568b99"
+  },
+  "python": "3.12.10",
+  "platform": "macOS-26.5-arm64-arm-64bit",
+  "devices": [
+    "cpu:0"
+  ],
+  "device_kind": "cpu",
+  "x64": true,
+  "fft_defaults": {
+    "n_fft": 4096,
+    "log_u_min": -8,
+    "log_u_max": 4,
+    "rho_switch": 0.0001,
+    "u_switch": 20
+  },
+  "bins": [
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "radii": [
+    1e-06,
+    1e-05,
+    0.0001,
+    0.01,
+    0.1,
+    1.0
+  ],
+  "u_over_rho": [
+    0.0,
+    1e-06,
+    0.00999,
+    0.01,
+    0.01001,
+    0.1,
+    0.3,
+    0.5,
+    0.7,
+    0.85,
+    0.9,
+    0.95,
+    0.98,
+    0.9804999999999999,
+    0.981,
+    0.9815,
+    0.982,
+    0.9824999999999999,
+    0.983,
+    0.9835,
+    0.984,
+    0.9844999999999999,
+    0.985,
+    0.9855,
+    0.986,
+    0.9864999999999999,
+    0.987,
+    0.9875,
+    0.988,
+    0.9884999999999999,
+    0.989,
+    0.9895,
+    0.99,
+    0.9904999999999999,
+    0.991,
+    0.9915,
+    0.992,
+    0.9924999999999999,
+    0.993,
+    0.9935,
+    0.994,
+    0.9944999999999999,
+    0.995,
+    0.9955,
+    0.996,
+    0.9964999999999999,
+    0.997,
+    0.9975,
+    0.998,
+    0.9984999999999999,
+    0.999,
+    0.9995,
+    1.0,
+    1.0005,
+    1.001,
+    1.0015,
+    1.002,
+    1.0025,
+    1.0030000000000001,
+    1.0035,
+    1.004,
+    1.0045,
+    1.005,
+    1.0055,
+    1.006,
+    1.0065,
+    1.0070000000000001,
+    1.0075,
+    1.008,
+    1.0085,
+    1.009,
+    1.0095,
+    1.01,
+    1.0105,
+    1.0110000000000001,
+    1.0115,
+    1.012,
+    1.0125,
+    1.013,
+    1.0135,
+    1.014,
+    1.0145,
+    1.0150000000000001,
+    1.0155,
+    1.016,
+    1.0165,
+    1.017,
+    1.0175,
+    1.018,
+    1.0185,
+    1.0190000000000001,
+    1.0195,
+    1.02,
+    1.05,
+    1.1,
+    1.2,
+    1.5,
+    2.0,
+    3.0,
+    5.0,
+    10.0,
+    19.99,
+    20.0,
+    20.01,
+    50.0
+  ],
+  "physical_a1": 0.5,
+  "reference": "Independent lens-centered source quadrature",
+  "reference_tolerances": [
+    1e-09,
+    1e-11
+  ],
+  "reference_checks": [
+    {
+      "source": "uniform",
+      "rho": 1e-06,
+      "max_relative_change": 5.295763827461997e-14
+    },
+    {
+      "source": "uniform",
+      "rho": 1e-05,
+      "max_relative_change": 5.306866057708248e-14
+    },
+    {
+      "source": "uniform",
+      "rho": 0.0001,
+      "max_relative_change": 5.306866057708248e-14
+    },
+    {
+      "source": "uniform",
+      "rho": 0.01,
+      "max_relative_change": 5.306866057708248e-14
+    },
+    {
+      "source": "uniform",
+      "rho": 0.1,
+      "max_relative_change": 5.284661597215745e-14
+    },
+    {
+      "source": "uniform",
+      "rho": 1.0,
+      "max_relative_change": 4.5075054799781356e-14
+    },
+    {
+      "source": "linear",
+      "rho": 1e-06,
+      "max_relative_change": 4.68070027181966e-13
+    },
+    {
+      "source": "linear",
+      "rho": 1e-05,
+      "max_relative_change": 4.662936703425657e-13
+    },
+    {
+      "source": "linear",
+      "rho": 0.0001,
+      "max_relative_change": 4.700684286262913e-13
+    },
+    {
+      "source": "linear",
+      "rho": 0.01,
+      "max_relative_change": 4.89164264649844e-13
+    },
+    {
+      "source": "linear",
+      "rho": 0.1,
+      "max_relative_change": 2.418509836843441e-12
+    },
+    {
+      "source": "linear",
+      "rho": 1.0,
+      "max_relative_change": 2.7111646261346323e-13
+    }
+  ],
+  "external_versions": {
+    "VBMicrolensing": "5.6.1",
+    "MulensModel": "3.12.0"
+  },
+  "scope": "Sampled errors, not a uniform bound. Full FFT for rho>=1e-4; the small-source approximation is reported separately. VBM Tol and RelTol are both set to the label value; minannuli=2 for linear limb darkening and 1 for uniform sources. Non-finite external values are counted and excluded from finite-point error summaries.",
+  "results": [
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.006917693695185134,
+      "rms_relative_error": 0.004888804056612977
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.006917693660409174,
+      "rms_relative_error": 0.004888804052839116
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.006111581895615892,
+      "rms_relative_error": 0.004396642347872494
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.01229048625147433,
+      "rms_relative_error": 0.004576366535240832
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.010421178147595467,
+      "rms_relative_error": 0.0050493627625343845
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.005374266391003912,
+      "rms_relative_error": 0.003572956189194662
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.002940957159672797,
+      "rms_relative_error": 0.0018185696436856474
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.002940957191882587,
+      "rms_relative_error": 0.0018185696422498192
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0032490159282156927,
+      "rms_relative_error": 0.0021284817015606657
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.002818207118725047,
+      "rms_relative_error": 0.0017597317268657914
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0031444793212236366,
+      "rms_relative_error": 0.0019247765238117791
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.002562554484148327,
+      "rms_relative_error": 0.0016553260950071978
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0015601856366330713,
+      "rms_relative_error": 0.0007323734150653757
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0015601856691710436,
+      "rms_relative_error": 0.0007323734146351656
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0015760718330997125,
+      "rms_relative_error": 0.0007283064105717226
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0014538257925269527,
+      "rms_relative_error": 0.0006925296154942587
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0016762627812620945,
+      "rms_relative_error": 0.0008164414340905758
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0012402127259160123,
+      "rms_relative_error": 0.0005662806296201296
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009702668347845167,
+      "rms_relative_error": 0.0003691349600060885
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009702668674647086,
+      "rms_relative_error": 0.00036913495983533027
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.001004973804214604,
+      "rms_relative_error": 0.0003764367617052829
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009349052212836995,
+      "rms_relative_error": 0.0003591675821734207
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009770780906374066,
+      "rms_relative_error": 0.00036691080967640564
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008003101544173941,
+      "rms_relative_error": 0.0002937565505453602
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008869340338353293,
+      "rms_relative_error": 0.00032909281429585184
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008869340005128734,
+      "rms_relative_error": 0.00032909281420206483
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.000882132359617982,
+      "rms_relative_error": 0.00032608825090941714
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008831734138061709,
+      "rms_relative_error": 0.00032606570553755064
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008784968830348738,
+      "rms_relative_error": 0.0003252732655835021
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0007034351494465962,
+      "rms_relative_error": 0.0002547359963403059
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008823147350047744,
+      "rms_relative_error": 0.00032813470752930283
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008823147016825406,
+      "rms_relative_error": 0.0003281347074359656
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008823723457278554,
+      "rms_relative_error": 0.0003252342167808501
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008820162910712082,
+      "rms_relative_error": 0.00032524419649110234
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0008763203938511044,
+      "rms_relative_error": 0.0003242624124402358
+    },
+    {
+      "source": "uniform",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0007036353067081391,
+      "rms_relative_error": 0.0002540595291083454
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=0.001",
+      "rho": 1e-06,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474839240466556,
+      "rms_relative_error": 0.000839127829097451
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=0.001",
+      "rho": 1e-05,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474839441640079,
+      "rms_relative_error": 0.000839127837186182
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=0.001",
+      "rho": 0.0001,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474859559227674,
+      "rms_relative_error": 0.000839128646060852
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=0.001",
+      "rho": 0.01,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474238954495625,
+      "rms_relative_error": 0.0008391013647479934
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=0.001",
+      "rho": 0.1,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018413126597054408,
+      "rms_relative_error": 0.000836414373684314
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=0.001",
+      "rho": 1.0,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.001435952671057894,
+      "rms_relative_error": 0.0006564920494318994
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 1e-06,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474839240466556,
+      "rms_relative_error": 0.000839127829097451
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 1e-05,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474839441640079,
+      "rms_relative_error": 0.000839127837186182
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 0.0001,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474859559227674,
+      "rms_relative_error": 0.000839128646060852
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 0.01,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018474238954495625,
+      "rms_relative_error": 0.0008391013647479934
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 0.1,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018413126597054408,
+      "rms_relative_error": 0.0008364143736843098
+    },
+    {
+      "source": "uniform",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 1.0,
+      "n_fft": null,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.001435952671057894,
+      "rms_relative_error": 0.0006564920494123268
+    },
+    {
+      "source": "uniform",
+      "implementation": "MulensModel",
+      "rho": 1e-06,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 9.789046462316264e-09,
+      "rms_relative_error": 9.598952317747e-10
+    },
+    {
+      "source": "uniform",
+      "implementation": "MulensModel",
+      "rho": 1e-05,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 9.801421452237946e-09,
+      "rms_relative_error": 9.611198862300663e-10
+    },
+    {
+      "source": "uniform",
+      "implementation": "MulensModel",
+      "rho": 0.0001,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 1.103892133258455e-08,
+      "rms_relative_error": 1.1773954037465343e-09
+    },
+    {
+      "source": "uniform",
+      "implementation": "MulensModel",
+      "rho": 0.01,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 1.250955442877455e-05,
+      "rms_relative_error": 4.792343944825034e-06
+    },
+    {
+      "source": "uniform",
+      "implementation": "MulensModel",
+      "rho": 0.1,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0012476708988607976,
+      "rms_relative_error": 0.000481202517436522
+    },
+    {
+      "source": "uniform",
+      "implementation": "MulensModel",
+      "rho": 1.0,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.10557281775530647,
+      "rms_relative_error": 0.04682191050946445
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.004945199648561216,
+      "rms_relative_error": 0.0033912154816702266
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.004945199613288542,
+      "rms_relative_error": 0.003391215475977803
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.004448040028376621,
+      "rms_relative_error": 0.0030392391378428825
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.007374394145032603,
+      "rms_relative_error": 0.003063795416618894
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0065842381605412115,
+      "rms_relative_error": 0.003470995700503721
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 512,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.003701691485459513,
+      "rms_relative_error": 0.002384940750200696
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0018720510287484338,
+      "rms_relative_error": 0.0011950229690260933
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.001872050994440766,
+      "rms_relative_error": 0.0011950229671361728
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0022074136819592027,
+      "rms_relative_error": 0.0014180522270928267
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0019557946593877773,
+      "rms_relative_error": 0.0011719696468500478
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0019964718823901606,
+      "rms_relative_error": 0.0012628911559523048
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 1024,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0016750445651831924,
+      "rms_relative_error": 0.00109658360779598
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009765513850008567,
+      "rms_relative_error": 0.00047395493366447
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009765514182897839,
+      "rms_relative_error": 0.00047395493343420033
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0010621028322987947,
+      "rms_relative_error": 0.00047980973533851055
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0009789492876079997,
+      "rms_relative_error": 0.0004516224493326925
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0011156308088817735,
+      "rms_relative_error": 0.0005355057787066463
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 2048,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0007810068819507077,
+      "rms_relative_error": 0.0003643388170686735
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0006283788444285676,
+      "rms_relative_error": 0.00023993891964450305
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0006283788103929044,
+      "rms_relative_error": 0.00023993891951222727
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0006658090050293275,
+      "rms_relative_error": 0.00024342563544372967
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0006208047566502728,
+      "rms_relative_error": 0.00023231297647264532
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0006266154950795855,
+      "rms_relative_error": 0.00023686222819661656
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 4096,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005073281962344467,
+      "rms_relative_error": 0.00018978231336013528
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005874822722451434,
+      "rms_relative_error": 0.0002147037519879761
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005874822382108125,
+      "rms_relative_error": 0.0002147037519390553
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005843262412164041,
+      "rms_relative_error": 0.00021088267275445538
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005848490362221348,
+      "rms_relative_error": 0.00021087124735903398
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.000580849755802415,
+      "rms_relative_error": 0.00021042778678871755
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 8192,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0004464939130975898,
+      "rms_relative_error": 0.0001648445043341578
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-06,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005844177707214904,
+      "rms_relative_error": 0.00021409332437148732
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1e-05,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005844177366873815,
+      "rms_relative_error": 0.00021409332432316362
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.0001,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005844572734321485,
+      "rms_relative_error": 0.0002103243392510937
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.01,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005841173590335202,
+      "rms_relative_error": 0.00021033708395135043
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 0.1,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0005793252545505112,
+      "rms_relative_error": 0.0002097717621022027
+    },
+    {
+      "source": "linear",
+      "implementation": "singlens",
+      "rho": 1.0,
+      "n_fft": 16384,
+      "n_valid": 105,
+      "n_invalid": 0,
+      "max_relative_error": 0.0004466504448555897,
+      "rms_relative_error": 0.00016441569940096035
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=0.001",
+      "rho": 1e-06,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0017192549945623803,
+      "rms_relative_error": 0.0007220375136992077
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=0.001",
+      "rho": 1e-05,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0017192549979117011,
+      "rms_relative_error": 0.0007220375163296863
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=0.001",
+      "rho": 0.0001,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0017192553257450172,
+      "rms_relative_error": 0.0007220377790687427
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=0.001",
+      "rho": 0.01,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0017192024481045287,
+      "rms_relative_error": 0.0007220167026066826
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=0.001",
+      "rho": 0.1,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0017139832503088037,
+      "rms_relative_error": 0.0007199284753910169
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=0.001",
+      "rho": 1.0,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0014174628067484818,
+      "rms_relative_error": 0.0006010918452009948
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 1e-06,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.009871659762400897,
+      "rms_relative_error": 0.001116687077740623
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 1e-05,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.00987165976229143,
+      "rms_relative_error": 0.0011166870804548094
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 0.0001,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.009871659751416573,
+      "rms_relative_error": 0.0011166873517160845
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 0.01,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.009871549892354947,
+      "rms_relative_error": 0.0011166687321580951
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 0.1,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.009860691200743288,
+      "rms_relative_error": 0.0011148324865864988
+    },
+    {
+      "source": "linear",
+      "implementation": "VBM Tol=1e-06",
+      "rho": 1.0,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.008920567631542031,
+      "rms_relative_error": 0.0009757936056359048
+    },
+    {
+      "source": "linear",
+      "implementation": "MulensModel",
+      "rho": 1e-06,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 5.478826170524087e-09,
+      "rms_relative_error": 5.372457930607545e-10
+    },
+    {
+      "source": "linear",
+      "implementation": "MulensModel",
+      "rho": 1e-05,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 5.489840360084486e-09,
+      "rms_relative_error": 5.383394294599611e-10
+    },
+    {
+      "source": "linear",
+      "implementation": "MulensModel",
+      "rho": 0.0001,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 6.591245882425767e-09,
+      "rms_relative_error": 7.579362125787767e-10
+    },
+    {
+      "source": "linear",
+      "implementation": "MulensModel",
+      "rho": 0.01,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 1.1130599502862104e-05,
+      "rms_relative_error": 4.108559818467039e-06
+    },
+    {
+      "source": "linear",
+      "implementation": "MulensModel",
+      "rho": 0.1,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0011106499632993483,
+      "rms_relative_error": 0.00041292277868725365
+    },
+    {
+      "source": "linear",
+      "implementation": "MulensModel",
+      "rho": 1.0,
+      "n_fft": null,
+      "n_valid": 104,
+      "n_invalid": 1,
+      "max_relative_error": 0.0953582088693089,
+      "rms_relative_error": 0.04116490915229675
+    }
+  ]
+}

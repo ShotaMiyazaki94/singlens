@@ -1,0 +1,55 @@
+{
+  "repository": "https://github.com/ShotaMiyazaki94/microjax",
+  "commit": "326cb0dd14617e5716a9d652b510709902d27b5b",
+  "files": [
+    {
+      "source": "src/microjax/fspl/fftlog_jax.py",
+      "sha256": "394712f4239aaadc5bd326b24c14ea8f9fcb65492336d7d510149eb959162c7b"
+    },
+    {
+      "source": "src/microjax/fspl/special.py",
+      "sha256": "62bc2c4ce70527c7f00c1d5d95834501f84253f84c8a05475c62edd743e0b6f9"
+    },
+    {
+      "source": "src/microjax/trajectory/parallax.py",
+      "sha256": "f629465abc69fdb0571c03a51011b7b0d52a96ca11b99dd44cb45f6039040f59"
+    },
+    {
+      "source": "src/microjax/trajectory/_kepler.py",
+      "sha256": "5641b4948508fb8c69cee9118eb769bc1ea8d9e8adedb1304f6b461c27b4d240"
+    },
+    {
+      "source": "src/microjax/likelihood.py",
+      "sha256": "2422013d4b6e43b75bf26225eaebb63029f0f1bb06a7fdb02a8f09ce9b22ef46"
+    },
+    {
+      "source": "src/microjax/data/earth_orbital_parallax_table.txt",
+      "sha256": "4db030f4a46bfbf51eccad311b444af6cd41840eb15c40b16902d96748bfa61c"
+    },
+    {
+      "source": "src/microjax/fspl/mag_fft_jax.py",
+      "sha256": "4985c57d8d735439580ada1ec3c85c24ab837c745e6d5710d67abad36840d79e",
+      "note": "Relevant single-lens routines adapted; module not copied wholesale."
+    },
+    {
+      "source": "src/microjax/point_source.py",
+      "sha256": "2dc88e773e764b4fbfddd491fcb743de054797f8a48938aa3739e6dca2041d2e",
+      "note": "Relevant single-lens routines adapted; module not copied wholesale."
+    }
+  ],
+  "roman_recovery": {
+    "repository": "https://github.com/ShotaMiyazaki94/test_microjax",
+    "commit": "979fa9b33b69c4ba89eb7ad70ebae3d23da349cc",
+    "files": [
+      {
+        "source": "Roman_recovery/Tool/0_gen_lc.py",
+        "sha256": "36993329460e707391cb2a28f10172e7796b8ea665f8e591acd32c688c107548"
+      },
+      {
+        "source": "Roman_recovery/data/WFIRST/full_magnitude_error.csv",
+        "sha256": "3a609809483a075e83bcfb5970381c44aa5dcbfcc2c85142da9df9b3127bcbc3"
+      }
+    ],
+    "note": "Cadence, photometric setup, and copied magnitude-error table; binary event replaced by a single-lens parallax event with magnified source variability."
+  }
+}

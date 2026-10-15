@@ -1,0 +1,41 @@
+singlens
+Copyright (c) 2026 Shota Miyazaki
+
+Single-lens components adapted from microJAX
+Copyright (c) 2025 Shota Miyazaki
+https://github.com/ShotaMiyazaki94/microjax
+MIT terms preserved in LICENSES/microjax-MIT.txt.
+The source snapshot and hashes are recorded in docs/upstream.json.
+
+Roman-like injection photometry and the magnitude-error table follow
+test_microjax/Roman_recovery, commit 979fa9b33b69c4ba89eb7ad70ebae3d23da349cc.
+https://github.com/ShotaMiyazaki94/test_microjax
+Copyright (c) 2024 test_microjax contributors.
+The copied table is example/inference/data/roman_magnitude_error.csv.
+MIT terms preserved in LICENSES/test_microjax-MIT.txt.
+
+FFTLog and extended-source algorithms derive from fft-extended-source
+Copyright (c) 2022 git-sunao (Sunao Sugiyama)
+https://github.com/git-sunao/fft-extended-source
+MIT terms preserved in LICENSES/fft-extended-source-MIT.txt.
+
+Bessel rational approximations in src/singlens/numerics/special.py were adapted by
+microJAX from Benjamin Pope's JAX pull request #17038:
+https://github.com/jax-ml/jax/pull/17038
+Copyright 2018 The JAX Authors.
+JAX is distributed under Apache License 2.0; see LICENSES/JAX-Apache-2.0.txt.
+The approximations and coefficients originate in the Cephes Mathematical
+Library, Release 2.8 (June 2000), as distributed with SciPy:
+Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier.
+https://github.com/scipy/scipy/blob/v1.10.1/scipy/special/cephes/j0.c
+https://github.com/scipy/scipy/blob/v1.10.1/scipy/special/cephes/j1.c
+The SciPy BSD terms
+are preserved in LICENSES/SciPy-BSD-3-Clause.txt.
+
+singlens modifications include source-profile normalization, stable central
+magnifications, safe small-argument derivatives, shape handling, ephemeris
+validation, flux-fit corrections, a 1L1S API, tests, and distribution metadata.
+
+The Earth ephemeris is a JPL Horizons data product, retrieved by microJAX.
+Its original header, reference frame, dates, units, and provenance are retained
+in src/singlens/data/earth_orbital_parallax_table.txt.

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "singlens"
+version = "0.1.0"
+description = "Differentiable single-lens microlensing in JAX"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT AND Apache-2.0 AND BSD-3-Clause"
+license-files = ["LICENSE", "LICENSES/*.txt", "NOTICE"]
+authors = [{name = "Shota Miyazaki", email = "miyazaki@ir.isas.jaxa.jp"}]
+keywords = ["microlensing", "astronomy", "jax", "autodiff", "single-lens"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Operating System :: OS Independent",
+]
+dependencies = ["jax>=0.11.2", "numpy>=2.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "scipy>=1.14"]
+dev = ["singlens[test]", "build>=1.2", "twine>=6", "ruff>=0.11"]
+validation = ["VBMicrolensing>=5", "MulensModel>=3", "emcee>=3.1,<4"]
+examples = [
+  "matplotlib>=3.9", "scipy>=1.14", "numpyro>=0.22",
+  "tinygp>=0.3.1,<0.4", "corner>=2.2,<3",
+]
+docs = [
+  "singlens[examples]", "sphinx>=8,<10", "sphinx-book-theme>=1.1,<2",
+  "myst-nb>=1.2,<2",
+  "ipykernel>=6", "ipywidgets>=8", "nbformat>=5.10",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"singlens.data" = ["*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["reference: comparisons with optional independent microlensing libraries"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

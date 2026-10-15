@@ -1,0 +1,45 @@
+# Local history, experiments, and numerical diagnostics
+/archive/
+/local/
+/tools/validation/outputs/
+/example/**/outputs/progress_*.json
+# The sampler control is summarized in inference_speed.json.
+/example/compare-single-vbml/outputs/posterior_singlens_emcee.npz
+
+# Python environments, caches, and build products
+.venv*/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+
+# Notebook and documentation caches
+/docs/_build/
+/docs/_autoapi/
+/docs/reference/
+.jupyter_cache/
+.ipynb_checkpoints/
+.mplconfig/
+
+# Personal settings and environment files
+/.codex/
+/.agents/
+/.aws/
+/.pypirc
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example
+
+# Local system files and logs
+.DS_Store
+*.log
