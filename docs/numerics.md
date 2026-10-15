@@ -73,17 +73,34 @@ Changing it changes frequency coverage and endpoint effects; narrowing it
 does not reduce FFT work at a fixed bin count. Observation count, FFT
 resolution, and transform range are separate settings.
 
+## Distant observations
+
+With the defaults, positions at **`u/rho >= 20`** use the point-source
+magnification plus the leading finite-source correction. The correction
+depends on both source radius and radial brightness profile, so radius and
+limb-darkening derivatives are retained. This applies to every source radius.
+
+**When every position in one event evaluation satisfies this condition,
+the radius-dependent FFT is skipped.** A mixed batch uses the same expression
+at its distant positions. Between `u/rho=10` and 20, a smooth blend connects
+the finite-source calculation to the far-field expansion.
+
+Closer positions use the FFT calculation for `rho >= 1e-4`; smaller sources
+use a prepared small-source approximation. Parameter-independent transforms
+are prepared with the model. `FFTConfig.u_switch` sets the outer transition
+ratio, with the blend starting at half that value.
+
 ## Derivatives
 
 Automatic differentiation evaluates derivatives of the same numerical model
 used for magnification. Check their stability near source contact and exact
 alignment when they determine a fit.
 
-With the defaults, approximations change at `rho=1e-4` and, for smaller
-sources, at `u/rho=20`. Near alignment (`u/rho<.01`), a central expansion
+With the defaults, approximations change at `rho=1e-4`.
+Near alignment (`u/rho<.01`), a central expansion
 preserves the value and leading slope. Derivatives need not be continuous
-at approximation boundaries. At `u>=100` in the larger-source calculation,
-magnification is fixed to 1. More FFT bins do not remove these limits.
+at these approximation boundaries. The transition to the far-field
+expansion is smooth. More FFT bins do not remove the other branch limits.
 
 ## Annual parallax
 

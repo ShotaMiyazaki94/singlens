@@ -11,7 +11,8 @@ class FFTConfig:
 
     ``n_fft`` sets the FFT resolution; the default is 4096. ``log_u_min`` and
     ``log_u_max`` set the base-10 separation range. ``rho_switch`` selects the
-    small-source approximation, whose outer limit is ``u_switch * rho``.
+    small-source approximation. At ``u >= u_switch * rho`` the far-field
+    expansion is used; an entirely far-field batch skips the FFT.
     """
 
     n_fft: int = 4096

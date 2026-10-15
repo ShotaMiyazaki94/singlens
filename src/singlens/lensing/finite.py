@@ -107,6 +107,24 @@ class _FiniteSource:
         """Central value plus curvature, with z2=(u/rho)**2 (subclass hook)."""
         raise NotImplementedError
 
+    def _radial_moment(self, **profile):
+        """Mean squared source radius in units of rho**2."""
+        return 0.5
+
+    def _far_magnification(self, u, rho, **profile):
+        # Source average: A + <r**2>/4 * laplacian(A). Inverse lengths
+        # avoid powers overflowing at large u. The next term is O((rho/u)**4).
+        inv_u, inv_h = 1 / u, 1 / jnp.hypot(u, 2.0)
+        correction = (
+            8
+            * self._radial_moment(**profile)
+            * (rho * inv_u) ** 2
+            * (1 - 3 * inv_h**2)
+            * inv_u
+            * inv_h**3
+        )
+        return pspl(u) + correction
+
     def _A_for_small_rho(self, u, rho, **profile):
         near = u < self.fft.u_switch * rho
         # Safe inactive branches are essential for reverse-mode autodiff.
@@ -151,12 +169,24 @@ class _FiniteSource:
         safe_rho = jnp.where(valid & (rho > 0), rho, 1.0)
         near_center = u < 0.01 * safe_rho
         safe_u = jnp.where(near_center, 0.01 * safe_rho, u)
-        values = lax.cond(
-            safe_rho < self.fft.rho_switch,
-            lambda r: self._A_for_small_rho(safe_u, r, **profile),
-            lambda r: self._A_for_large_rho(safe_u, r, **profile),
-            safe_rho,
-        )
+        outer = self.fft.u_switch * safe_rho
+        far = self._far_magnification(jnp.maximum(u, outer / 2), safe_rho, **profile)
+
+        def finite_source(_):
+            return lax.cond(
+                safe_rho < self.fft.rho_switch,
+                lambda r: self._A_for_small_rho(safe_u, r, **profile),
+                lambda r: self._A_for_large_rho(safe_u, r, **profile),
+                safe_rho,
+            )
+
+        # One event shares one FFT. Omit it only when every position is far.
+        values = lax.cond(jnp.all(u >= outer) | (rho == 0), lambda _: far, finite_source, None)
+        # The same per-position expression in mixed and all-far batches avoids
+        # batch-dependent answers. Smoothly join over u/rho=10..20 by default.
+        x = jnp.clip(2 * u / outer - 1, 0.0, 1.0)
+        weight = x**3 * (10 + x * (-15 + 6 * x))
+        values = jnp.where(x >= 1, far, values + weight * (far - values))
         # FFT endpoints are unreliable arbitrarily close to alignment. The
         # central expansion retains the correct value and leading derivative.
         z2 = jnp.where(near_center, u / safe_rho, 0.0) ** 2
@@ -204,6 +234,10 @@ class LinearLimbDarkened(_FiniteSource):
         gamma = self.gamma if a1 is None else 2 * a1 / (3 - a1)
         return (1 - gamma) * _central_disk(rho, z2) + gamma * _central_moment(rho, 1, z2)
 
+    def _radial_moment(self, a1=None):
+        gamma = self.gamma if a1 is None else 2 * a1 / (3 - a1)
+        return 0.5 - 0.1 * gamma
+
     def init_Aext0(self):
         x = self._grid
         weight = x * _damping(x)
@@ -235,3 +269,6 @@ class QuadraticProfile(_FiniteSource):
 
     def _central_expansion(self, rho, z2):
         return _central_moment(rho, 2, z2)
+
+    def _radial_moment(self):
+        return 1 / 3

@@ -133,6 +133,73 @@ def test_limits_shapes_and_invalid_inputs(model):
         source.A(u, jnp.array([0.1, 0.2]))
 
 
+@pytest.mark.parametrize("rho", [1e-6, 0.01, 0.1, 1.0, 10.0])
+def test_far_field_against_independent_integral(model, rho):
+    source, profile = model
+    u = rho * np.array([20.0, 30.0, 50.0])
+    expected = [reference(float(x), rho, profile) for x in u]
+    np.testing.assert_allclose(jax.jit(source.A)(u, rho), expected, rtol=1e-6)
+
+
+def test_entirely_far_batch_skips_fft(monkeypatch):
+    source = UniformDisk()
+    original = source._large_rho_grid
+    calls = []
+
+    def grid(rho, **profile):
+        jax.debug.callback(lambda: calls.append("fft"))
+        return original(rho, **profile)
+
+    monkeypatch.setattr(source, "_large_rho_grid", grid)
+    evaluate = jax.jit(source.A)
+    evaluate(jnp.array([0.2, 0.3, 0.5]), 0.01).block_until_ready()
+    jax.effects_barrier()
+    assert calls == []
+    derivative = jax.jit(jax.grad(lambda rho: source.A(jnp.array([0.2, 0.3, 0.5]), rho).sum()))
+    derivative(0.01).block_until_ready()
+    jax.effects_barrier()
+    assert calls == []
+    evaluate(jnp.array([0.005, 0.3, 0.5]), 0.01).block_until_ready()
+    jax.effects_barrier()
+    assert calls == ["fft"]
+
+
+def test_far_values_and_gradients_do_not_depend_on_batch():
+    source = LinearLimbDarkened()
+    far = jnp.array([0.21, 0.4, 1.0])
+    mixed = jnp.r_[0.005, far]
+
+    def curve(theta, positions):
+        return source.A(positions, theta[0], a1=theta[1])
+
+    theta = jnp.array([0.01, 0.4])
+    alone, together = curve(theta, far), curve(theta, mixed)[1:]
+    np.testing.assert_allclose(alone, together, rtol=1e-13)
+    derivative = jax.jit(jax.jacfwd(curve))
+    alone, together = derivative(theta, far), derivative(theta, mixed)[1:]
+    np.testing.assert_allclose(alone, together, rtol=1e-11, atol=1e-13)
+    assert np.all(alone[:, 0] > 0)  # The radius correction is retained.
+    assert np.all(alone[:, 1] < 0)  # Limb darkening changes the radial moment.
+
+
+@pytest.mark.parametrize("ratio", [10.0, 20.0])
+def test_far_transition_value_slope_and_curvature(model, ratio):
+    source, _ = model
+    rho = 0.01
+
+    def curve(u):
+        return source.A(u, rho)[0]
+
+    values = jax.jit(jax.vmap(curve))
+    slopes = jax.jit(jax.vmap(jax.grad(curve)))
+    curvatures = jax.jit(jax.vmap(jax.grad(jax.grad(curve))))
+    u = rho * ratio * jnp.array([1 - 1e-8, 1 + 1e-8])
+    for evaluate in (values, slopes, curvatures):
+        left, right = evaluate(u)
+        assert np.isfinite([left, right]).all()
+        np.testing.assert_allclose(left, right, rtol=1e-5, atol=1e-12)
+
+
 def test_linear_coefficient_can_be_fitted():
     def f(a):
         return LinearLimbDarkened(a).A(jnp.array([0.0, 0.006]), 0.01).sum()
