@@ -61,11 +61,14 @@ def test_parameters_are_differentiable_without_unpacking(model_and_params):
         assert np.isfinite(a).all()
         np.testing.assert_allclose(a, b, rtol=1e-10, atol=1e-9)
     if model.source == "linear":
-        h = 1e-5
+        # A fourth-order difference allows a larger step, reducing cancellation.
+        h = 1e-3
         fd = (
-            compiled(times, params.replace(a1=params.a1 + h))
-            - compiled(times, params.replace(a1=params.a1 - h))
-        ) / (2 * h)
+            compiled(times, params.replace(a1=params.a1 - 2 * h))
+            - 8 * compiled(times, params.replace(a1=params.a1 - h))
+            + 8 * compiled(times, params.replace(a1=params.a1 + h))
+            - compiled(times, params.replace(a1=params.a1 + 2 * h))
+        ) / (12 * h)
         np.testing.assert_allclose(forward.a1, fd, rtol=1e-8)
 
 

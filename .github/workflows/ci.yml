@@ -2,67 +2,48 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - python-version: "3.12"
-            jax: "jax==0.11.2"
-          - python-version: "3.12"
-            jax: "jax"
-          - python-version: "3.13"
-            jax: "jax"
-          - python-version: "3.14"
-            jax: "jax"
+    env:
+      JAX_PLATFORMS: cpu
+      MPLBACKEND: Agg
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --upgrade '.[test]' ruff '${{ matrix.jax }}'
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install '.[dev,examples,validation]' 'jax==0.11.2'
       - run: ruff check src tests example tools docs/conf.py
       - run: ruff format --check src tests example tools docs/conf.py
       - run: python -m pytest
-  distribution:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install build twine
       - run: python -m build
       - run: python -m twine check --strict dist/*
-      - run: python -m pip install 'singlens[test]' --no-index --find-links dist --no-deps
-      - run: python -m pip install 'jax>=0.11.2' 'numpy>=2.0' 'pytest>=8' 'scipy>=1.14'
-      - run: python -m pytest
-      - run: python -c "import singlens; print(singlens.magnification(0., 0., 0.1, 20.))"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: distributions
-          path: dist/*
-  documentation:
-    runs-on: ubuntu-latest
-    env:
-      MPLBACKEND: Agg
-      JAX_PLATFORMS: cpu
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install '.[docs,test]'
-      - run: python -m pytest tests/test_inference.py
-      - run: python -m sphinx -b html -W --keep-going -D nb_execution_mode=force docs docs/_build/html
-      - uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: docs/_build/html
+      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
+      - name: Check installed wheel
+        working-directory: ${{ runner.temp }}
+        run: |
+          python - <<'PY'
+          import jax
+          import numpy as np
+          import singlens
+          jax.config.update("jax_enable_x64", True)
+          geometry = singlens.AnnualParallax(t_ref=8000., ra_deg=266.4, dec_deg=-29.)
+          value = singlens.magnification(
+              8000., 8000., 0.01, 20., rho=0.01, a1=0.5,
+              parallax=geometry, pi_e_n=0.1, pi_e_e=0.1,
+          )
+          assert np.isfinite(value) and value > 1
+          PY

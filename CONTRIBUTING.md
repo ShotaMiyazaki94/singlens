@@ -10,6 +10,11 @@ python -m build
 python -m twine check --strict dist/*
 ```
 
+CI runs lint, the test suite, and distribution checks once on Python 3.12
+with the minimum supported JAX version. Optional example and reference-library
+dependencies are installed so those tests also run.
+
+Build documentation locally before submitting changes to docs or examples.
 Sphinx executes three notebooks and treats warnings/errors as failures.
 `-E` also reruns notebooks whose imported helpers changed. Open
 `docs/_build/html/index.html`. Numerical diagnostics live in `tools/validation`;
@@ -121,7 +126,5 @@ tests because `bessel_jn` is not a drop-in replacement across that range.
 
 `.readthedocs.yaml` supplies the documentation build configuration; a repository
 and Read the Docs project must be connected before remote hosting works.
-The `Publish` GitHub workflow is explicit-dispatch only. Configure the actual
-repository's PyPI/TestPyPI Trusted Publisher and GitHub environments first;
-validate on TestPyPI before production. Production requires a matching
-`vVERSION` tag. No package or documentation is published by local checks.
+CI checks distribution files but does not publish packages. Package releases
+are separate from routine repository checks.
