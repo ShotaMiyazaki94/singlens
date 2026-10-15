@@ -1,15 +1,19 @@
 # singlens
 
-<img src="logo_transparent.png" alt="singlens logo" width="280">
+<img src="https://raw.githubusercontent.com/ShotaMiyazaki94/singlens/main/logo_transparent.png" alt="singlens logo" width="280">
 
 Differentiable single-lens microlensing in JAX: static and annual-parallax light
 curves, finite sources, limb darkening, and gradient-based inference.
 
 ```bash
-python -m pip install -e '.[examples]'
+python -m pip install singlens
 ```
 
-Requires Python 3.12+ and JAX 0.11.2+. Enable float64 before evaluation.
+Requires Python 3.12+ and JAX 0.11.2+. Install `singlens[examples]` for plotting
+and inference dependencies. Enable float64 before evaluation.
+
+See the [documentation](https://singlens.readthedocs.io/en/latest/) for
+installation, tutorials, and the API.
 
 ```python
 import jax
@@ -40,22 +44,20 @@ dA_drho = jax.jacfwd(curve)(0.01)
 
 Use `Model`, `Parameters`, and `fit_flux` for named event parameters,
 source-position input, and source/blend flux fitting.
-See the [API](docs/api.md) and [examples](example/README.md).
-[Benchmarks](docs/benchmarks.md) compare magnification accuracy, CPU runtime,
+See the [API](https://singlens.readthedocs.io/en/latest/api.html) and
+[examples](https://github.com/ShotaMiyazaki94/singlens/tree/main/example).
+[Benchmarks](https://singlens.readthedocs.io/en/latest/benchmarks.html) compare
+magnification accuracy, CPU runtime,
 and inference efficiency with VBMicrolensing and MulensModel.
 
-Build the local documentation with:
-
-```bash
-python -m pip install -e '.[docs]'
-python -m sphinx -E -b html -W --keep-going docs docs/_build/html
-```
-
-Open `docs/_build/html/index.html` in a browser.
+For source installation and development, see
+[CONTRIBUTING](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md).
 
 ## Attribution
 
 Adapted from [microJAX](https://github.com/ShotaMiyazaki94/microjax) and the
 FFT method of [Sugiyama (2022)](https://arxiv.org/abs/2203.06637).
-See [attribution](docs/attribution.md), `NOTICE`, and `LICENSES/` for citations
-and the MIT, Apache-2.0, and BSD-3-Clause license notices.
+See [attribution](https://singlens.readthedocs.io/en/latest/attribution.html),
+[NOTICE](https://github.com/ShotaMiyazaki94/singlens/blob/main/NOTICE), and
+[LICENSES](https://github.com/ShotaMiyazaki94/singlens/tree/main/LICENSES) for
+citations and the MIT, Apache-2.0, and BSD-3-Clause license notices.

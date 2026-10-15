@@ -1,16 +1,33 @@
 # Installation
 
-Requires Python 3.12+ and JAX 0.11.2+. From the repository root:
+Requires Python 3.12+ and JAX 0.11.2+. Install the package in your Python environment:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[examples]'
+python -m pip install singlens
 ```
 
-The runtime depends on JAX and NumPy. Optional extras are `examples` (plotting,
-optimization, NumPyro, tinygp), `validation` (VBMicrolensing, MulensModel, emcee), and
-`docs` (local documentation). Before evaluating finite sources:
+JAX and NumPy are installed as dependencies. To add plotting, optimization,
+NumPyro, tinygp, and corner for the tutorials and examples:
+
+```bash
+python -m pip install 'singlens[examples]'
+```
+
+Use a [virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
+if you want to keep these dependencies separate from other projects.
+
+To install the latest source from GitHub:
+
+```bash
+python -m pip install 'singlens @ git+https://github.com/ShotaMiyazaki94/singlens.git'
+```
+
+Editable installation (`-e`) is only needed when modifying the source; see
+[development](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md).
+The `validation` extra adds VBMicrolensing, MulensModel, and emcee for benchmarks;
+`docs` adds the documentation build dependencies.
+
+Enable float64 before creating JAX arrays or evaluating magnifications:
 
 ```python
 import jax
