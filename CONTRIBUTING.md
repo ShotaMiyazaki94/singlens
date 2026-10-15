@@ -1,5 +1,16 @@
 # Development
 
+Clone the repository and create an environment with Python 3.12 or later:
+
+```bash
+git clone https://github.com/ShotaMiyazaki94/singlens.git
+cd singlens
+python3.12 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the development dependencies and run the checks from the repository root:
+
 ```bash
 python -m pip install -e '.[dev,docs,validation]'
 ruff check src tests example tools docs/conf.py
@@ -137,7 +148,24 @@ tests because `bessel_jn` is not a drop-in replacement across that range.
 
 ## Publication
 
-`.readthedocs.yaml` supplies the documentation build configuration; a repository
-and Read the Docs project must be connected before remote hosting works.
-CI checks distribution files but does not publish packages. Package releases
-are separate from routine repository checks.
+`.readthedocs.yaml` supplies the documentation build configuration. On Read the
+Docs Community, import the public `ShotaMiyazaki94/singlens` repository, select
+`main` as the default branch, and use the project slug `singlens` if available.
+The documentation URL is `https://singlens.readthedocs.io/en/latest/`; update the
+README and package metadata if a different slug is required. Read the Docs
+builds documentation when changes are pushed.
+
+PyPI publication uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
+through `.github/workflows/publish.yml`. Set up the accounts once:
+
+1. In the GitHub repository settings, create an environment named `pypi`.
+2. In PyPI account settings, add a pending GitHub publisher with project name
+   `singlens`, owner `ShotaMiyazaki94`, repository `singlens`, workflow filename
+   `publish.yml`, and environment `pypi`.
+
+After the checks pass, publish a GitHub Release with a tag matching the version
+in `pyproject.toml`, for example `v0.1.0` for version `0.1.0`. The publication
+workflow verifies that match, builds and checks the wheel and source archive,
+and uploads both to PyPI. No API token is stored in GitHub. The first successful
+upload creates the PyPI project; a pending publisher does not reserve its name.
+Use a new version for subsequent releases. Regular pushes only run CI.
