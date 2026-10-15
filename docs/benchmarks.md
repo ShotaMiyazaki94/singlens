@@ -414,16 +414,6 @@ the sampler. **With singlens fixed, NUTS gives 3.23× the ESS/s of emcee**
 sampler on this event. These are results for one event and noise realization,
 rather than universal sampler speedups.
 
-The numerical posteriors differ: the largest VBM/NUTS mean shift is
-**0.168 pooled posterior standard deviations**, in `rho`
-(9.00 combined Monte Carlo standard errors).
-Across 64 common states, the VBM-minus-singlens log posterior ranges from
--1.313 to 1.206. Tightening VBM to `1e-6`, with `minannuli=4`, changes
-its log posterior by -1.715 to 1.647 on the NUTS draws.
-Magnification tolerances do not bound accumulated likelihood error.
-The same-backend NUTS/emcee means differ by at most 2.20
-combined Monte Carlo standard errors.
-
 At one posterior state, warm evaluation costs **0.64 ms** for
 singlens and **0.87 ms** for VBM. The singlens value and gradient
 cost **1.24 ms**. These costs and sampler mixing jointly
