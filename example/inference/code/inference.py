@@ -11,6 +11,7 @@ import hashlib
 import json
 import sys
 from dataclasses import asdict
+from functools import partial
 from pathlib import Path
 from time import perf_counter
 from typing import NamedTuple
@@ -20,6 +21,10 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
+import numpyro
+import numpyro.distributions as dist
+from numpyro.diagnostics import summary
+from numpyro.infer import MCMC, NUTS, init_to_value
 from scipy.optimize import least_squares, minimize
 from tinygp import GaussianProcess, kernels
 
@@ -28,7 +33,6 @@ import singlens as sl
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from example._common import metadata, save_figure, save_json, style
-from example._sampling import sample_nuts
 
 TOPIC = Path(__file__).resolve().parents[1]
 OUTPUT = TOPIC / "outputs"
@@ -110,6 +114,33 @@ def gp_log_probability(magnification, params, times, flux, error):
     residual = (flux - params["f_b"]) / magnification - params["f_s"]
     gp = build_gp(times, error / magnification, params)
     return gp.log_probability(residual) - jnp.sum(jnp.log(magnification))
+
+
+def microlensing_model(times, flux, flux_error, *, model):
+    """Parallax lens and magnified stellar variability, with twelve sampled parameters."""
+    t0 = numpyro.sample("t0", dist.Normal(0.0, 0.5))
+    u0 = numpyro.sample("u0", dist.LogNormal(jnp.log(0.01), 1.0))
+    t_e = numpyro.sample("t_e", dist.LogNormal(jnp.log(15.0), 0.6))
+    rho = numpyro.sample("rho", dist.LogNormal(jnp.log(0.01), 0.7))
+    f_s = numpyro.sample("f_s", dist.LogNormal(0.0, 1.0))
+    f_b = numpyro.sample("f_b", dist.Normal(0.0, 5.0))
+    pi_e_n = numpyro.sample("pi_e_n", dist.Normal(0.0, 0.5))
+    pi_e_e = numpyro.sample("pi_e_e", dist.Normal(0.0, 0.5))
+    a1 = numpyro.sample(
+        "a1",
+        dist.TransformedDistribution(dist.Normal(0.0, 1.0), dist.transforms.SigmoidTransform()),
+    )
+    gp_sigma = numpyro.sample("gp_sigma", dist.LogNormal(jnp.log(0.01), 1.0))
+    gp_scale = numpyro.sample("gp_scale", dist.LogNormal(jnp.log(20.0), 0.7))
+    gp_period = numpyro.sample("gp_period", dist.LogNormal(jnp.log(5.0), 0.7))
+
+    parameters = sl.Parameters(t0=t0, u0=u0, t_e=t_e, rho=rho, a1=a1, pi_e_n=pi_e_n, pi_e_e=pi_e_e)
+    A = model.magnification(times, parameters)
+    gp_parameters = dict(gp_sigma=gp_sigma, gp_scale=gp_scale, gp_period=gp_period)
+    loglike = gp_log_probability(
+        A, dict(f_s=f_s, f_b=f_b, **gp_parameters), times, flux, flux_error
+    )
+    numpyro.factor("flux_loglikelihood", loglike)
 
 
 def event_parameters(params):
@@ -269,16 +300,86 @@ def fit_event(model, times, flux, error):
     return result, unpack(result.x)
 
 
+def sample_posterior(
+    model,
+    times,
+    flux,
+    error,
+    *,
+    initial_values,
+    initial_covariance,
+    warmup=500,
+    samples=800,
+    seed=18,
+):
+    """Run two sequential NUTS chains, initialized from the joint MAP fit."""
+    parameter_order = tuple(initial_values)
+    kernel = NUTS(
+        partial(microlensing_model, model=model),
+        init_strategy=init_to_value(values=initial_values),
+        # Covariance uses log/logit coordinates in the initial_values order.
+        dense_mass=[parameter_order],
+        inverse_mass_matrix={parameter_order: jnp.asarray(initial_covariance)},
+        regularize_mass_matrix=False,
+        target_accept_prob=0.9,
+    )
+    mcmc = MCMC(
+        kernel,
+        num_warmup=warmup,
+        num_samples=samples,
+        num_chains=2,
+        chain_method="sequential",
+        progress_bar=False,
+    )
+    mcmc.run(
+        jax.random.key(seed),
+        times,
+        flux,
+        error,
+        extra_fields=("diverging", "num_steps", "accept_prob"),
+    )
+    jax.block_until_ready(mcmc.last_state)
+    return mcmc
+
+
 def run_hmc(model, times, flux, error, *, initial, warmup=500, samples=800, seed=18):
-    """Two NUTS chains with the full source-variability likelihood and priors."""
-    return sample_nuts(
-        lambda theta: negative_log_posterior(theta, model, times, flux, error),
-        initial,
-        unpack,
+    """Sample once, then collect diagnostics outside the sampling timer."""
+    start = perf_counter()
+    mcmc = sample_posterior(
+        model,
+        times,
+        flux,
+        error,
+        initial_values=unpack(jnp.asarray(initial.x)),
+        initial_covariance=initial.hess_inv,
         warmup=warmup,
         samples=samples,
         seed=seed,
     )
+    elapsed = perf_counter() - start
+    draws = jax.tree.map(np.asarray, mcmc.get_samples(group_by_chain=True))
+    fields = jax.tree.map(np.asarray, mcmc.get_extra_fields())
+    diagnostics = summary(draws, group_by_chain=True)
+    report = {
+        "warmup_per_chain": warmup,
+        "draws_per_chain": samples,
+        "chains": 2,
+        "seed": seed,
+        "sampler": "NumPyro NUTS with joint MAP initialization and dense mass adaptation",
+        "elapsed_seconds_including_compile": elapsed,
+        "divergences": int(fields["diverging"].sum()),
+        "max_r_hat": float(max(item["r_hat"] for item in diagnostics.values())),
+        "min_effective_sample_size": float(min(item["n_eff"] for item in diagnostics.values())),
+        "mean_accept_prob": float(fields["accept_prob"].mean()),
+        "mean_num_steps": float(fields["num_steps"].mean()),
+        "max_num_steps": int(fields["num_steps"].max()),
+        "tree_depth_saturations": int((fields["num_steps"] >= 1023).sum()),
+        "parameters": {
+            name: {key: float(value) for key, value in values.items()}
+            for name, values in diagnostics.items()
+        },
+    }
+    return draws, report
 
 
 def posterior_magnitudes(model, data, draws, *, seed=23):
@@ -586,7 +687,7 @@ def main():
         np.savez_compressed(args.output_dir / "posterior.npz", **draws)
         rows = recovery_rows(data.truth, point, draws)
         with (args.output_dir / "recovery.csv").open("w") as file:
-            writer = csv.DictWriter(file, fieldnames=rows[0].keys())
+            writer = csv.DictWriter(file, fieldnames=rows[0].keys(), lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
         save_figure(

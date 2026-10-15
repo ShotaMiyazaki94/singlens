@@ -37,7 +37,9 @@ All twelve event, parallax, limb-darkening, flux, and GP parameters are inferred
 
 The [inference tutorial](../../docs/tutorials/inference.ipynb) writes out the
 GP kernel, NumPyro model and priors, NUTS sampling, conditional GP predictions,
-and posterior plots. `gp_sigma` is in
+and posterior plots. It includes the model and sampler directly from this
+example's source. Set `RUN_SAMPLING = True` in the notebook to run NUTS;
+the default displays the saved recovery. `gp_sigma` is in
 unmagnified source-flux units; `gp_scale` and `gp_period` are the coherence
 time and rotation period in days.
 

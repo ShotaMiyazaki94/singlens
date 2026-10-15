@@ -13,6 +13,7 @@ pytest.importorskip("tinygp")
 pytest.importorskip("numpyro")
 pytest.importorskip("corner")
 
+from numpyro.infer.util import potential_energy
 from tinygp.solvers import QuasisepSolver
 
 from example.inference.code.inference import (
@@ -26,6 +27,7 @@ from example.inference.code.inference import (
     event_parameters,
     gp_log_probability,
     mean_flux,
+    microlensing_model,
     posterior_magnitudes,
     synthetic_event,
     unpack,
@@ -112,6 +114,22 @@ def test_magnified_source_gp_likelihood_and_gradient():
 
     actual = jax.jit(jax.value_and_grad(lambda x: evaluate(x, dense=False)))(theta)
     expected = jax.jit(jax.value_and_grad(lambda x: evaluate(x, dense=True)))(theta)
+    for a, e in zip(actual, expected):
+        np.testing.assert_allclose(a, e, rtol=1e-8, atol=1e-8)
+
+    # Check the actual NUTS target, including every prior and support transform,
+    # against the independently constructed observed-flux covariance above.
+    def numpyro_log_probability(x):
+        potential = potential_energy(
+            microlensing_model,
+            (times, flux, error),
+            {"model": model},
+            dict(zip(NAMES, x)),
+        )
+        prior_normalization = jnp.sum(jnp.log(PRIOR_SCALE * jnp.sqrt(2 * jnp.pi)))
+        return -potential + prior_normalization
+
+    actual = jax.jit(jax.value_and_grad(numpyro_log_probability))(theta)
     for a, e in zip(actual, expected):
         np.testing.assert_allclose(a, e, rtol=1e-8, atol=1e-8)
 
