@@ -429,14 +429,6 @@ singlens and **0.87 ms** for VBM. The singlens value and gradient
 cost **1.24 ms**. These costs and sampler mixing jointly
 determine inference efficiency.
 
-```{image} ../example/compare-single-vbml/outputs/trace_comparison.png
-:alt: NUTS and both emcee traces for limb darkening and event timescale
-```
-
-NUTS chain 0 and ensemble 0, walker 0 from each emcee run, without thinning.
-Bottom and top axes count NUTS and emcee production steps; matching horizontal
-positions do not represent equal elapsed time. All chains and walkers enter ESS.
-
 Download the {download}`inference report <../example/compare-single-vbml/outputs/inference_speed.json>`,
 {download}`summary CSV <../example/compare-single-vbml/outputs/inference_speed.csv>`,
 {download}`input data <../example/compare-single-vbml/outputs/inference_event.csv>`,
