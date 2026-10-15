@@ -58,8 +58,32 @@ for n_fft in bins:
 
 Repeat for each `rho` in `RADII`. For a uniform source use
 `Model(source="uniform")`, omit `a1` in its evaluation, and set `a1=0` in the
-reference. Comparing quadrature tolerances `1e-9` and `1e-11` checks the
-reference independently of FFT resolution.
+reference. Comparing quadrature tolerances `1e-9` and `1e-11` changes the
+reference by at most `2.42e-12` relative on this grid. Each FFT size uses the
+same 105 separations and six source radii (`1e-6`, `1e-5`, `1e-4`, `.01`,
+`.1`, `1`).
+
+### Reference package settings
+
+VBM uses precomputed ESPL tables. Both `Tol` (absolute) and `RelTol`
+(relative) are set to the tolerance displayed in the results table;
+linear limb darkening uses `minannuli=2`. These control the calculation's
+stopping rule and do not bound the table's approximation error. The
+uniform-source error near contact remains when the tolerance is tightened.
+The `0.9872%` linear-source error at tolerance `1e-6` occurs at
+`u/rho=1e-6`, very close to alignment.
+
+The `rho=1e-6` cases are below VBM's documented table range. At exact
+alignment, VBM's limb-darkened call is non-finite in this experiment and
+MulensModel's table methods raise. Their maxima therefore use 104 valid
+points; uniform VBM and singlens use all 105. The downloadable reports mark
+missing points explicitly. See VBM's
+[single-lens documentation](https://github.com/valboz/VBMicrolensing/blob/main/docs/python/SingleLenses.md).
+
+MulensModel uses Gould94 for uniform sources and Yoo04 for linear limb
+darkening. These small-source approximations are especially accurate at
+`rho=.01`, but their accuracy changes for larger sources. All tested radii
+are included in the [accuracy report](benchmarks.md#accuracy-versus-fft-bins).
 
 ## Native batch interfaces
 
@@ -122,3 +146,35 @@ tolerance `Tol`, rather than a fixed `u/rho` or `RelTol`.
 See [the implementation](https://github.com/valboz/VBMicrolensing/blob/main/VBMicrolensing/lib/VBMicrolensingLibrary.cpp#L539-L565).
 Its limb-darkening integration also uses `RelTol`. Comparisons retain each
 package's normal approximations and assess achieved errors independently.
+
+## Sampling protocol
+
+All three runs start from one fit that maximizes the singlens posterior
+(the maximum a posteriori, or MAP, fit), using the data and stated priors.
+Injected parameter values are not used for initialization. The fit's
+measured cost is included in every method's total time. Timing also includes
+likelihood compilation, warmup, and production sampling. Preparing inputs,
+convergence checks, file IO, plots, and numerical validation are outside
+the timer. VBM uses `Tol=RelTol=1e-3` and `minannuli=2`.
+
+| Method | Independent runs | Warmup per run | Retained steps per run |
+| --- | --- | ---: | ---: |
+| singlens + NUTS | 2 sequential chains | 500 | 1700 |
+| VBM + emcee | 2 ensembles, each with 32 walkers | 1000 | 8000 |
+| singlens + emcee | 2 ensembles, each with 32 walkers | 1000 | 8500 |
+
+Every method must reach minimum parameter ESS ≥ 5000. NUTS also requires
+R̂ < 1.01 and no divergences. For emcee, production must cover at least 50
+estimated autocorrelation times, and each parameter's autocorrelation
+estimate must change by less than 10% as sampling is extended.
+Separate ensemble means must agree within four combined Monte Carlo
+standard errors, which estimate uncertainty due to finite sampling.
+Walkers within an ensemble are not treated as independent chains for R̂.
+
+ESS is computed from every retained step in physical parameter coordinates
+using the same autocorrelation estimator for all methods. Negative
+autocorrelation can make ESS larger than the retained draw count. The emcee files
+available for download keep every tenth step for plotting; rerun the script
+to obtain the unthinned chains used for ESS. Seeds, package versions,
+timings, and diagnostics are recorded in the
+{download}`inference report <../example/compare-single-vbml/outputs/inference_speed.json>`.

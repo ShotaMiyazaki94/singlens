@@ -24,8 +24,6 @@ python -m pip install 'singlens @ git+https://github.com/ShotaMiyazaki94/singlen
 
 Editable installation (`-e`) is only needed when modifying the source; see
 [development](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md).
-The `validation` extra adds VBMicrolensing, MulensModel, and emcee for benchmarks;
-`docs` adds the documentation build dependencies.
 
 Enable float64 before creating JAX arrays or evaluating magnifications:
 

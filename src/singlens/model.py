@@ -129,9 +129,8 @@ class Model:
     def fit_flux(self, times, params, observed_flux, flux_err):
         """Fit source/blend fluxes for one dataset; return a named ``FluxFit``.
 
-        This profiles over the two flux coefficients at fixed event parameters.
-        It is not Bayesian marginalization. For HMC, sample fluxes with explicit
-        priors, or use a Gaussian-prior marginal likelihood from
-        ``singlens.photometry``. Reported flux errors are conditional on params.
+        Event parameters are held fixed while fitting the two coefficients.
+        Reported flux errors assume those event parameters are known. For HMC,
+        sample fluxes with the event parameters and give them explicit priors.
         """
         return fit_flux(self.magnification(times, params), observed_flux, flux_err)

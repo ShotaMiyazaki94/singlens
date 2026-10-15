@@ -62,16 +62,13 @@ pointwise relative differences are unstable where a derivative crosses zero.
 Magnification error measurements do not guarantee the same accuracy for
 derivatives, especially near source contact.
 
-The default transform grid spans `u=1e-8` to `1e4`. This does not require
-observations at such large separations. The
-[original method](https://arxiv.org/html/2203.06637v1#S3) explains why small
-sources need high-frequency modes, and uses roughly `1e-6` to `1e3` with
-1024 bins in its demonstration. That range is not presented as an optimum.
-
-Keep the default range unless you have checked the intended parameter domain.
-Changing it changes frequency coverage and endpoint effects; narrowing it
-does not reduce FFT work at a fixed bin count. Observation count, FFT
-resolution, and transform range are separate settings.
+The FFT grid spans `u=1e-8` to `1e4`. This is the calculation's integration
+range; observations do not need to cover it. Changing the range affects
+numerical accuracy, while narrowing it leaves the FFT size and its cost
+unchanged at a fixed bin count. Keep the default unless accuracy has been
+checked for the source radii you need. The
+[original method](https://arxiv.org/html/2203.06637v1#S3) describes the
+frequency coverage needed for small sources.
 
 ## Distant observations
 
@@ -86,8 +83,7 @@ at its distant positions. Between `u/rho=10` and 20, a smooth blend connects
 the finite-source calculation to the far-field expansion.
 
 Closer positions use the FFT calculation for `rho >= 1e-4`; smaller sources
-use a prepared small-source approximation. Parameter-independent transforms
-are prepared with the model. `FFTConfig.u_switch` sets the outer transition
+use a small-source approximation. `FFTConfig.u_switch` sets the outer transition
 ratio, with the blend starting at half that value.
 
 ## Derivatives

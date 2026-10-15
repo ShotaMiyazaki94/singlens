@@ -34,7 +34,7 @@ disk. For a static event, omit the geometry and both parallax components.
 | --- | --- |
 | `times`, `t0`, `t_e` | Observation times, peak time, positive Einstein timescale; days for parallax |
 | `u0` | Signed impact parameter in Einstein-radius units |
-| `rho` | Source radius; omit for PSPL, zero gives the point-source limit |
+| `rho` | Source radius in Einstein-radius units; omit or set to zero for a point source |
 | `a1` | Physical coefficient in `I(mu)=1-a1*(1-mu)`; omit for a uniform disk |
 | `parallax` | `AnnualParallax` sky position, reference epoch, and time convention |
 | `pi_e_n`, `pi_e_e` | North/east microlensing parallax components; both required with geometry |
@@ -95,11 +95,11 @@ uses separation or complex position directly, without applying a trajectory.
 ## Flux and inference
 
 For a dataset, `flux = f_s * A + f_b`. Coefficients and limb darkening can differ
-between passbands while geometry is shared. `fit_flux` solves weighted least
-squares at fixed magnification; this profiles fluxes rather than marginalizing
-their uncertainty. Bayesian sampling should include flux priors, as in the
-[inference tutorial](tutorials/inference.ipynb). Gaussian-prior marginal
-likelihood helpers are available in `singlens.photometry`.
+between passbands while geometry is shared. `fit_flux` finds the best-fitting
+source and blend fluxes by weighted least squares for a given magnification
+curve. For Bayesian inference, sample the fluxes with the event parameters
+and give them explicit priors, as in the
+[inference tutorial](tutorials/inference.ipynb).
 
 With measured arrays `observed_flux` and `flux_error` at the same times:
 

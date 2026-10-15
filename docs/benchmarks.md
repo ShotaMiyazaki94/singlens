@@ -4,9 +4,15 @@ Three measurements on CPU, float64: **accuracy versus FFT bins**, **magnificatio
 runtime**, and **inference ESS/second**. FFT resolution and observation count
 are measured separately.
 
-The code below shows the main measurements; [measurement details](benchmark-methods.md)
-provide the reference integration and full backend setup. Install
-`.[examples,validation]` to include the reference packages, and enable float64:
+The code below shows how to measure runtime and sampling efficiency.
+[Measurement details](benchmark-methods.md) give the independent accuracy
+reference and complete reproduction commands. Install the comparison packages:
+
+```bash
+python -m pip install 'singlens[examples,validation]'
+```
+
+Enable float64 before evaluating magnifications:
 
 ```python
 import jax
@@ -20,33 +26,13 @@ import singlens as sl
 
 ## Accuracy versus FFT bins
 
-The reference is independent numerical source integration. Tightening its
-tolerances changes the result by at most **2.42e-12 relative** on the test grid.
-Six source radii (`1e-6`, `1e-5`, `1e-4`, `.01`, `.1`, `1`) are evaluated at
-the same 105 `u/rho` values from 0 to 50 for every FFT size, with fine sampling
-near source contact. These are sampled errors,
-not a bound over all separations.
-
-The error at each separation is `abs(A / reference - 1)`; the plotted
-quantity is its maximum over the common grid. The [measurement details](benchmark-methods.md#accuracy-reference)
-show the independent integral, exact grid, and FFT-bin loop. For example:
-
-```python
-from importlib import import_module
-
-accuracy = import_module("example.compare-single-vbml.code.accuracy")
-rho, a1 = 0.01, 0.5
-u = jnp.asarray(accuracy.RATIOS * rho)
-reference = np.array([accuracy.integral(float(x), rho, a1=a1, tolerance=1e-11) for x in u])
-bins = [512, 1024, 2048, 4096, 8192, 16384]
-errors = []
-for n_fft in bins:
-    model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=n_fft))
-    actual = np.asarray(jax.jit(model.magnification_at)(u, rho=rho, a1=a1))
-    errors.append(np.max(np.abs(actual / reference - 1)))
-```
-
-The figure repeats this calculation for all six radii and both source profiles:
+The reference is independent numerical integration over the source disk.
+For each FFT size, the figure shows the maximum relative error
+`abs(A / reference - 1)` over the same separations, `0 <= u/rho <= 50`.
+It includes six source radii and both uniform and linearly limb-darkened
+profiles, with extra sampling near the source edge.
+The [reference calculation](benchmark-methods.md#accuracy-reference)
+includes the integration code and FFT-bin sweep.
 
 ```{image} ../example/compare-single-vbml/outputs/accuracy.png
 :alt: Maximum sampled relative error versus FFT bins for six source radii
@@ -68,27 +54,19 @@ At `rho=.01`, maximum sampled errors are:
 | VBM, tolerance `1e-6` | 0.1847% | 0.9872% |
 | MulensModel, Gould94/Yoo04 | 0.001251% | 0.001113% |
 
-**Use 4096 bins by default.** A separate check of 33,666 values at 31 radii
-from `1e-6` to 10 finds a largest relative error of **0.101%**, for a uniform source. It includes
-near alignment, source contact, approximation boundaries, and far wings.
-Uniform and pure linear limb darkening bracket physical `0<=a1<=1`;
-the pure quadratic profile is checked separately.
-See [numerical accuracy](numerics.md) for limits and derivative guidance.
+**Use 4096 bins by default.** Increasing the resolution further gives little
+improvement in this comparison. A wider check over `1e-6 <= rho <= 10`
+finds a largest sampled error of **0.101%**, for a uniform source.
+These measurements are not an error bound for every event; see
+[numerical accuracy](numerics.md) for the tested range and derivative guidance.
 
-VBM is checked against the same reference, rather than assumed exact:
-[its single-lens implementation uses precomputed ESPL tables](https://github.com/valboz/VBMicrolensing/blob/main/docs/python/SingleLenses.md).
-Both `Tol` (absolute) and `RelTol` (relative) are set to the displayed tolerance;
-linear limb darkening uses `minannuli=2`. These are stopping criteria, not
-achieved error bounds. The uniform-source table error near contact remains
-when the tolerance is tightened; the 0.9872% linear-source value above occurs
-very close to alignment, at `u/rho=1e-6`.
-The `rho=1e-6` rows lie below VBM's documented table range. At exact alignment,
-VBM's limb-darkened call is non-finite here and MulensModel's table methods
-raise; these points are explicitly marked missing and excluded from their
-error maxima (104 valid points versus singlens's 105). Uniform VBM has all 105.
-MulensModel's small-source methods are especially accurate at this radius,
-but are approximations for larger sources; all radii and RMS errors remain
-in the report.
+VBM and MulensModel are evaluated against the same independent reference.
+VBM's requested tolerance is a stopping criterion, not a bound on its table
+errors: tightening it need not improve the maximum error. The 0.9872% entry
+occurs very close to alignment. Undefined results at exact alignment are
+excluded from the reference packages' maxima. The
+[measurement details](benchmark-methods.md#reference-package-settings)
+give the settings and unsupported cases.
 
 Download {download}`accuracy report <../example/compare-single-vbml/outputs/accuracy.json>`
 and {download}`per-point errors <../example/compare-single-vbml/outputs/accuracy.csv>`.
@@ -102,7 +80,7 @@ and limb coefficient; only the number of queried positions changes. All
 methods receive the same positions, sampling a common trajectory over
 `0.5 <= u/rho <= 5.03`, with `rho=.01` and `a1=.5` for linear limb darkening.
 N counts requested magnifications, including positions where a package uses
-an internal approximation. It does not count FFT bins or repeated timing calls.
+an approximation.
 
 singlens uses **4096 FFT bins**; VBM uses **`Tol=RelTol=1e-3`**, with
 `minannuli=2` for linear limb darkening. MulensModel uses Gould94/Yoo04.
@@ -112,7 +90,7 @@ singlens uses **4096 FFT bins**; VBM uses **`Tol=RelTol=1e-3`**, with
 ```
 
 The vertical axis is **total batch time in microseconds**, on a logarithmic
-scale. Lines show warm medians. For linear limb darkening, singlens is faster
+scale. Lines show median durations after warmup. For linear limb darkening, singlens is faster
 than VBM at N=1000 in this run; MulensModel remains faster. Both reference
 packages are faster for uniform sources. The different slopes follow from
 how the methods share work:
@@ -137,8 +115,7 @@ reconstructs the corresponding grid. These timings include that work;
 they do not reuse magnification grids between sampler steps.
 An event evaluation with **all positions at `u/rho >= 20` skips the FFT**
 and uses a far-field expansion. The batches measured here contain closer
-positions and build the grid. Parameter-independent
-transforms are prepared with the model. The inference advantage also depends
+positions and build the grid. The inference advantage also depends
 on how efficiently NUTS uses gradients to explore the posterior.
 
 Actual errors are evaluated separately above; nominal tolerances do not
@@ -210,7 +187,7 @@ resolution cost separately from batch size:
 ```python
 device_times = jax.block_until_ready(jnp.linspace(-1.0, 1.0, 100))
 seconds_by_bins = []
-for n_fft in bins:
+for n_fft in (512, 1024, 2048, 4096, 8192, 16384):
     model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=n_fft))
     evaluate = jax.jit(model.magnification)
     seconds_by_bins.append(
@@ -285,7 +262,7 @@ without GP parameters or a latent source process.
 Both rows use magnitudes. Residuals subtract **the true lens curve**.
 Blue, burgundy, and green curves and bands show each method's posterior median and
 pointwise 90% interval. Dark residual points are 0.1-day bins with white-noise
-error bars; all original observations enter both fits.
+error bars; all original observations enter all three fits.
 
 | Parameter | Injected | NUTS median | Central 90% interval |
 | --- | ---: | ---: | --- |
@@ -300,9 +277,9 @@ error bars; all original observations enter both fits.
 | `a1` | 0.5 | 0.481231 | [0.446447, 0.512813] |
 
 The source radius, limb darkening, and event timescale are constrained in this
-realization. The north parallax component remains prior-dominated; including
-both components does not imply precise measurement of both. One injection
-is not a coverage test.
+realization. The north parallax component is weakly constrained: its posterior
+remains broad, close to its prior. Including both parallax components does
+not imply a precise measurement of both.
 
 ```{image} ../example/compare-single-vbml/outputs/posterior_comparison.png
 :alt: Overlaid nine-parameter corner plot of singlens NUTS, VBM emcee, and singlens emcee samples
@@ -315,35 +292,45 @@ Download the {download}`full-size corner PDF <../example/compare-single-vbml/out
 
 ### Sampling efficiency
 
-All three methods start from the same joint MAP fit, obtained from the data and
-priors without using the injected parameters. Its measured cost is charged
-to every method. Timing starts at that fit and includes likelihood
-compilation, warmup, and production. Input/model preparation, diagnostics,
-IO, plotting, and numerical validation are excluded.
+Sampler draws are correlated. The **effective sample size (ESS)** estimates
+how many independent draws would give the same precision for a parameter
+mean. We compare **the smallest ESS among the nine parameters per second**,
+so a rapidly sampled parameter cannot hide a slowly sampled one.
 
-All runs require **minimum parameter ESS ≥ 5000** and convergence checks.
-NUTS uses two sequential chains with 500 warmup steps and
-retains 1700 draws per chain. Each emcee run uses two independent
-ensembles of 32 walkers, with 1000 warmup steps per ensemble.
-VBM/emcee retains 8000 production steps per ensemble;
-singlens/emcee retains 8500.
-Both emcee runs require at least 50 estimated correlation lengths and less
-than 10% change in every parameter's autocorrelation estimate. Independent
-ensemble means must agree within four combined Monte Carlo standard errors;
-walkers are not treated as independent chains for R̂. NUTS requires R̂<1.01
-and no divergences.
+Timing includes the initial fit, JAX compilation, warmup, and sampling.
+Every method is charged the same initial-fit cost. Data preparation, plots,
+and convergence checks are outside the timer. All runs reach minimum
+ESS ≥ 5000 and pass the [stopping checks](benchmark-methods.md#sampling-protocol).
 
-The common [autocorrelation estimator](https://emcee.readthedocs.io/en/stable/tutorials/autocorr/)
-uses physical parameter series and `ESS = draws / tau`. The minimum over
-all nine parameters sets ESS/second. VBM uses `Tol=RelTol=1e-3` and
-`minannuli=2` for linear limb darkening.
+```{image} ../example/compare-single-vbml/outputs/inference_speed.png
+:alt: Minimum ESS against elapsed time and ESS per second for the nine inferred parameters
+```
+
+Left: minimum ESS versus elapsed time, with the target shown by the dashed
+line. Large markers mark completed runs; early ESS estimates are less stable.
+Right: ESS per second for each parameter.
+
+| Method | Total [s] | Minimum ESS | ESS/s |
+| --- | ---: | ---: | ---: |
+| singlens + NUTS | 64.9 | 5163 | 79.50 |
+| VBM + emcee | 468.9 | 5143 | 10.97 |
+| singlens + emcee | 205.3 | 5048 | 24.59 |
+
+singlens/NUTS reaches **7.25× the ESS/s of VBM/emcee** on this event.
+This comparison changes both the magnification calculation and the sampler.
+Keeping singlens fixed, **NUTS reaches 3.23× the ESS/s of emcee**
+(79.50 versus 24.59 ESS/s). That comparison measures the benefit of NUTS
+with gradients for this event. Rates will depend on the data, posterior,
+and hardware.
 
 ### Compute ESS per second
 
-Keep the time axis when estimating autocorrelation. For a physical parameter
+Keep successive steps in their original order when estimating autocorrelation.
+Here a stream means one NUTS chain or one emcee walker. For a parameter
 with $M$ streams and $N$ retained steps per stream,
 $\mathrm{ESS}=MN/\tau$, where $\tau$ is the integrated autocorrelation time.
-The following code uses exactly the same estimator for both samplers:
+The same [autocorrelation estimator](https://emcee.readthedocs.io/en/stable/tutorials/autocorr/)
+is used for both samplers:
 
 ```python
 import emcee
@@ -369,55 +356,15 @@ ess_nuts, rate_nuts = sampling_efficiency(chains_nuts, nuts_total_seconds)
 ess_vbm, rate_vbm = sampling_efficiency(chains_vbm, vbm_total_seconds)
 ```
 
-`nuts_draws` and `ensemble_draws` are the unthinned production arrays in the
-listed physical-parameter order;
-`nuts_total_seconds` and `vbm_total_seconds` include the measured common fit,
-compilation, warmup, and production. Reshape ensembles and walkers onto the
-**stream** axis, never the time axis. This calculation estimates ESS; the
-length/stability checks and independent-ensemble comparisons above are still
-needed. Emcee walkers within one ensemble are not independent chains for R̂.
-Negative autocorrelation can give $\tau<1$, so an ESS larger than the raw
-draw count is possible.
-
-The singlens/emcee arrays use the same ensemble layout and ESS calculation.
-The downloadable emcee samples are thinned by 10 for posterior plots. The
-reported ESS uses unthinned production chains; use those when reproducing
-the calculation above.
-
-```{image} ../example/compare-single-vbml/outputs/inference_speed.png
-:alt: Minimum ESS against elapsed time and ESS per second for the nine inferred parameters
-```
-
-Left: ESS at measured wall-time checkpoints; early estimates are provisional.
-The dashed line marks the common target, and large markers mark completed
-runs. Right: whole-run efficiency for each parameter.
-
-| Method | Total [s] | Minimum ESS | ESS/s | Estimated time to ESS 5000 [s] |
-| --- | ---: | ---: | ---: | ---: |
-| singlens + NUTS | 64.9 | 5163 | 79.50 | 63.4 |
-| VBM + emcee | 468.9 | 5143 | 10.97 | 457.3 |
-| singlens + emcee | 205.3 | 5048 | 24.59 | 203.6 |
-
-The last column keeps measured MAP and warmup costs and rescales production
-time using the final autocorrelation estimate. It estimates time to equal
-ESS; the actual validated runs finish at the displayed ESS values.
-NUTS has maximum R̂ **1.0004** and **0 divergences**.
-Independent ensemble means agree within **1.97**
-combined Monte Carlo standard errors for VBM/emcee and
-**1.53** for singlens/emcee.
-All three runs pass their stopping checks.
-
-In this experiment, singlens/NUTS reaches **7.25× the whole-run ESS/s
-of VBM/emcee**. This comparison changes both the magnification backend and
-the sampler. **With singlens fixed, NUTS gives 3.23× the ESS/s of emcee**
-(79.50 versus 24.59 ESS/s), measuring the benefit of the gradient-based
-sampler on this event. These are results for one event and noise realization,
-rather than universal sampler speedups.
-
-At one posterior state, warm evaluation costs **0.64 ms** for
-singlens and **0.87 ms** for VBM. The singlens value and gradient
-cost **1.24 ms**. These costs and sampler mixing jointly
-determine inference efficiency.
+`nuts_draws` and `ensemble_draws` contain every retained step after warmup;
+the two time variables contain the total measured durations.
+Reshape ensembles and walkers onto the **stream** axis, never the time axis.
+The singlens/emcee run uses the same calculation as VBM/emcee.
+Emcee walkers in one ensemble are correlated with one another, so convergence
+is also checked using separate ensembles; see the
+[sampling protocol](benchmark-methods.md#sampling-protocol).
+The downloadable emcee samples keep every tenth step for posterior plots.
+Use the unthinned chains when reproducing the reported ESS.
 
 Download the {download}`inference report <../example/compare-single-vbml/outputs/inference_speed.json>`,
 {download}`summary CSV <../example/compare-single-vbml/outputs/inference_speed.csv>`,

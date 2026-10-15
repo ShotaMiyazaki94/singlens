@@ -72,9 +72,9 @@ errors $\sigma_i$. Weighted least squares minimizes
 
 $$\chi^2(\theta,f_s,f_b)=\sum_i\frac{[F_i^{\mathrm{obs}}-F_i]^2}{\sigma_i^2}.$$
 
-`Model.fit_flux` solves for $f_s,f_b$ at fixed $\theta$. Optimizing the resulting
-profiled residuals is convenient and differentiable. The returned flux errors
-are conditional on the event parameters and do not include their uncertainty.
+`Model.fit_flux` solves for $f_s,f_b$ at fixed $\theta$. An optimizer can use
+this fit at each trial event. Its returned flux errors assume that the event
+parameters are known; a joint fit also includes their uncertainty.
 
 For Bayesian inference, the log likelihood is
 
@@ -96,10 +96,8 @@ Here `event` is a dictionary containing the seven arguments after `times`
 in `event_magnification`. Add a log prior to obtain a log posterior. The
 normalization term is especially important when noise parameters are inferred.
 
-The HMC tutorial samples both fluxes with explicit priors. A profiled
-$-\chi^2/2$ alone does **not** integrate out flux uncertainty.
-`singlens.photometry` also provides analytical marginal likelihoods for
-Gaussian flux priors (omitting the constant $N\log(2\pi)/2$).
+The HMC tutorial samples both fluxes with explicit priors, so their
+uncertainty is included in the joint posterior.
 
 The Roman-like injection–recovery example models rotational variability of
 the source with a damped-oscillator GP:
