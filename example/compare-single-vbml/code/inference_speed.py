@@ -23,12 +23,15 @@ from scipy.special import expit, logit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from example._common import save_figure, save_json, style
-from example._sampling import sample_nuts
 from example.inference.code.inference import binned_residuals
 
 recovery = import_module("example.compare-single-vbml.code.experiment")
+sample_nuts_until = import_module("example.compare-single-vbml.code.sampling").sample_nuts_until
 
 OUTPUT = Path(__file__).resolve().parents[1] / "outputs"
+METHOD_COLORS = ("#247BA0", "#9B1B30", "#3D8067")
+METHOD_LABELS = ("singlens / NUTS", "VBM / emcee", "singlens / emcee")
+METHOD_STYLES = ("-", "--", ":")
 
 
 def physical(theta):
@@ -278,9 +281,8 @@ def posterior_costs(model, data, theta):
 
 def plot(report):
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), layout="constrained")
-    rows = report["results"][:2]
-    colors = ["#247BA0", "#E07A5F"]
-    for i, (row, color) in enumerate(zip(rows, colors)):
+    rows = report["results"]
+    for i, (row, color) in enumerate(zip(rows, METHOD_COLORS)):
         label = f"{row['backend']} / {row['sampler']}"
         history = row.get("sampling_history", row.get("autocorrelation_history"))
         times = [h["elapsed_seconds"] + row["initialization_seconds"] for h in history]
@@ -289,7 +291,7 @@ def plot(report):
         axes[0].plot(row["total_seconds"], row["min_ess"], "o", ms=7, color=color)
         axes[1].scatter(
             [row["parameters"][name]["ess"] / row["total_seconds"] for name in recovery.NAMES],
-            np.arange(len(recovery.NAMES)) + (i - 0.5) * 0.2,
+            np.arange(len(recovery.NAMES)) + (i - 1) * 0.2,
             s=22,
             color=color,
             label=label,
@@ -312,14 +314,15 @@ def plot(report):
     return fig
 
 
-def posterior_magnitudes(model, data, draws, vbm_posterior, emcee_chains):
+def posterior_magnitudes(model, data, draws, vbm_posterior, emcee_chains, singlens_chains):
     """Pointwise intervals, evaluating each posterior with its own lens backend."""
     samples = [
         np.column_stack([np.asarray(draws[name]).reshape(-1) for name in recovery.NAMES]),
         emcee_chains.reshape(-1, len(recovery.NAMES)),
+        singlens_chains.reshape(-1, len(recovery.NAMES)),
     ]
     bands = []
-    for backend, values in zip(("singlens", "VBM"), samples):
+    for backend, values in zip(("singlens", "VBM", "singlens"), samples):
         values = values[np.linspace(0, len(values) - 1, 256, dtype=int)]
         theta = transformed(values)
         if backend == "singlens":
@@ -341,7 +344,7 @@ def posterior_magnitudes(model, data, draws, vbm_posterior, emcee_chains):
 
 
 def plot_recovery(data, bands):
-    """The inference data and both recovered curves, with true-lens residuals."""
+    """The inference data and three recovered curves, with true-lens residuals."""
     times = np.asarray(data.times) - data.truth["t0"]
     observed = 25 - 2.5 * np.log10(np.asarray(data.flux))
     truth = 25 - 2.5 * np.log10(np.asarray(data.lens_flux))
@@ -350,7 +353,6 @@ def plot_recovery(data, bands):
     fig, axes = plt.subplots(
         2, 2, figsize=(14, 6), sharex="col", height_ratios=[2, 1], layout="constrained"
     )
-    colors, labels = ["#247BA0", "#E07A5F"], ["singlens / NUTS", "VBM / emcee"]
     for column, (lo, hi) in enumerate(((times.min(), times.max()), (-1, 1))):
         upper, lower = axes[:, column]
         upper.plot(times, observed, ".", ms=1.5, color="0.6", alpha=0.3, label="Data")
@@ -358,12 +360,14 @@ def plot_recovery(data, bands):
         lower.axhline(0, color="0.25", ls="--", lw=0.8)
         lower.plot(times, observed - truth, ".", ms=1.5, color="0.6", alpha=0.25)
         lower.errorbar(btime, bvalue, berror, fmt=".", ms=2, lw=0.4, color="0.25", alpha=0.6)
-        for band, color, label in zip(bands, colors, labels):
+        for band, color, label, linestyle in zip(
+            bands, METHOD_COLORS, METHOD_LABELS, METHOD_STYLES
+        ):
             q05, median, q95 = band
             upper.fill_between(times, q05, q95, color=color, alpha=0.18)
-            upper.plot(times, median, color=color, lw=1.2, label=label)
+            upper.plot(times, median, color=color, lw=1.2, ls=linestyle, label=label)
             lower.fill_between(times, q05 - truth, q95 - truth, color=color, alpha=0.18)
-            lower.plot(times, median - truth, color=color, lw=1.0)
+            lower.plot(times, median - truth, color=color, lw=1.0, ls=linestyle)
         selected = (times >= lo) & (times <= hi)
         lower.set(
             ylim=(
@@ -384,11 +388,12 @@ def plot_recovery(data, bands):
     return fig
 
 
-def plot_posterior_comparison(draws, emcee_chains, truth):
+def plot_posterior_comparison(draws, emcee_chains, singlens_chains, truth):
     """Overlay actual posterior samples, with common bins and normalized marginals."""
     samples = [
         np.column_stack([np.asarray(draws[name]).reshape(-1) for name in recovery.NAMES]),
         np.asarray(emcee_chains).reshape(-1, len(recovery.NAMES)),
+        np.asarray(singlens_chains).reshape(-1, len(recovery.NAMES)),
     ]
     injected = np.array([truth[name] for name in recovery.NAMES])
     quantiles = np.array([np.quantile(values, [0.001, 0.999], axis=0) for values in samples])
@@ -396,9 +401,8 @@ def plot_posterior_comparison(draws, emcee_chains, truth):
     upper = np.maximum(quantiles[:, 1].max(axis=0), injected)
     margin = 0.03 * (upper - lower)
     ranges = list(zip(lower - margin, upper + margin))
-    colors, names = ["#247BA0", "#E07A5F"], ["singlens / NUTS", "VBM / emcee"]
     fig = None
-    for i, (values, color) in enumerate(zip(samples, colors)):
+    for i, (values, color, linestyle) in enumerate(zip(samples, METHOD_COLORS, METHOD_STYLES)):
         fig = corner.corner(
             values,
             fig=fig,
@@ -418,54 +422,58 @@ def plot_posterior_comparison(draws, emcee_chains, truth):
             no_fill_contours=True,
             max_n_ticks=3,
             label_kwargs={"fontsize": 11},
-            hist_kwargs={"linewidth": 1.5, "linestyle": "-" if i == 0 else "--"},
-            contour_kwargs={"linewidths": 1.2, "linestyles": "solid" if i == 0 else "dashed"},
+            hist_kwargs={"linewidth": 1.5, "linestyle": linestyle},
+            contour_kwargs={"linewidths": 1.2, "linestyles": linestyle},
         )
     handles = [
-        Line2D([], [], color=color, lw=2, ls="-" if i == 0 else "--", label=name)
-        for i, (color, name) in enumerate(zip(colors, names))
+        Line2D([], [], color=color, lw=2, ls=linestyle, label=name)
+        for color, name, linestyle in zip(METHOD_COLORS, METHOD_LABELS, METHOD_STYLES)
     ]
     handles.append(Line2D([], [], color="0.3", lw=1, label="Injected"))
     fig.legend(handles=handles, loc="upper right", bbox_to_anchor=(0.93, 0.95), fontsize=20)
     return fig
 
 
-def plot_trace_comparison(draws, emcee_trace, truth):
+def plot_trace_comparison(draws, emcee_trace, singlens_trace, truth):
     """Fixed NUTS chain 0 and emcee ensemble 0 / walker 0; no time flattening."""
-    blue, burgundy = "#0055CC", "#9B1B30"
+    blue, burgundy, green = METHOD_COLORS
     nuts = np.column_stack([draws[name][0] for name in recovery.NAMES])
     values = (
-        (nuts[:, 8], emcee_trace[:, 8], truth["a1"], r"$a_1$"),
-        (nuts[:, 2], emcee_trace[:, 2], truth["t_e"], r"$t_E$ [day]"),
+        (8, truth["a1"], r"$a_1$"),
+        (2, truth["t_e"], r"$t_E$ [day]"),
     )
     fig, axes = plt.subplots(2, 1, figsize=(14, 6), sharex=True, layout="constrained")
-    ratio = (len(emcee_trace) - 1) / (len(nuts) - 1)
-    for ax, (nuts_values, emcee_values, injected, label) in zip(axes, values):
+    ratio = (max(len(emcee_trace), len(singlens_trace)) - 1) / (len(nuts) - 1)
+    for ax, (column, injected, label) in zip(axes, values):
         ax.plot(
             np.arange(len(nuts)),
-            nuts_values,
+            nuts[:, column],
             color=blue,
             alpha=0.3,
             lw=0.6,
             label="singlens / NUTS",
         )
-        ax.plot(
-            np.arange(len(emcee_trace)) / ratio,
-            emcee_values,
-            color=burgundy,
-            lw=0.6,
-            label="VBM / emcee",
-        )
+        for trace, color, name in zip(
+            (emcee_trace, singlens_trace), (burgundy, green), METHOD_LABELS[1:]
+        ):
+            ax.plot(
+                np.arange(len(trace)) / ratio,
+                trace[:, column],
+                color=color,
+                lw=0.6,
+                alpha=0.75,
+                label=name,
+            )
         ax.axhline(injected, color="0.3", lw=0.7, ls="--", label="Injected")
         ax.set_ylabel(label)
         ax.grid(False)
     top = axes[0].secondary_xaxis("top", functions=(lambda x: x * ratio, lambda x: x / ratio))
-    top.set_xlabel("Post-warmup steps (VBM / emcee)", color=burgundy)
+    top.set_xlabel("Post-warmup steps (emcee)", color=burgundy)
     top.tick_params(axis="x", colors=burgundy)
     axes[-1].set(xlim=(0, len(nuts) - 1), xlabel="Post-warmup steps (singlens / NUTS)")
     axes[-1].xaxis.label.set_color(blue)
     axes[-1].tick_params(axis="x", colors=blue)
-    axes[0].legend(loc="upper right", ncol=3, fontsize=9)
+    axes[0].legend(loc="upper right", ncol=4, fontsize=9)
     return fig
 
 
@@ -544,7 +552,7 @@ def main():
         )
         return dict(min_ess=min_ess, done=done)
 
-    draws, hmc = sample_nuts(
+    draws, hmc = sample_nuts_until(
         lambda theta: recovery.negative_log_posterior(
             theta, model, data.times, data.flux, data.error
         ),
@@ -665,23 +673,28 @@ def main():
         "diagnostics_pass",
     )
     with (args.output_dir / "inference_speed.csv").open("w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=keys, extrasaction="ignore")
+        writer = csv.DictWriter(file, fieldnames=keys, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(report["results"])
     style()
     save_figure(plot(report), "inference_speed", args.output_dir)
-    with np.load(args.output_dir / "posterior_vbm_emcee.npz") as saved:
+    with (
+        np.load(args.output_dir / "posterior_vbm_emcee.npz") as saved,
+        np.load(args.output_dir / "posterior_singlens_emcee.npz") as singlens_saved,
+    ):
         save_figure(
-            plot_posterior_comparison(draws, saved["chains"], data.truth),
+            plot_posterior_comparison(draws, saved["chains"], singlens_saved["chains"], data.truth),
             "posterior_comparison",
             args.output_dir,
         )
         save_figure(
-            plot_trace_comparison(draws, saved["trace"], data.truth),
+            plot_trace_comparison(draws, saved["trace"], singlens_saved["trace"], data.truth),
             "trace_comparison",
             args.output_dir,
         )
-        bands = posterior_magnitudes(model, data, draws, vbm_posterior, saved["chains"])
+        bands = posterior_magnitudes(
+            model, data, draws, vbm_posterior, saved["chains"], singlens_saved["chains"]
+        )
         save_figure(plot_recovery(data, bands), "inference_recovery", args.output_dir)
     plt.close("all")
     for backend in ("VBM", "singlens"):

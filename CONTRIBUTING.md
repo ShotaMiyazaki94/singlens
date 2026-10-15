@@ -18,10 +18,11 @@ Build documentation locally before submitting changes to docs or examples.
 Show the scientific calculation in tutorials: define the probability model,
 likelihood, sampler, and predictions directly. Keep file loading and global
 plot styling out of the rendered code. Saved long-run samples may supply figures;
-state which run they represent and keep its statistical model identical to
-the displayed one.
-Long sampling cells use `skip-execution` during documentation builds. Load
-saved draws only as a fallback, so an interactive run keeps its new samples.
+state which run they represent. The inference tutorial includes the actual
+example model and sampler source with `literalinclude`, so the displayed
+definitions and executed implementation cannot drift apart.
+Its explicit `RUN_SAMPLING` switch selects a new run or saved draws; never
+infer that choice from which variables happen to exist in the kernel.
 Sphinx executes three notebooks and treats warnings/errors as failures.
 `-E` also reruns notebooks whose imported helpers changed. Open
 `docs/_build/html/index.html`. Numerical diagnostics live in `tools/validation`;
@@ -41,8 +42,8 @@ samples used by the public examples are also versioned so the documentation
 can build without rerunning long inference jobs.
 
 `.gitignore` excludes local archives and experiments, virtual environments,
-caches, builds, private settings, numerical diagnostic outputs, temporary
-checkpoints, and control-only sampler draws. `MANIFEST.in` applies the same
+caches, builds, private settings, numerical diagnostic outputs, and temporary
+checkpoints. `MANIFEST.in` applies the same
 exclusions to source distributions. Keep ad hoc work in the ignored `local/`
 directory and original snapshots in the ignored `archive/` directory.
 
@@ -67,16 +68,19 @@ Document current algorithms and validation procedures here or in
 `tools/validation`; keep dated working notes and superseded results locally.
 
 Finite-source interpolation uses a natural C2 cubic spline at interior grid
-knots. This does not smooth the approximation boundaries: `rho=1e-4`,
-`u/rho=20` in the small-source branch, the central expansion at `u/rho=.01`,
-and the constant extension at `u=100`. Keep independent value, slope, and
-curvature checks when changing these paths.
+knots. The far-field expansion is joined over `u/rho=10..20` with matching
+first and second derivatives. Test that all-far batches skip the FFT under
+both evaluation and autodiff, and give the same distant values as mixed
+batches. Other boundaries remain at `rho=1e-4`, the central expansion at
+`u/rho=.01`, and the FFT grid's constant extension at `u=100` before blending.
+Keep independent value, slope, and curvature checks when changing these paths.
 
-The examples share NUTS sampling in `example/_sampling.py`. Its affine
-transformation from the MAP covariance has a constant Jacobian. Priors and
-likelihood remain defined in the original coordinates; diagnostics and IO
-are excluded from both samplers' timings. The speed comparison generates
-independent noise directly; GP injection–recovery remains a separate example.
+GP recovery uses a NumPyro model and one fixed-length `MCMC.run`, initialized
+from the joint MAP and its covariance. The speed comparison keeps its ESS
+stopping loop in `example/compare-single-vbml/code/sampling.py`; its affine
+transformation has a constant Jacobian. Diagnostics and IO are excluded from
+both benchmark samplers' timings. The speed comparison generates independent
+noise directly; GP injection–recovery remains a separate example.
 
 The independent accuracy reference cancels the point-lens singularity with
 the lens-centered area element. Its convergence and center checks are in
@@ -115,8 +119,10 @@ limb contact; pure linear and quadratic basis checks retain 0.1% thresholds.
 Public accuracy figures report the measured errors rather than these check limits.
 
 For small sources, `A_ext=A_ext0(u/rho)/rho+O(rho)` has no additive constant.
-The point-source branch begins at `u/rho=20`, where the leading uniform-disk
-finite-source correction is about 0.031%.
+The far-field branch begins at `u/rho=20` for every source radius. It retains
+the second-order correction from the brightness profile's radial moment;
+the uncorrected point-source error is about 0.031% there in the high-
+magnification uniform-disk limit.
 
 Near alignment, the quadratic central expansion avoids FFT endpoint errors.
 A radial profile can be written as a weighted mixture of uniform disks;

@@ -11,7 +11,6 @@ prune docs/.jupyter_cache
 prune docs/.mplconfig
 recursive-include example *.py *.md *.json *.csv *.png *.pdf *.npz
 recursive-exclude example progress_*.json
-exclude example/compare-single-vbml/outputs/posterior_singlens_emcee.npz
 recursive-include tests *.py *.json
 include CONTRIBUTING.md
 recursive-include tools *.py *.md

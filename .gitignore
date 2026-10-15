@@ -3,8 +3,6 @@
 /local/
 /tools/validation/outputs/
 /example/**/outputs/progress_*.json
-# The sampler control is summarized in inference_speed.json.
-/example/compare-single-vbml/outputs/posterior_singlens_emcee.npz
 
 # Python environments, caches, and build products
 .venv*/

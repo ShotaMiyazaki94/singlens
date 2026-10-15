@@ -1,4 +1,4 @@
-"""NUTS in affine coordinates, shared by the recovery and comparison examples."""
+"""Benchmark NUTS with timed sampling blocks and an ESS stopping criterion."""
 
 from time import perf_counter
 
@@ -9,13 +9,15 @@ from numpyro.diagnostics import summary
 from numpyro.infer import MCMC, NUTS
 
 
-def sample_nuts(objective, initial, unpack, *, warmup, samples, seed, max_samples=None, check=None):
-    """Two sequential chains; optional stopping checks run outside timed sampling.
+def sample_nuts_until(objective, initial, unpack, *, warmup, samples, seed, max_samples, check):
+    """Two sequential chains; convergence checks run outside timed sampling.
 
     The affine transformation has a constant Jacobian. The objective and
     unpacking function keep priors and summaries in their original coordinates.
     ``samples`` is the minimum per chain; ``check`` may extend it to max_samples.
     """
+    if not 0 < samples <= max_samples:
+        raise ValueError("Require 0 < samples <= max_samples.")
     center = jnp.asarray(initial.x)
     transform = jnp.asarray(np.linalg.cholesky(initial.hess_inv))
     kernel = NUTS(
@@ -36,10 +38,8 @@ def sample_nuts(objective, initial, unpack, *, warmup, samples, seed, max_sample
         print(f"NUTS: chain {i + 1} warmup complete", flush=True)
     warmup_seconds = perf_counter() - start
     blocks, extra, history = [[], []], [[], []], []
-    limit = samples if check is None else max_samples or samples
-    status = {}
-    for begin in range(0, limit, 100):
-        count = min(100, limit - begin)
+    for begin in range(0, max_samples, 100):
+        count = min(100, max_samples - begin)
         for i, sampler in enumerate(samplers):
             sampler.num_samples = count
             sampler.post_warmup_state = sampler.last_state
@@ -58,11 +58,11 @@ def sample_nuts(objective, initial, unpack, *, warmup, samples, seed, max_sample
             name: np.stack([np.concatenate([block[name] for block in chain]) for chain in extra])
             for name in extra[0][0]
         }
-        status = check(draws, diagnostics, fields) if check is not None else {}
+        status = check(draws, diagnostics, fields)
         history.append(dict(draws_per_chain=begin + count, elapsed_seconds=elapsed, **status))
         print(f"NUTS: {begin + count} draws/chain, elapsed={elapsed:.1f}s", flush=True)
         start += perf_counter() - check_start
-        if begin + count >= samples and (check is None or status.get("done", False)):
+        if begin + count >= samples and status.get("done", False):
             break
     report = {
         "warmup_per_chain": warmup,
@@ -82,7 +82,6 @@ def sample_nuts(objective, initial, unpack, *, warmup, samples, seed, max_sample
         "parameters": {
             name: {k: float(v) for k, v in values.items()} for name, values in diagnostics.items()
         },
+        "stopping_check": status,
     }
-    if check is not None:
-        report["stopping_check"] = status
     return draws, report
