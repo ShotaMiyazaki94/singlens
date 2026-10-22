@@ -40,9 +40,14 @@ Sphinx executes three notebooks and treats warnings/errors as failures.
 regenerate example results when changing the solver. Benchmark separately
 from tests or other CPU-intensive work.
 
-Astrometry figures use vertically stacked time-series panels with a shared
-time axis and aligned source-contact markers. Keep the overall figure
-landscape or square, including legends and labels. Put two-dimensional
+Tutorial and example figures should be landscape or square overall,
+including legends and labels. Preserve natural layouts for corner plots
+and other structural diagnostics when rearranging them would make the
+relationships harder to read. Use shorter derivative or residual panels
+where appropriate, keeping labels and curves readable.
+
+Time-series comparisons use vertically stacked panels with a shared time
+axis. For astrometry, align source-contact markers, put two-dimensional
 centroid tracks in separate figures, and state any unequal angular-axis
 scales in the caption.
 

@@ -73,8 +73,8 @@ def sensitivity_figure(fft=None):
     fig, axes = plt.subplots(
         1 + len(fields),
         1,
-        figsize=(10, 15),
-        gridspec_kw={"height_ratios": [2.4] + [1] * len(fields)},
+        figsize=(12, 9),
+        gridspec_kw={"height_ratios": [1.8] + [1] * len(fields)},
         sharex=True,
         layout="constrained",
     )
