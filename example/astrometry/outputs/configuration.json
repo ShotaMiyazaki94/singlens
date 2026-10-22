@@ -1,10 +1,10 @@
 {
   "event": {
     "t0": 0.0,
-    "u0": 0.03,
+    "u0": 0.1,
     "t_e": 20.0
   },
-  "rho": 0.1,
+  "rho": 0.5,
   "a1": 0.6,
   "theta_e_mas": 1.2,
   "source_flux": 1.0,
@@ -24,5 +24,14 @@
     -40.0,
     40.0
   ],
+  "track_samples": 6001,
+  "track_time_range_day": [
+    -20000.0,
+    20000.0
+  ],
+  "track_max_abs_tau": 1000.0,
+  "plot_angular_unit": "microarcsecond; CSV data use milliarcseconds",
+  "source_track_vertical_expansion": 5.0,
+  "blending_track_equal_angular_axes": true,
   "jax_x64": true
 }

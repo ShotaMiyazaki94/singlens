@@ -11,7 +11,8 @@
   and distant limits, and lazy preparation of the astrometric kernels.
 - An astrometry chapter and reproducible light-curve/centroid examples,
   including luminous-lens and unrelated blending with an explicit
-  flux-weighted observation model.
+  flux-weighted observation model, shared-time-axis figures, separate
+  centroid tracks, and limb-darkening residuals.
 
 ## 0.1.0
 

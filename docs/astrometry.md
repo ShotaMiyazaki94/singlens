@@ -55,10 +55,16 @@ of light across the source.
 
 ## Light curve and centroid of the same event
 
-The following event has $t_E=20$ days, $u_0=0.03$, and $\theta_E=1.2$ mas.
-The finite sources have radius $\rho=0.1$, so the lens crosses their disks.
+The following illustrative event has $t_E=20$ days, $u_0=0.1$, and
+$\theta_E=1.2$ mas. The finite sources have radius $\rho=0.5$, so the lens
+crosses their disks and the source-size effects are easy to see.
 Three curves use the same trajectory: a point source, a uniform disk, and
 a linearly limb-darkened disk with `a1=0.6`.
+
+The time-series presentation follows the shared time axes and limb-contact
+markers in [Lee et al. (2010), Figs. 5–6 and 8](https://arxiv.org/pdf/1005.3021).
+The curves below are new `singlens` point-lens calculations. The paper also
+studies finite-lens occultation, which is outside this example's model.
 
 ```python
 from typing import NamedTuple
@@ -87,23 +93,57 @@ and `sl.astrometric_shift`, omit `rho` for a point source and omit `a1`
 for a uniform disk.
 
 ```{figure} ../example/astrometry/outputs/source_profiles.png
-:alt: Light curves, signed astrometric components, and two-dimensional centroid-shift trajectories for point, uniform, and limb-darkened sources.
+:alt: Magnification and two signed centroid-shift components in three vertically aligned panels sharing one time axis.
 
-Magnification and source-only centroid shifts for the same event. The time
-panels show the central six days on either side of closest approach; the
-two-dimensional trajectory spans forty days on either side, with an inset
-around the source transit. Angular components are in the trajectory frame.
+Magnification and source-only centroid shifts on a common time axis, from
+$t_0-40$ to $t_0+40$ days. The vertical dotted lines in every panel mark
+$u=\rho$, at $t-t_0=\pm t_E\sqrt{\rho^2-u_0^2}\simeq\pm9.80$ days.
+Shifts are in $\mu$as in the trajectory frame; the example code computes
+them in mas and converts them for plotting. Line styles distinguish the
+profiles as well as colors.
 ```
 
 Finite source size changes both the peak light curve and the signed
-astrometric components. In the two-dimensional panel, the plotted position
-is $(\delta_{s,\tau},\delta_{s,\beta})$, so the origin means zero lensing
-displacement. It is not a plot of the source's proper motion. A uniform
-disk has zero shift when $u=\rho$ as well as at exact alignment; the
-astrometric behavior near contact depends on the brightness profile.
+astrometric components. A uniform disk has zero shift when $u=\rho$ as
+well as at exact alignment; the astrometric behavior near contact depends
+on the brightness profile.
 
-Download the {download}`source-profile figure as PDF
-<../example/astrometry/outputs/source_profiles.pdf>`.
+```{figure} ../example/astrometry/outputs/source_tracks.png
+:alt: Separate two-dimensional centroid-shift tracks comparing the point-source ellipse with the finite-source loops.
+
+The same event in the $(\delta_{s,\tau},\delta_{s,\beta})$ plane. The
+vertical angular scale is expanded by a factor of five to show the transit
+loop, following the unequal-scale presentation in
+[Mao & Witt (1998), Fig. 2](https://arxiv.org/pdf/astro-ph/9804045).
+The cross marks zero displacement relative to the unlensed source. The
+tracks include the wings out to $|t-t_0|/t_E=1000$, where they approach
+the origin. Arrows show increasing time.
+```
+
+The two-dimensional figure plots the lensing displacement, not the
+source's proper motion. The point-source ellipse and finite-source loop
+are easier to compare separately from the time series.
+
+### Isolating limb darkening
+
+To resolve the smaller change between the two extended-source profiles,
+subtract the uniform-disk prediction at the same epochs:
+
+```{figure} ../example/astrometry/outputs/limb_darkening.png
+:alt: Limb-darkened minus uniform-source residuals in magnification and two centroid components on a common time axis.
+
+Limb-darkening residuals: $100(A_{\mathrm{linear}}/A_{\mathrm{uniform}}-1)$
+in the top panel, and $\delta_{\mathrm{linear}}-\delta_{\mathrm{uniform}}$
+in $\mu$as in the two astrometric panels. All panels share the same time
+range and limb-contact markers as the preceding light curve. These are
+differences between physical source profiles, rather than numerical errors.
+```
+
+Download the {download}`time-series PDF
+<../example/astrometry/outputs/source_profiles.pdf>`,
+{download}`centroid-track PDF <../example/astrometry/outputs/source_tracks.pdf>`,
+or {download}`limb-darkening residual PDF
+<../example/astrometry/outputs/limb_darkening.pdf>`.
 
 ## Blending and the observed centroid
 
@@ -190,10 +230,21 @@ blend scenarios use $F_b/F_s=0.5$ and the same limb-darkened source:
 ```{figure} ../example/astrometry/outputs/blending.png
 :alt: Identical blended light curves but different astrometric shifts for a luminous lens and an unrelated star with the same blend flux.
 
-The luminous lens and unrelated blend produce identical normalized flux
-$F/(F_s+F_b)$, but different astrometric signals. Each blended shift is
-measured from its own unlensed combined centroid at the same epoch. The
-unblended comparison is measured from the unlensed source center.
+Normalized flux and the two centroid-shift components share a single time
+axis. The luminous lens and unrelated blend produce identical
+$F/(F_s+F_b)$, shown once as "Both blends", but different astrometric
+signals. Each blended shift is measured from its own unlensed combined
+centroid at the same epoch. The unblended comparison is measured from the
+unlensed source center.
+```
+
+```{figure} ../example/astrometry/outputs/blending_tracks.png
+:alt: Centroid-shift tracks of an unblended source, a luminous lens, and an unrelated blend, plotted with equal angular scales.
+
+Blending changes the shape and direction of the two-dimensional
+displacement. This figure uses equal angular scales on both axes and
+includes the same extended time sampling as the source-only tracks.
+The origin denotes each model's own same-time unlensed centroid.
 ```
 
 Thus a photometric estimate of `f_b` alone cannot determine the astrometric
@@ -212,8 +263,10 @@ they all contribute to the measured unresolved centroid. If the imaging
 measurement excludes or resolves some components, use the fluxes and
 centroid model appropriate to that measurement.
 
-Download the {download}`blending figure as PDF
-<../example/astrometry/outputs/blending.pdf>`.
+Download the {download}`blending time-series PDF
+<../example/astrometry/outputs/blending.pdf>` or
+{download}`blending centroid-track PDF
+<../example/astrometry/outputs/blending_tracks.pdf>`.
 
 ## From a lensing shift to sky astrometry
 
@@ -288,7 +341,7 @@ change the weighting of spatially separated components, so the final
 angular precision depends on the blend geometry.
 
 The {download}`complete executable example
-<../example/astrometry/code/astrometry.py>` generates both figures. From
+<../example/astrometry/code/astrometry.py>` generates all five figures. From
 the repository root, with the `examples` extra installed, run:
 
 ```bash
