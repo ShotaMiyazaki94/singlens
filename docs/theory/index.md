@@ -171,7 +171,7 @@ $$\log p(F^{\mathrm{obs}}|\theta,f_s,f_b,\sigma_{\mathrm{GP}},\tau_{\mathrm{GP}}
 The latent GP is marginalized with tinygp. Event parameters, limb darkening,
 fluxes, and GP amplitude, period, and coherence time are jointly sampled
 with the stated priors. The [inference tutorial](../tutorials/inference.ipynb)
-shows posterior light curves, residuals, parameter correlations, and traces.
+shows posterior light curves, residuals, and parameter correlations.
 
 The example fits the `u0 > 0` branch. Other solutions, including negative
 `u0` and parallax degeneracies, may require separate exploration. See [numerical limits](../numerics.md) for accuracy limits.
