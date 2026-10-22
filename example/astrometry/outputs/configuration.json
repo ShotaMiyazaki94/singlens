@@ -1,37 +1,75 @@
 {
-  "event": {
-    "t0": 0.0,
-    "u0": 0.1,
-    "t_e": 20.0
+  "source_example": {
+    "event": {
+      "t0": 0.0,
+      "u0": 0.1,
+      "t_e": 20.0
+    },
+    "rho": 0.5,
+    "a1": 0.6,
+    "theta_e_mas": 1.2,
+    "samples": 4801,
+    "time_range_day": [
+      -80.0,
+      80.0
+    ],
+    "track_samples": 6801,
+    "track_time_range_day": [
+      -20000.0,
+      20000.0
+    ],
+    "track_max_abs_tau": 1000.0,
+    "track_vertical_expansion": 5.0,
+    "animation_time_range_day": [
+      -80.0,
+      80.0
+    ]
   },
-  "rho": 0.5,
-  "a1": 0.6,
-  "theta_e_mas": 1.2,
-  "source_flux": 1.0,
-  "blend_flux": 0.5,
-  "lens_position_mas": [
-    0.0,
-    0.0
-  ],
-  "field_position_mas": [
-    3.0,
-    2.0
-  ],
-  "coordinate_frame": "tau + 1j*beta; fixed lens at origin",
-  "shift_reference": "same-time unlensed source, or unlensed source-plus-blend centroid",
-  "samples": 4001,
-  "time_range_day": [
-    -40.0,
-    40.0
-  ],
-  "track_samples": 6001,
-  "track_time_range_day": [
-    -20000.0,
-    20000.0
-  ],
-  "track_max_abs_tau": 1000.0,
+  "long_event": {
+    "event": {
+      "t0": 8000.0,
+      "u0": 0.35,
+      "t_e": 180.0
+    },
+    "rho": 0.005,
+    "source": "uniform",
+    "theta_e_mas": 1.2,
+    "parallax_geometry": {
+      "ra_deg": 266.0,
+      "dec_deg": -29.0,
+      "t_ref": 8000.0
+    },
+    "pi_e_n": 0.12,
+    "pi_e_e": 0.08,
+    "time_convention": "HJD - 2450000; plotted time is t - t0",
+    "samples": 4801,
+    "time_range_day": [
+      -540.0,
+      540.0
+    ],
+    "minimum_u_over_rho": {
+      "no_parallax": 70.0,
+      "annual_parallax": 70.0
+    },
+    "track_vertical_expansion": 1.0
+  },
+  "blending": {
+    "event": "long_event with annual parallax",
+    "source_flux": 1.0,
+    "blend_flux": 0.5,
+    "lens_position_mas": [
+      0.0,
+      0.0
+    ],
+    "coordinate_frame": "tau + 1j*beta; positions relative to the lens",
+    "shift_reference": "same-time unlensed source-plus-lens centroid",
+    "track_vertical_expansion": 1.0
+  },
+  "animation": {
+    "frames": 241,
+    "frames_per_second": 20,
+    "duration_ms": 50
+  },
   "plot_angular_unit": "microarcsecond; CSV data use milliarcseconds",
-  "source_track_vertical_expansion": 5.0,
-  "blending_track_equal_angular_axes": true,
   "jax_x64": true
 }

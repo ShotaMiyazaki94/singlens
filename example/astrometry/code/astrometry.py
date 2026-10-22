@@ -13,13 +13,19 @@ import numpy as np
 import singlens as sl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from example._common import save_figure, save_json
+from example._common import save_json
+from example.astrometry.code.animation import save_source_animation
+from example.astrometry.code.long_event import (
+    calculate_long_event,
+    save_blending_animation,
+    save_long_event_animation,
+    save_long_event_data,
+)
 
 OUTPUT = Path(__file__).resolve().parents[1] / "outputs"
 COLORS = ("#222222", "#0072B2", "#D55E00")
 LINE_STYLES = ("--", "-", "-.")
 SOURCE_LABELS = ("Point source", "Uniform disk", r"Linear ($a_1=0.6$)")
-BLEND_LABELS = ("No blend", "Luminous lens", "Unrelated blend")
 
 
 def publication_style():
@@ -50,7 +56,6 @@ def publication_style():
             "figure.dpi": 120,
             "savefig.dpi": 180,
             "savefig.facecolor": "white",
-            "pdf.fonttype": 42,
         }
     )
 
@@ -99,8 +104,9 @@ def blended_observables(
 
 
 def calculate_examples():
+    """Calculate the first, source-profile comparison only."""
     # BEGIN SOURCE EXAMPLE
-    times = jnp.linspace(-40.0, 40.0, 4001)  # days
+    times = jnp.linspace(-80.0, 80.0, 4801)  # days
     event = dict(t0=0.0, u0=0.1, t_e=20.0)
     rho = 0.5
     theta_e_mas = 1.2
@@ -121,33 +127,6 @@ def calculate_examples():
     # Real and imaginary parts are the signed tau and beta components.
     # END SOURCE EXAMPLE
 
-    # BEGIN BLENDING EXAMPLE
-    # A fixed lens at the origin; source proper motion follows the trajectory.
-    source_position_mas = theta_e_mas * linear_model.trajectory(times, linear_params)
-    source_flux, blend_flux = 1.0, 0.5
-    lens_position_mas = 0.0 + 0.0j
-    field_position_mas = 3.0 + 2.0j
-
-    luminous_lens = blended_observables(
-        A_linear,
-        shift_linear_mas,
-        source_position_mas,
-        source_flux=source_flux,
-        blend_flux=blend_flux,
-        blend_position=lens_position_mas,
-    )
-    field_blend = blended_observables(
-        A_linear,
-        shift_linear_mas,
-        source_position_mas,
-        source_flux=source_flux,
-        blend_flux=blend_flux,
-        blend_position=field_position_mas,
-    )
-    normalized_flux = luminous_lens.total_flux / (source_flux + blend_flux)
-    # field_blend has exactly the same light curve, but a different centroid.
-    # END BLENDING EXAMPLE
-
     # Track plots include logarithmic wings so all curves visibly approach the
     # unlensed origin. No artificial segment closes the finite-time endpoints.
     wings = event["t_e"] * np.geomspace(2.0, 1000.0, 1001)
@@ -160,20 +139,6 @@ def calculate_examples():
             (linear_model, linear_params),
         )
     ]
-    track_A = linear_model.magnification(track_times, linear_params)
-    track_source = theta_e_mas * linear_model.trajectory(track_times, linear_params)
-    track_blends = [
-        blended_observables(
-            track_A,
-            track_shifts[2],
-            track_source,
-            source_flux=source_flux,
-            blend_flux=blend_flux,
-            blend_position=position,
-        )
-        for position in (lens_position_mas, field_position_mas)
-    ]
-
     return dict(
         times=np.asarray(times),
         event=event,
@@ -182,212 +147,86 @@ def calculate_examples():
         a1=float(linear_params.a1),
         magnifications=[np.asarray(A) for A in (A_point, A_uniform, A_linear)],
         shifts=[np.asarray(s) for s in (shift_point_mas, shift_uniform_mas, shift_linear_mas)],
-        source_position_mas=np.asarray(source_position_mas),
+        track_times=np.asarray(track_times),
+        track_shifts=track_shifts,
+    )
+
+
+def calculate_blending(long_event):
+    magnifications = long_event["magnifications"]
+    shifts = long_event["shifts"]
+    trajectories = long_event["trajectories"]
+    theta_e_mas = long_event["theta_e_mas"]
+    # BEGIN BLENDING EXAMPLE
+    # Positions are relative to the lens and use the same annual-parallax
+    # trajectory as the long-event magnification and source centroid shift.
+    magnification = magnifications[1]
+    source_shift = shifts[1]
+    source_position_mas = theta_e_mas * trajectories[1]
+    source_flux, blend_flux = 1.0, 0.5
+    lens_position_mas = 0.0 + 0.0j
+    luminous_lens = blended_observables(
+        magnification,
+        source_shift,
+        source_position_mas,
+        source_flux=source_flux,
+        blend_flux=blend_flux,
+        blend_position=lens_position_mas,
+    )
+    normalized_flux = luminous_lens.total_flux / (source_flux + blend_flux)
+    # END BLENDING EXAMPLE
+    return dict(
+        times=long_event["times"],
+        epochs=long_event["epochs"],
+        event=long_event["event"],
+        rho=long_event["rho"],
+        magnification=magnification,
+        source_shift=source_shift,
+        source_position_mas=source_position_mas,
         source_flux=source_flux,
         blend_flux=blend_flux,
         lens_position_mas=lens_position_mas,
-        field_position_mas=field_position_mas,
         luminous_lens=luminous_lens,
-        field_blend=field_blend,
         normalized_flux=np.asarray(normalized_flux),
-        track_times=np.asarray(track_times),
-        track_shifts=track_shifts,
-        track_magnification=np.asarray(track_A),
-        track_blends=track_blends,
     )
-
-
-def _contact_lines(ax, data):
-    contact = data["event"]["t_e"] * np.sqrt(data["rho"] ** 2 - data["event"]["u0"] ** 2)
-    for time in (-contact, contact):
-        ax.axvline(time, color="0.65", linestyle=":", linewidth=0.8, zorder=0)
-
-
-def _time_panels(data):
-    fig, axes = plt.subplots(3, 1, figsize=(7.2, 5.5), sharex=True)
-    fig.subplots_adjust(left=0.13, right=0.98, bottom=0.105, top=0.92, hspace=0)
-    for ax, label in zip(axes, ("(a)", "(b)", "(c)")):
-        ax.set_xlim(-40, 40)
-        ax.minorticks_on()
-        ax.text(0.025, 0.88, label, transform=ax.transAxes, fontsize=10)
-        _contact_lines(ax, data)
-    axes[-1].set_xlabel(r"$t-t_0$ (day)")
-    axes[-1].set_xticks(np.arange(-40, 41, 10))
-    for ax in axes[1:]:
-        ax.axhline(0, color="0.8", linewidth=0.6, zorder=0)
-    return fig, axes
-
-
-def _top_legend(fig, ax, ncol=3):
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(
-        handles,
-        labels,
-        loc="upper center",
-        bbox_to_anchor=(0.56, 0.994),
-        ncol=ncol,
-        handlelength=2.5,
-        columnspacing=1.3,
-    )
-
-
-def _track_arrow(ax, data, shift, color, start, end):
-    i = np.argmin(np.abs(data["track_times"] - start))
-    j = np.argmin(np.abs(data["track_times"] - end))
-    ax.annotate(
-        "",
-        xy=(1000 * shift[j].real, 1000 * shift[j].imag),
-        xytext=(1000 * shift[i].real, 1000 * shift[i].imag),
-        arrowprops=dict(arrowstyle="->", color=color, lw=1.0, mutation_scale=10),
-    )
-
-
-def source_profiles_figure(data):
-    fig, (ax_flux, ax_tau, ax_beta) = _time_panels(data)
-    for label, color, ls, A, shift in zip(
-        SOURCE_LABELS, COLORS, LINE_STYLES, data["magnifications"], data["shifts"]
-    ):
-        ax_flux.plot(data["times"], A, label=label, color=color, ls=ls)
-        ax_tau.plot(data["times"], 1000 * shift.real, color=color, ls=ls)
-        ax_beta.plot(data["times"], 1000 * shift.imag, color=color, ls=ls)
-    ax_flux.set_ylabel(r"Magnification $A$")
-    ax_flux.set_ylim(0.8, 10.8)
-    ax_flux.text(
-        0.97,
-        0.88,
-        r"$u_0=0.1$, $\rho=0.5$",
-        transform=ax_flux.transAxes,
-        ha="right",
-        va="top",
-        fontsize=9,
-    )
-    ax_tau.set_ylabel(r"$\delta\theta_\tau$ ($\mu$as)")
-    ax_tau.set_ylim(-475, 475)
-    ax_tau.set_yticks([-400, -200, 0, 200, 400])
-    ax_beta.set_ylabel(r"$\delta\theta_\beta$ ($\mu$as)")
-    ax_beta.set_ylim(-52, 68)
-    ax_beta.set_yticks([-40, -20, 0, 20, 40, 60])
-    _top_legend(fig, ax_flux)
-    return fig
-
-
-def source_tracks_figure(data):
-    fig, ax = plt.subplots(figsize=(6.4, 3.9))
-    fig.subplots_adjust(left=0.15, right=0.97, bottom=0.16, top=0.9)
-    for label, color, ls, shift in zip(SOURCE_LABELS, COLORS, LINE_STYLES, data["track_shifts"]):
-        ax.plot(1000 * shift.real, 1000 * shift.imag, color=color, ls=ls, label=label)
-    _track_arrow(ax, data, data["track_shifts"][0], COLORS[0], -28, -22)
-    _track_arrow(ax, data, data["track_shifts"][1], COLORS[1], 3, 4.5)
-    _track_arrow(ax, data, data["track_shifts"][2], COLORS[2], 3, 4.5)
-    ax.plot(0, 0, marker="+", color="0.15", markersize=6, markeredgewidth=0.8, zorder=5)
-    ax.set(
-        xlim=(-460, 460),
-        ylim=(-36, 66),
-        xlabel=r"$\delta\theta_\tau$ ($\mu$as)",
-        ylabel=r"$\delta\theta_\beta$ ($\mu$as)",
-    )
-    # One microarcsecond is drawn five times longer vertically than horizontally.
-    # This deliberate display expansion reveals the transit loop; it does not
-    # rescale any physical coordinate or data value.
-    ax.set_aspect(5)
-    ax.set_xticks([-400, -200, 0, 200, 400])
-    ax.set_yticks([-20, 0, 20, 40, 60])
-    ax.minorticks_on()
-    _top_legend(fig, ax)
-    return fig
-
-
-def blending_figure(data):
-    fig, (ax_flux, ax_tau, ax_beta) = _time_panels(data)
-    ax_flux.plot(
-        data["times"], data["magnifications"][2], color=COLORS[0], ls="--", label="No blend"
-    )
-    # Both blend positions produce precisely the same flux; draw this only once.
-    ax_flux.plot(data["times"], data["normalized_flux"], color="0.45", label="Both blends")
-    ax_flux.set_ylabel(r"$F/(F_s+F_b)$")
-    ax_flux.set_ylim(0.8, 5.1)
-    ax_flux.legend(loc="upper right", handlelength=2.5)
-    ax_flux.text(0.03, 0.68, r"$F_b/F_s=0.5$", transform=ax_flux.transAxes, fontsize=9)
-    shifts = (
-        data["shifts"][2],
-        data["luminous_lens"].relative_shift,
-        data["field_blend"].relative_shift,
-    )
-    for label, color, ls, shift in zip(BLEND_LABELS, COLORS, LINE_STYLES, shifts):
-        shift = 1000 * np.asarray(shift)
-        ax_tau.plot(data["times"], shift.real, color=color, ls=ls, label=label)
-        ax_beta.plot(data["times"], shift.imag, color=color, ls=ls)
-    ax_tau.set_ylabel(r"$\delta\theta_{\mathrm{obs},\tau}$ ($\mu$as)")
-    ax_beta.set_ylabel(r"$\delta\theta_{\mathrm{obs},\beta}$ ($\mu$as)")
-    # The blend-free beta shift is close to the top of this panel.
-    ax_beta.texts[0].set_y(0.72)
-    _top_legend(fig, ax_tau)
-    return fig
-
-
-def blending_tracks_figure(data):
-    fig, ax = plt.subplots(figsize=(6.4, 3.65))
-    fig.subplots_adjust(left=0.15, right=0.97, bottom=0.18, top=0.88)
-    shifts = (
-        data["track_shifts"][2],
-        *(np.asarray(b.relative_shift) for b in data["track_blends"]),
-    )
-    for label, color, ls, shift in zip(BLEND_LABELS, COLORS, LINE_STYLES, shifts):
-        ax.plot(1000 * shift.real, 1000 * shift.imag, color=color, ls=ls, label=label)
-        _track_arrow(ax, data, shift, color, -10, -8)
-    ax.plot(0, 0, marker="+", color="0.15", markersize=6, markeredgewidth=0.8, zorder=5)
-    ax.set(
-        xlabel=r"$\delta\theta_{\mathrm{obs},\tau}$ ($\mu$as)",
-        ylabel=r"$\delta\theta_{\mathrm{obs},\beta}$ ($\mu$as)",
-    )
-    ax.set_aspect("equal", adjustable="box")
-    ax.minorticks_on()
-    _top_legend(fig, ax)
-    return fig
-
-
-def limb_darkening_figure(data):
-    fig, (ax_flux, ax_tau, ax_beta) = _time_panels(data)
-    relative_flux = 100 * (data["magnifications"][2] / data["magnifications"][1] - 1)
-    shift = 1000 * (data["shifts"][2] - data["shifts"][1])
-    for ax, value in zip((ax_flux, ax_tau, ax_beta), (relative_flux, shift.real, shift.imag)):
-        ax.plot(data["times"], value, color=COLORS[2])
-    ax_flux.axhline(0, color="0.8", linewidth=0.6, zorder=0)
-    ax_flux.set_ylabel(r"$\Delta A/A_{\mathrm{uni}}$ (%)")
-    ax_tau.set_ylabel(r"$\Delta\delta\theta_\tau$ ($\mu$as)")
-    ax_beta.set_ylabel(r"$\Delta\delta\theta_\beta$ ($\mu$as)")
-    ax_flux.set_yticks([-4, 0, 4, 8])
-    ax_tau.set_yticks([-30, 0, 30])
-    ax_beta.set_yticks([0, 2, 4, 6])
-    fig.text(
-        0.56,
-        0.975,
-        r"Linear limb darkening ($a_1=0.6$) $-$ uniform disk",
-        ha="center",
-        va="top",
-        fontsize=10,
-    )
-    return fig
 
 
 def verify_observables(data):
     """Check the flux-weighted identity and physical limiting cases."""
-    A = np.asarray(data["magnifications"][2])
-    delta = np.asarray(data["shifts"][2])
+    A = np.asarray(data["magnification"])
+    delta = np.asarray(data["source_shift"])
     theta_s = np.asarray(data["source_position_mas"])
     fs, fb = data["source_flux"], data["blend_flux"]
-    for name, theta_b in (
-        ("luminous_lens", data["lens_position_mas"]),
-        ("field_blend", data["field_position_mas"]),
-    ):
-        result = data[name]
-        direct = (fs * A * (theta_s + delta) + fb * theta_b) / (fs * A + fb)
-        np.testing.assert_allclose(result.observed_centroid, direct, rtol=2e-13, atol=2e-14)
-        np.testing.assert_allclose(
-            result.relative_shift, direct - result.baseline_centroid, rtol=2e-11, atol=2e-14
-        )
+    theta_b = data["lens_position_mas"]
+    result = data["luminous_lens"]
+    direct = (fs * A * (theta_s + delta) + fb * theta_b) / (fs * A + fb)
+    np.testing.assert_allclose(result.total_flux, fs * A + fb, rtol=2e-13, atol=2e-14)
+    np.testing.assert_allclose(result.observed_centroid, direct, rtol=2e-13, atol=2e-14)
+    np.testing.assert_allclose(
+        result.relative_shift, direct - result.baseline_centroid, rtol=2e-11, atol=2e-14
+    )
+    # A common, time-dependent sky motion changes the absolute centroids but
+    # cancels from their same-epoch lensing displacement.
+    common_motion = 1.5 + 0.002 * data["times"] + 1j * (-2 + 0.0007 * data["times"])
+    translated = blended_observables(
+        A,
+        delta,
+        theta_s + common_motion,
+        source_flux=fs,
+        blend_flux=fb,
+        blend_position=theta_b + common_motion,
+    )
+    np.testing.assert_allclose(
+        translated.relative_shift, result.relative_shift, rtol=2e-13, atol=2e-14
+    )
+    np.testing.assert_allclose(
+        translated.observed_centroid,
+        result.observed_centroid + common_motion,
+        rtol=2e-13,
+        atol=2e-14,
+    )
     no_blend = blended_observables(
-        A, delta, theta_s, source_flux=fs, blend_flux=0.0, blend_position=3 + 2j
+        A, delta, theta_s, source_flux=fs, blend_flux=0.0, blend_position=theta_b
     )
     np.testing.assert_allclose(no_blend.relative_shift, delta, atol=0, rtol=0)
     unlensed = blended_observables(
@@ -396,7 +235,7 @@ def verify_observables(data):
         theta_s,
         source_flux=fs,
         blend_flux=fb,
-        blend_position=3 + 2j,
+        blend_position=theta_b,
     )
     np.testing.assert_allclose(unlensed.relative_shift, 0.0, atol=0, rtol=0)
     coincident = blended_observables(
@@ -405,40 +244,29 @@ def verify_observables(data):
     np.testing.assert_allclose(
         coincident.relative_shift, A / (A + fb / fs) * delta, rtol=2e-13, atol=2e-14
     )
-    np.testing.assert_array_equal(data["luminous_lens"].total_flux, data["field_blend"].total_flux)
-    assert (
-        np.max(
-            np.abs(
-                np.asarray(
-                    data["luminous_lens"].relative_shift - data["field_blend"].relative_shift
-                )
-            )
-        )
-        > 0.1
-    )
     # The recipe is usable inside the same JAX transformations as singlens.
     compiled = jax.jit(blended_observables)(
-        A, delta, theta_s, source_flux=fs, blend_flux=fb, blend_position=3 + 2j
+        A, delta, theta_s, source_flux=fs, blend_flux=fb, blend_position=theta_b
     )
     np.testing.assert_allclose(
-        compiled.relative_shift, data["field_blend"].relative_shift, rtol=2e-13, atol=2e-14
+        compiled.relative_shift, result.relative_shift, rtol=2e-13, atol=2e-14
     )
     blend_gradient = jax.jacfwd(
         lambda flux: (
             blended_observables(
-                A, delta, theta_s, source_flux=fs, blend_flux=flux, blend_position=3 + 2j
+                A, delta, theta_s, source_flux=fs, blend_flux=flux, blend_position=theta_b
             ).relative_shift
         )
     )(fb)
     assert np.all(np.isfinite(np.asarray(blend_gradient)))
 
 
-def save_data(data, output):
+def save_data(source, long_event, blending, output):
     output.mkdir(parents=True, exist_ok=True)
-    columns = [data["times"]]
+    columns = [source["times"]]
     headers = ["time_day"]
     for name, A, shift in zip(
-        ("point", "uniform", "linear"), data["magnifications"], data["shifts"]
+        ("point", "uniform", "linear"), source["magnifications"], source["shifts"]
     ):
         columns.extend([A, shift.real, shift.imag])
         headers.extend([f"A_{name}", f"delta_tau_{name}_mas", f"delta_beta_{name}_mas"])
@@ -450,40 +278,9 @@ def save_data(data, output):
         comments="",
         fmt="%.12g",
     )
-    columns = [
-        data["times"],
-        data["magnifications"][2],
-        data["normalized_flux"],
-        data["source_position_mas"].real,
-        data["source_position_mas"].imag,
-    ]
-    headers = [
-        "time_day",
-        "A_linear",
-        "normalized_blended_flux",
-        "source_tau_mas",
-        "source_beta_mas",
-    ]
-    for name in ("luminous_lens", "field_blend"):
-        for field in ("observed_centroid", "baseline_centroid", "relative_shift"):
-            value = np.asarray(getattr(data[name], field))
-            columns.extend([value.real, value.imag])
-            headers.extend([f"{name}_{field}_tau_mas", f"{name}_{field}_beta_mas"])
-    np.savetxt(
-        output / "blending.csv",
-        np.column_stack(columns),
-        delimiter=",",
-        header=",".join(headers),
-        comments="",
-        fmt="%.12g",
-    )
-    columns = [data["track_times"]]
+    columns = [source["track_times"]]
     headers = ["time_day"]
-    for name, shift in zip(("point", "uniform", "linear"), data["track_shifts"]):
-        columns.extend([shift.real, shift.imag])
-        headers.extend([f"delta_tau_{name}_mas", f"delta_beta_{name}_mas"])
-    for name, result in zip(("luminous_lens", "field_blend"), data["track_blends"]):
-        shift = np.asarray(result.relative_shift)
+    for name, shift in zip(("point", "uniform", "linear"), source["track_shifts"]):
         columns.extend([shift.real, shift.imag])
         headers.extend([f"delta_tau_{name}_mas", f"delta_beta_{name}_mas"])
     np.savetxt(
@@ -494,43 +291,84 @@ def save_data(data, output):
         comments="",
         fmt="%.12g",
     )
-    limb_darkening_shift = data["shifts"][2] - data["shifts"][1]
+    save_long_event_data(long_event, output)
+    columns = [
+        blending["times"],
+        blending["epochs"],
+        blending["magnification"],
+        blending["normalized_flux"],
+        blending["source_position_mas"].real,
+        blending["source_position_mas"].imag,
+        blending["source_shift"].real,
+        blending["source_shift"].imag,
+    ]
+    headers = [
+        "time_from_t0_day",
+        "epoch_hjd_minus_2450000",
+        "A_uniform_annual_parallax",
+        "normalized_blended_flux",
+        "source_tau_mas",
+        "source_beta_mas",
+        "source_shift_tau_mas",
+        "source_shift_beta_mas",
+    ]
+    for field in ("observed_centroid", "baseline_centroid", "relative_shift"):
+        value = np.asarray(getattr(blending["luminous_lens"], field))
+        columns.extend([value.real, value.imag])
+        headers.extend([f"luminous_lens_{field}_tau_mas", f"luminous_lens_{field}_beta_mas"])
     np.savetxt(
-        output / "limb_darkening.csv",
-        np.column_stack(
-            [
-                data["times"],
-                100 * (data["magnifications"][2] / data["magnifications"][1] - 1),
-                limb_darkening_shift.real,
-                limb_darkening_shift.imag,
-            ]
-        ),
+        output / "blending.csv",
+        np.column_stack(columns),
         delimiter=",",
-        header="time_day,relative_flux_percent,delta_tau_linear_minus_uniform_mas,"
-        "delta_beta_linear_minus_uniform_mas",
+        header=",".join(headers),
         comments="",
         fmt="%.12g",
     )
     save_json(
         dict(
-            event=data["event"],
-            rho=data["rho"],
-            a1=data["a1"],
-            theta_e_mas=data["theta_e_mas"],
-            source_flux=data["source_flux"],
-            blend_flux=data["blend_flux"],
-            lens_position_mas=[data["lens_position_mas"].real, data["lens_position_mas"].imag],
-            field_position_mas=[data["field_position_mas"].real, data["field_position_mas"].imag],
-            coordinate_frame="tau + 1j*beta; fixed lens at origin",
-            shift_reference="same-time unlensed source, or unlensed source-plus-blend centroid",
-            samples=len(data["times"]),
-            time_range_day=[float(data["times"][0]), float(data["times"][-1])],
-            track_samples=len(data["track_times"]),
-            track_time_range_day=[float(data["track_times"][0]), float(data["track_times"][-1])],
-            track_max_abs_tau=1000.0,
+            source_example=dict(
+                event=source["event"],
+                rho=source["rho"],
+                a1=source["a1"],
+                theta_e_mas=source["theta_e_mas"],
+                samples=len(source["times"]),
+                time_range_day=[float(source["times"][0]), float(source["times"][-1])],
+                track_samples=len(source["track_times"]),
+                track_time_range_day=[
+                    float(source["track_times"][0]),
+                    float(source["track_times"][-1]),
+                ],
+                track_max_abs_tau=1000.0,
+                track_vertical_expansion=5.0,
+                animation_time_range_day=[-80.0, 80.0],
+            ),
+            long_event=dict(
+                event=long_event["event"],
+                rho=long_event["rho"],
+                source=long_event["source"],
+                theta_e_mas=long_event["theta_e_mas"],
+                parallax_geometry=long_event["parallax_geometry"],
+                pi_e_n=long_event["pi_e_n"],
+                pi_e_e=long_event["pi_e_e"],
+                time_convention="HJD - 2450000; plotted time is t - t0",
+                samples=len(long_event["times"]),
+                time_range_day=[-540.0, 540.0],
+                minimum_u_over_rho=dict(
+                    zip(("no_parallax", "annual_parallax"), long_event["minimum_u_over_rho"])
+                ),
+                track_vertical_expansion=1.0,
+            ),
+            blending=dict(
+                event="long_event with annual parallax",
+                source_flux=blending["source_flux"],
+                blend_flux=blending["blend_flux"],
+                lens_position_mas=[0.0, 0.0],
+                coordinate_frame="tau + 1j*beta; positions relative to the lens",
+                shift_reference="same-time unlensed source-plus-lens centroid",
+                track_vertical_expansion=1.0,
+            ),
+            animation=dict(frames=241, frames_per_second=20, duration_ms=50),
             plot_angular_unit="microarcsecond; CSV data use milliarcseconds",
-            source_track_vertical_expansion=5.0,
-            blending_track_equal_angular_axes=True,
             jax_x64=bool(jax.config.jax_enable_x64),
         ),
         "configuration",
@@ -544,14 +382,14 @@ def main():
     args = parser.parse_args()
     jax.config.update("jax_enable_x64", True)
     publication_style()
-    data = calculate_examples()
-    verify_observables(data)
-    save_figure(source_profiles_figure(data), "source_profiles", args.output_dir)
-    save_figure(source_tracks_figure(data), "source_tracks", args.output_dir)
-    save_figure(blending_figure(data), "blending", args.output_dir)
-    save_figure(blending_tracks_figure(data), "blending_tracks", args.output_dir)
-    save_figure(limb_darkening_figure(data), "limb_darkening", args.output_dir)
-    save_data(data, args.output_dir)
+    source = calculate_examples()
+    long_event = calculate_long_event()
+    blending = calculate_blending(long_event)
+    verify_observables(blending)
+    save_data(source, long_event, blending, args.output_dir)
+    save_source_animation(source, args.output_dir)
+    save_long_event_animation(long_event, args.output_dir)
+    save_blending_animation(blending, args.output_dir)
     plt.close("all")
 
 

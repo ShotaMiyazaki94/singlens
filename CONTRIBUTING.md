@@ -46,10 +46,11 @@ and other structural diagnostics when rearranging them would make the
 relationships harder to read. Use shorter derivative or residual panels
 where appropriate, keeping labels and curves readable.
 
-Time-series comparisons use vertically stacked panels with a shared time
-axis. For astrometry, align source-contact markers, put two-dimensional
-centroid tracks in separate figures, and state any unequal angular-axis
-scales in the caption.
+Static time-series comparisons use vertically stacked panels with a shared
+time axis. Astrometry examples use synchronized movies with the light curve
+on the left and the two-dimensional centroid track on the right. Show the
+current epoch in both panels, use a uniform physical-time playback rate,
+and state any unequal angular-axis scales in the caption.
 
 The wheel contains the Earth ephemeris and license notices. Source archives
 include examples and tests, but exclude historical `archive/`, generated docs,

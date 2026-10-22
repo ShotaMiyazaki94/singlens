@@ -5,55 +5,53 @@ python example/astrometry/code/astrometry.py
 ```
 
 Run from the repository root with the `examples` extra installed. The script
-enables JAX 64-bit mode and writes PNG/PDF figures, CSV data, and the physical
-configuration to `outputs/`. Override the destination with `--output-dir PATH`.
+enables JAX 64-bit mode and writes three GIFs, numerical CSV data, and event
+configurations to `outputs/`. Override the destination with `--output-dir PATH`.
 
-- `source_profiles`: magnification and both signed centroid-shift components
-  for point, uniform, and linear sources, stacked on a shared time axis.
-- `source_tracks`: a separate two-dimensional centroid plot, with the vertical
-  angular scale expanded by a factor of five to show the finite-source loop.
-- `limb_darkening`: linear-minus-uniform residuals in magnification and both
-  shift components, stacked on the same time axis.
-- `blending`: compare the unblended source, light from the lens, and light from
-  an unrelated star in three panels with a shared time axis. The identical
-  blended photometric curves are drawn once; the centroids differ.
-- `blending_tracks`: separate two-dimensional blend trajectories with equal
-  angular scales.
+Every movie puts the light curve on the left and the centroid-shift geometry
+on the right. A time cursor and distinct moving markers identify the same
+epoch in both panels. Faint curves show the complete paths; brighter trails
+show the elapsed interval. Each movie has 241 uniformly spaced epochs,
+played at 20 fps (12.05 seconds), on a landscape canvas.
 
-The event has `t0=0 day`, `u0=0.1`, `t_e=20 day`, `rho=0.5`, and
-`theta_E=1.2 mas`; the linear profile uses `a1=0.6`. Coordinates are
-`tau + 1j*beta`, with a fixed lens at the origin and source position
-`theta_E * ((t-t0)/t_e + 1j*u0)`. The luminous-lens blend is at `0 mas`; the
-unrelated blend is fixed at `3 + 2j mas`. Both have `F_b/F_s=0.5` and are assumed
-unresolved and unmicrolensed. These positions are illustrative, rather than a
-choice of instrumental resolution.
+- `source_animation.gif`: point, uniform, and linear source profiles in a
+  source-crossing event. It covers -80 to +80 days; the vertical angular
+  scale is expanded by five to reveal the transit loop.
+- `long_event_animation.gif`: a long event with small finite-source effects,
+  comparing annual parallax with rectilinear motion. It covers -540 to +540
+  days and uses equal angular scales.
+- `blending_animation.gif`: the same long parallax event with and without
+  luminous-lens light, on the same time interval and equal angular scales.
+  Each light curve is normalized by its own baseline flux.
 
-The relatively large source illustrates the transit clearly. All time-series
-panels span -40 to +40 days, with dotted lines at limb contact (about +/-9.80
-days). Astrometric plots use microarcseconds; saved numeric data retain mas.
-Separate track sampling extends to `abs(t-t0)/t_e=1000` to show the wings
-approaching the origin without artificially closing the curves.
+Strong finite-source effects appear only in the first example: `t0=0 day`,
+`u0=0.1`, `t_e=20 day`, `rho=0.5`, and `theta_E=1.2 mas`; the linear profile
+uses `a1=0.6`. Dotted lines mark limb contact at approximately +/-9.80 days.
+Its faint background tracks extend to `abs(t-t0)/t_e=1000`, approaching the
+origin without artificially closing the curves.
 
-The shared-axis time-series layout follows
-[Lee et al. (2010), Figs. 5–6 and 8](https://arxiv.org/pdf/1005.3021), and the
-expanded vertical scale of the source tracks follows
-[Mao & Witt (1998), Fig. 2](https://arxiv.org/pdf/astro-ph/9804045).
-These figures are new `singlens` calculations for a point lens; Lee et al.
-also include finite-lens occultation, which this example does not model.
-All figures have a landscape or square overall layout, including the
-three-panel time series.
+The long event uses `t0=8000` in HJD - 2450000, `u0=0.35`, `t_e=180 day`,
+`rho=0.005`, and `theta_E=1.2 mas`, with a uniform source. Annual parallax
+uses `(pi_e_n, pi_e_e)=(0.12, 0.08)`, `(RA, Dec)=(266, -29)` degrees, and
+`t_ref=t0`. The luminous-lens comparison uses `F_L/F_s=0.5`.
 
-The example-local `blended_observables` function combines the lensed source
-centroid and blend light by their observed fluxes. It returns the total flux,
-observed centroid, same-time unlensed combined-light centroid, and their
-displacement. Thus each blended astrometric curve is relative to its own
-instantaneous combined baseline, rather than a fixed reference position or
-the source alone. All positions must use the same frame and angular units.
-The script checks the flux-weighted identity, the no-blend and unlensed limits,
-coincident source/blend positions, identical blended photometry, and JAX
-compilation/differentiation of this composition.
+Coordinates are `tau + 1j*beta`. Astrometric plots use microarcseconds;
+saved numerical data use mas. The source-only tracks show the displacement
+relative to the unlensed source. The source example's vertical expansion
+follows [Mao & Witt (1998), Fig. 2](https://arxiv.org/pdf/astro-ph/9804045).
+These are new `singlens` point-lens calculations; finite-lens occultation
+is not included.
 
-See the [astrometry chapter](../../docs/astrometry.md) for equations,
-coordinate conventions, and the distinction between a lensing shift and an
-observed sky position. This recipe is an observation-model example; it does
-not add a public blending API to `singlens`.
+The example-local `blended_observables` function combines source images and
+lens light by their observed fluxes. It returns the total flux, observed
+centroid, same-time unlensed combined-light centroid, and their displacement.
+For blending, source positions follow the same parallax trajectory in the
+lens-relative frame. All positions use the same frame and angular units.
+The script checks the flux-weighted identity, physical limits, and JAX
+compilation/differentiation. Unrelated blended light can use the same
+composition; its flux and position trajectory belong in the observation
+model for each analysis.
+
+See the [astrometry chapter](../../docs/astrometry.md) for equations and
+coordinate conventions. This is an observation-model recipe; it does not
+add a public blending API to `singlens`.
