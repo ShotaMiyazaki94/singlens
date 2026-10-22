@@ -120,9 +120,9 @@ trajectory frame as `Model.trajectory`. Multiplying by $\theta_E$ converts it
 to an angle; a separate sky rotation maps it into astrometric coordinate
 components. Annual microlensing parallax changes $\boldsymbol u(t)$, while
 source proper motion/parallax and blended light require a separate observed
-centroid model. See {ref}`the API <astrometric-shift-api>`
-for an example and [numerical accuracy](../numerics.md#astrometric-shifts)
-for validation guidance.
+centroid model. See the [astrometry chapter](../astrometry.md) for light
+curves, centroid tracks, sky coordinates, and blending, and
+[numerical accuracy](../numerics.md#astrometric-shifts) for validation guidance.
 
 ## Flux, optimization, and probability
 

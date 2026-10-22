@@ -55,8 +55,10 @@ shift_mas = 1.2 * shift  # For an angular Einstein radius of 1.2 mas.
 
 The complex shift is measured from the unlensed source center in the
 `tau + 1j*beta` trajectory frame. It assumes a dark point lens and a circular
-source. Rotate this frame into sky coordinates separately; source proper
-motion/parallax and blended light are not included. See
+source. The [astrometry chapter](https://singlens.readthedocs.io/en/latest/astrometry.html)
+shows light curves and centroid tracks, the sky rotation, and an observation
+model that adds luminous-lens or unrelated blended light. Source proper
+motion and absolute parallax are supplied separately. See
 [astrometric accuracy](https://singlens.readthedocs.io/en/latest/numerics.html#astrometric-shifts)
 before fitting precise positions.
 

@@ -1,0 +1,28 @@
+{
+  "event": {
+    "t0": 0.0,
+    "u0": 0.03,
+    "t_e": 20.0
+  },
+  "rho": 0.1,
+  "a1": 0.6,
+  "theta_e_mas": 1.2,
+  "source_flux": 1.0,
+  "blend_flux": 0.5,
+  "lens_position_mas": [
+    0.0,
+    0.0
+  ],
+  "field_position_mas": [
+    3.0,
+    2.0
+  ],
+  "coordinate_frame": "tau + 1j*beta; fixed lens at origin",
+  "shift_reference": "same-time unlensed source, or unlensed source-plus-blend centroid",
+  "samples": 4001,
+  "time_range_day": [
+    -40.0,
+    40.0
+  ],
+  "jax_x64": true
+}

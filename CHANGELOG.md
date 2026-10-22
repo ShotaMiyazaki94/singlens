@@ -9,6 +9,9 @@
   microlensing parallax, JIT, automatic differentiation, and event batching.
 - Separate finite-source flux and first-moment convolutions, analytic central
   and distant limits, and lazy preparation of the astrometric kernels.
+- An astrometry chapter and reproducible light-curve/centroid examples,
+  including luminous-lens and unrelated blending with an explicit
+  flux-weighted observation model.
 
 ## 0.1.0
 

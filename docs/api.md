@@ -80,6 +80,10 @@ lens, unresolved images, and a circular brightness profile. Source proper
 motion/parallax, an absolute sky position, and the flux and positions of
 blended light must be supplied by an observation model.
 
+The [astrometry chapter](astrometry.md) compares light curves and centroid
+tracks for point and finite sources, and shows how to add a luminous lens
+or an unrelated blend to the observed centroid.
+
 JIT, derivatives, and `jax.vmap` work as for magnification. Astrometric accuracy
 must be assessed in angular units, including near sign changes; see
 [numerical accuracy](numerics.md#astrometric-shifts).
@@ -145,6 +149,10 @@ source and blend fluxes by weighted least squares for a given magnification
 curve. For Bayesian inference, sample the fluxes with the event parameters
 and give them explicit priors, as in the
 [inference tutorial](tutorials/inference.ipynb).
+
+Astrometric blending also needs the blend's position: a fitted `f_b` alone
+does not specify the observed centroid. See the
+[blended-centroid model](astrometry.md#blending-and-the-observed-centroid).
 
 With measured arrays `observed_flux` and `flux_error` at the same times:
 
