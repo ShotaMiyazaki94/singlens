@@ -5,8 +5,10 @@ import importlib.metadata
 import importlib.util
 import json
 import platform
+import subprocess
 from dataclasses import asdict
 from datetime import datetime, timezone
+from functools import cache
 from pathlib import Path
 
 import jax
@@ -16,6 +18,44 @@ import singlens
 from singlens import FFTConfig
 
 COLORS = ["#247BA0", "#E07A5F", "#3D8067", "#8765A5", "#C59A32"]
+
+
+@cache
+def hardware_metadata():
+    """Record only the machine name and chip, without device identifiers."""
+    hardware = {}
+    if processor := platform.processor():
+        hardware["chip"] = processor
+    if platform.system() != "Darwin":
+        return hardware
+
+    try:
+        result = subprocess.run(
+            ["/usr/sbin/system_profiler", "SPHardwareDataType", "-json"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        records = json.loads(result.stdout).get("SPHardwareDataType", [])
+        details = records[0] if records else {}
+        for source, target in (
+            ("machine_name", "machine_name"),
+            ("chip_type" if details.get("chip_type") else "cpu_type", "chip"),
+        ):
+            if isinstance(value := details.get(source), str) and value:
+                hardware[target] = value
+    except (
+        OSError,
+        subprocess.SubprocessError,
+        ValueError,
+        AttributeError,
+        TypeError,
+        KeyError,
+        RuntimeError,
+    ):
+        pass
+    return hardware
 
 
 def style():
@@ -52,6 +92,7 @@ def metadata():
         },
         "python": platform.python_version(),
         "platform": platform.platform(),
+        "hardware": dict(hardware_metadata()),
         "devices": [str(device) for device in jax.devices()],
         "device_kind": jax.devices()[0].device_kind,
         "x64": jax.config.jax_enable_x64,

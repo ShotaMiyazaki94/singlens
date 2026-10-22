@@ -8,7 +8,7 @@
     "matplotlib": "3.11.2",
     "numpyro": "0.22.0"
   },
-  "created_utc": "2026-10-15T09:41:08.152458+00:00",
+  "created_utc": "2026-10-22T02:08:42.965721+00:00",
   "source_sha256": {
     "__init__.py": "f1becf1f799a5451b59ab980584b77ecf2d9900b4b18a0684b69d786371e78b5",
     "data/__init__.py": "d70619eabe4596e50812c14996eda1caf558d008f6ab25488a15d7dc6eede19d",
@@ -17,7 +17,7 @@
     "lensing/finite.py": "ff7f1b93682965c4ba64e464abe61708fef080936d3150c8b135b91e18cf4288",
     "lensing/point.py": "8c1789dc00649749a27a13ae7578ff547ffbd6d2f2d709815852546173bac14e",
     "lightcurve.py": "e6712c411124abce2ba1b9eadf542975da84b10338b72d64c1aa051a190c2d77",
-    "model.py": "fc97945c0c5fd0c739ce423aae7bf73217e76f70bc4b05b234d9a1e687b85f08",
+    "model.py": "f608e05bbe0e20150210d56088a7ed17dc61f325742d17a9050fedf6527c68d1",
     "numerics/__init__.py": "8ff1c38fca896fab741a1b171ee779ff7148aa286680b5c2e83a98cac621197e",
     "numerics/fftlog.py": "23b03ad8f8ce1bc0ca06ab4aee636a4030c2b64b23e1a72720f5926e21b772ab",
     "numerics/interpolate.py": "a71f4b975d62da427f25b42c307d205d1aac785aa3f5a7a58807be9a7532f3dd",
@@ -131,108 +131,108 @@
   "draws_per_chain": 1700,
   "chains": 2,
   "seed": 18,
-  "elapsed_seconds_including_compile": 64.06239754147828,
-  "warmup_seconds_including_compile": 13.58947216719389,
+  "elapsed_seconds_including_compile": 62.723468247335404,
+  "warmup_seconds_including_compile": 13.375013709068298,
   "sampling_history": [
     {
       "draws_per_chain": 100,
-      "elapsed_seconds": 16.783067583106458,
+      "elapsed_seconds": 16.485426624771208,
       "min_ess": 192.30604800122123,
       "done": false
     },
     {
       "draws_per_chain": 200,
-      "elapsed_seconds": 19.7106494163163,
+      "elapsed_seconds": 19.416918708011508,
       "min_ess": 406.7050397512202,
       "done": false
     },
     {
       "draws_per_chain": 300,
-      "elapsed_seconds": 22.617493666242808,
+      "elapsed_seconds": 22.307123666163534,
       "min_ess": 818.6884082138162,
       "done": false
     },
     {
       "draws_per_chain": 400,
-      "elapsed_seconds": 25.553318665828556,
+      "elapsed_seconds": 25.15801187325269,
       "min_ess": 1077.4238294109336,
       "done": false
     },
     {
       "draws_per_chain": 500,
-      "elapsed_seconds": 28.53804220771417,
+      "elapsed_seconds": 28.044482830911875,
       "min_ess": 1336.190046606727,
       "done": false
     },
     {
       "draws_per_chain": 600,
-      "elapsed_seconds": 31.48047654144466,
+      "elapsed_seconds": 30.989277789834887,
       "min_ess": 1626.377894951188,
       "done": false
     },
     {
       "draws_per_chain": 700,
-      "elapsed_seconds": 34.465271374210715,
+      "elapsed_seconds": 33.95812816545367,
       "min_ess": 2006.619297079465,
       "done": false
     },
     {
       "draws_per_chain": 800,
-      "elapsed_seconds": 37.32548800017685,
+      "elapsed_seconds": 36.85280853928998,
       "min_ess": 2366.4339105261206,
       "done": false
     },
     {
       "draws_per_chain": 900,
-      "elapsed_seconds": 40.38341816654429,
+      "elapsed_seconds": 39.69900883175433,
       "min_ess": 2725.9236270290335,
       "done": false
     },
     {
       "draws_per_chain": 1000,
-      "elapsed_seconds": 43.31465945858508,
+      "elapsed_seconds": 42.57527237245813,
       "min_ess": 3131.3404391529048,
       "done": false
     },
     {
       "draws_per_chain": 1100,
-      "elapsed_seconds": 46.16687020845711,
+      "elapsed_seconds": 45.45278883120045,
       "min_ess": 3365.2629452496167,
       "done": false
     },
     {
       "draws_per_chain": 1200,
-      "elapsed_seconds": 49.04837033338845,
+      "elapsed_seconds": 48.28607462346554,
       "min_ess": 3588.845346812784,
       "done": false
     },
     {
       "draws_per_chain": 1300,
-      "elapsed_seconds": 52.341165208723396,
+      "elapsed_seconds": 51.14479299727827,
       "min_ess": 3656.9691011910377,
       "done": false
     },
     {
       "draws_per_chain": 1400,
-      "elapsed_seconds": 55.24498058250174,
+      "elapsed_seconds": 53.93944153795019,
       "min_ess": 4034.451178513278,
       "done": false
     },
     {
       "draws_per_chain": 1500,
-      "elapsed_seconds": 58.16634133318439,
+      "elapsed_seconds": 56.76359016308561,
       "min_ess": 4364.159857341156,
       "done": false
     },
     {
       "draws_per_chain": 1600,
-      "elapsed_seconds": 61.07159541640431,
+      "elapsed_seconds": 59.66362095531076,
       "min_ess": 4669.426580290951,
       "done": false
     },
     {
       "draws_per_chain": 1700,
-      "elapsed_seconds": 64.06239754147828,
+      "elapsed_seconds": 62.723468247335404,
       "min_ess": 5162.85974915451,
       "done": true
     }
@@ -241,6 +241,8 @@
   "max_r_hat": 1.000410699562259,
   "min_effective_sample_size": 4892.585830071729,
   "mean_accept_prob": 0.9283947724045404,
+  "production_draws": 3400,
+  "production_leapfrog_steps": 23584,
   "mean_num_steps": 6.936470588235294,
   "max_num_steps": 23,
   "tree_depth_saturations": 0,
@@ -330,5 +332,9 @@
   "stopping_check": {
     "min_ess": 5162.85974915451,
     "done": true
+  },
+  "hardware": {
+    "chip": "Apple M5 Pro",
+    "machine_name": "MacBook Pro"
   }
 }

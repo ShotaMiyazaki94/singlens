@@ -32,7 +32,7 @@ Issues = "https://github.com/ShotaMiyazaki94/singlens/issues"
 [project.optional-dependencies]
 test = ["pytest>=8", "scipy>=1.14"]
 dev = ["singlens[test]", "build>=1.2", "twine>=6", "ruff>=0.11"]
-validation = ["VBMicrolensing>=5", "MulensModel>=3", "emcee>=3.1,<4"]
+validation = ["VBMicrolensing>=5,<6", "MulensModel>=3", "emcee>=3.1,<4"]
 examples = [
   "matplotlib>=3.9", "scipy>=1.14", "numpyro>=0.22",
   "tinygp>=0.3.1,<0.4", "corner>=2.2,<3",

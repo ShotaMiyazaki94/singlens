@@ -6,15 +6,11 @@ Requires Python 3.12+ and JAX 0.11.2+. Install the package in your Python enviro
 python -m pip install singlens
 ```
 
-JAX and NumPy are installed as dependencies. To add plotting, optimization,
-NumPyro, tinygp, and corner for the tutorials and examples:
+For the tutorials and examples, install the optional dependencies:
 
 ```bash
 python -m pip install 'singlens[examples]'
 ```
-
-Use a [virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
-if you want to keep these dependencies separate from other projects.
 
 To install the latest source from GitHub:
 
@@ -56,4 +52,3 @@ Continue with [light curves](tutorials/quickstart.ipynb),
 
 singlens does not change precision or device globally. For accelerators, use
 [JAX's installation guide](https://docs.jax.dev/en/latest/installation.html).
-The benchmarks use CPU.

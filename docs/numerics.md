@@ -1,8 +1,8 @@
 # Numerical accuracy
 
-Use float64 for finite-source calculations. The default FFT resolution is
-4096 bins. [Benchmarks](benchmarks.md) report accuracy against independent
-source integration and comparisons with other microlensing packages.
+Use float64 for finite-source calculations. [Benchmarks](benchmarks.md) report
+accuracy against independent source integration and comparisons with other
+microlensing packages.
 
 ## FFT resolution
 
@@ -12,10 +12,8 @@ The largest sampled relative error is **0.101%**, for a uniform source near
 contact. Uniform brightness and pure linear limb darkening bracket physical
 linear coefficients `0 <= a1 <= 1`; the pure quadratic profile is checked separately.
 
-At `rho=.01`, the largest sampled errors are
-**0.093% for a uniform source** and **0.062% for linear limb darkening**
-(`a1=.5`). Higher resolution can check a particular curve, derivative, or
-posterior. These are sampled results, not error bounds for arbitrary events.
+These are sampled results, not error bounds for arbitrary events.
+Higher resolution can check a particular curve, derivative, or posterior.
 Assess numerical differences relative to the measurement errors when fitting
 precise data.
 

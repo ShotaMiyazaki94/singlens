@@ -76,6 +76,8 @@ def sample_nuts_until(objective, initial, unpack, *, warmup, samples, seed, max_
         "max_r_hat": float(max(item["r_hat"] for item in diagnostics.values())),
         "min_effective_sample_size": float(min(item["n_eff"] for item in diagnostics.values())),
         "mean_accept_prob": float(fields["accept_prob"].mean()),
+        "production_draws": int(fields["num_steps"].size),
+        "production_leapfrog_steps": int(fields["num_steps"].sum()),
         "mean_num_steps": float(fields["num_steps"].mean()),
         "max_num_steps": int(fields["num_steps"].max()),
         "tree_depth_saturations": int((fields["num_steps"] >= 1023).sum()),

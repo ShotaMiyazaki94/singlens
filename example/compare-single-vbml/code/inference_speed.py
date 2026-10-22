@@ -6,6 +6,7 @@ geometry, default FFT settings, and affine initialization.
 
 import argparse
 import csv
+import hashlib
 import sys
 from importlib import import_module
 from importlib.metadata import version
@@ -51,12 +52,19 @@ def transformed(values):
 class Posterior:
     """A common likelihood; only the magnification calculation is exchanged."""
 
-    def __init__(self, model, data, backend, *, vbm_tolerance=1e-3, minannuli=2):
+    def __init__(
+        self, model, data, backend, *, vbm_tolerance=1e-3, minannuli=2, vbm_interface="array"
+    ):
         self.model, self.data, self.backend = model, data, backend
+        if vbm_interface not in ("array", "python"):
+            raise ValueError("vbm_interface must be 'array' or 'python'")
+        self.vbm_interface = vbm_interface
+        self.backend_setup_seconds = 0.0
         self.times = np.asarray(data.times)
         self.basis_n = np.asarray(model.parallax.offsets(data.times, pi_e_n=1.0, pi_e_e=0.0))
         self.basis_e = np.asarray(model.parallax.offsets(data.times, pi_e_n=0.0, pi_e_e=1.0))
         if backend == "VBM":
+            start = perf_counter()
             import VBMicrolensing
 
             self.vbm = VBMicrolensing.VBMicrolensing()
@@ -65,6 +73,10 @@ class Posterior:
             # coincide within tolerance even when limb darkening matters.
             self.vbm.minannuli = minannuli
             self.vbm.a1 = 0.0
+            if vbm_interface == "array":
+                adapter = import_module("example.compare-single-vbml.code.vbm_array")
+                self.vbm_array = adapter.VBMArray(tolerance=vbm_tolerance, minannuli=minannuli)
+            self.backend_setup_seconds = perf_counter() - start
 
         def log_prob(theta, magnification):
             p = recovery.unpack(theta)
@@ -93,14 +105,20 @@ class Posterior:
         return np.hypot(tau, beta)
 
     def magnifications(self, theta):
-        """One native VBM batch per event, with the common parallax trajectory.
+        """Evaluate the common parallax separations through the chosen VBM API.
 
-        ESPLLightCurve with u0=0, tE=1, t0=0 maps supplied nonnegative
-        separations to exactly the requested u. No Python loop over epochs.
+        The array bridge calls the installed ESPLMag2 directly. The stock API
+        maps separations to times with u0=0, tE=1, t0=0. Neither loops over
+        epochs in Python; only the stock path builds lists and unused positions.
         """
         theta = np.atleast_2d(theta)
+        separations = self.separations(theta)
+        if self.vbm_interface == "array":
+            return self.vbm_array.magnifications(
+                np.exp(theta[:, 3]), expit(theta[:, 8]), separations
+            )
         curves = []
-        for row, u in zip(theta, self.separations(theta)):
+        for row, u in zip(theta, separations):
             self.vbm.a1 = float(expit(row[8]))
             curves.append(self.vbm.ESPLLightCurve([-np.inf, 0.0, 0.0, row[3]], u.tolist())[0])
         return np.asarray(curves)
@@ -124,7 +142,14 @@ def autocorrelation(chains):
 
 def check_vbm_convergence(posterior, theta):
     """Check the numerical target at stricter tolerance outside MCMC timing."""
-    reference = Posterior(posterior.model, posterior.data, "VBM", vbm_tolerance=1e-6, minannuli=4)
+    reference = Posterior(
+        posterior.model,
+        posterior.data,
+        "VBM",
+        vbm_tolerance=1e-6,
+        minannuli=4,
+        vbm_interface=posterior.vbm_interface,
+    )
     differences = []
     max_flux_error = 0.0
     for block in np.array_split(theta, (len(theta) + 63) // 64):
@@ -149,7 +174,7 @@ def check_vbm_convergence(posterior, theta):
     )
 
 
-def efficiency(chains, seconds, *, initialization_seconds):
+def efficiency(chains, seconds, *, initialization_seconds, backend_setup_seconds=0.0):
     # chains shape: production steps, series (chains/walkers), physical parameters.
     tau = autocorrelation(chains)
     ess = chains.shape[0] * chains.shape[1] / tau
@@ -157,9 +182,12 @@ def efficiency(chains, seconds, *, initialization_seconds):
     return dict(
         sampling_seconds_including_warmup_compile=seconds,
         initialization_seconds=initialization_seconds,
-        total_seconds=seconds + initialization_seconds,
+        backend_setup_seconds=backend_setup_seconds,
+        total_seconds=seconds + initialization_seconds + backend_setup_seconds,
         min_ess=float(ess.min()),
-        min_ess_per_second=float(ess.min() / (seconds + initialization_seconds)),
+        min_ess_per_second=float(
+            ess.min() / (seconds + initialization_seconds + backend_setup_seconds)
+        ),
         steps_per_series=chains.shape[0],
         series=chains.shape[1],
         length_over_max_tau=float(chains.shape[0] / tau.max()),
@@ -181,8 +209,13 @@ def efficiency(chains, seconds, *, initialization_seconds):
 
 def run_emcee(posterior, initial, *, warmup, chunk, max_steps, walkers, seed, output, target_ess):
     center, transform = initial.x, np.linalg.cholesky(initial.hess_inv)
+    evaluated_states = 0
+    callback_calls = 0
 
     def log_prob(z):
+        nonlocal evaluated_states, callback_calls
+        evaluated_states += len(z)
+        callback_calls += 1
         return posterior(center + z @ transform.T)
 
     samplers, states = [], []
@@ -198,6 +231,7 @@ def run_emcee(posterior, initial, *, warmup, chunk, max_steps, walkers, seed, ou
         samplers.append(sampler)
         states.append(state)
     warmup_seconds = perf_counter() - start
+    warmup_evaluations, warmup_calls = evaluated_states, callback_calls
     previous_tau = None
     converged = False
     history = []
@@ -253,6 +287,13 @@ def run_emcee(posterior, initial, *, warmup, chunk, max_steps, walkers, seed, ou
         walkers_per_ensemble=walkers,
         warmup_steps_per_ensemble=warmup,
         warmup_seconds_including_compile=warmup_seconds,
+        posterior_evaluations=dict(
+            warmup_including_initial=warmup_evaluations,
+            production=evaluated_states - warmup_evaluations,
+            total=evaluated_states,
+            warmup_callback_calls=warmup_calls,
+            production_callback_calls=callback_calls - warmup_calls,
+        ),
         acceptance_fraction=float(np.mean([s.acceptance_fraction.mean() for s in samplers])),
         autocorrelation_history=history,
         max_ensemble_mean_difference_mcse=float(agreement.max()),
@@ -262,8 +303,36 @@ def run_emcee(posterior, initial, *, warmup, chunk, max_steps, walkers, seed, ou
     return chains, elapsed, info
 
 
-def posterior_costs(model, data, theta):
-    """Synchronized single-state likelihood/gradient costs, outside MCMC timing."""
+def check_vbm_interface(posterior, theta):
+    """Require the array interface to preserve the stock numerical target."""
+    stock = Posterior(
+        posterior.model,
+        posterior.data,
+        "VBM",
+        vbm_interface="python",
+        vbm_tolerance=posterior.vbm.Tol,
+        minannuli=posterior.vbm.minannuli,
+    )
+    actual, expected = posterior.magnifications(theta), stock.magnifications(theta)
+    np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+    delta = np.asarray(posterior.log_prob(theta, actual)) - np.asarray(
+        stock.log_prob(theta, expected)
+    )
+    np.testing.assert_allclose(delta, 0.0, rtol=0, atol=1e-8)
+    return dict(
+        states=len(theta),
+        interface=posterior.vbm_interface,
+        max_magnification_relative_difference=float(np.max(np.abs(actual / expected - 1))),
+        max_log_posterior_difference=float(np.max(np.abs(delta))),
+        magnification_rtol=1e-12,
+        magnification_atol=1e-12,
+        log_posterior_atol=1e-8,
+        passed=True,
+    )
+
+
+def posterior_costs(model, data, theta, *, walkers, vbm_interface):
+    """Synchronized value/gradient and walker-batch costs, outside MCMC timing."""
     timed = import_module("example.compare-single-vbml.code.benchmark").timed
 
     def objective(x):
@@ -271,12 +340,42 @@ def posterior_costs(model, data, theta):
 
     value = jax.jit(objective)
     value_gradient = jax.jit(jax.value_and_grad(objective))
-    vbm = Posterior(model, data, "VBM")
-    return {
-        "singlens_value": timed(lambda: value(theta).block_until_ready(), 100),
-        "singlens_value_gradient": timed(lambda: jax.block_until_ready(value_gradient(theta)), 100),
-        "VBM_value": timed(lambda: vbm(theta[None]), 100),
+    backends = {
+        "singlens": Posterior(model, data, "singlens"),
+        "VBM_python": Posterior(model, data, "VBM", vbm_interface="python"),
     }
+    if vbm_interface == "array":
+        backends["VBM_array"] = Posterior(model, data, "VBM", vbm_interface="array")
+    result = dict(
+        scope="Warm full posterior callbacks on evenly spaced NUTS posterior states. "
+        "Batch sizes include both stretch-move halves. Input preparation and JIT "
+        "excluded from warm medians; every result synchronized. No gradient for VBM.",
+        repeats=100,
+        singlens_value=timed(lambda: value(theta[0]).block_until_ready(), 100),
+        singlens_value_gradient=timed(lambda: jax.block_until_ready(value_gradient(theta[0])), 100),
+        batches={},
+    )
+    rng = np.random.default_rng(0)
+    for size in sorted({1, walkers // 2, walkers - walkers // 2}):
+        batch = theta[np.linspace(0, len(theta) - 1, size, dtype=int)]
+        calls = {name: (lambda p=p: p(batch)) for name, p in backends.items()}
+        # Record first calls separately, then interleave warm timings.
+        measurements = {name: timed(call, 1) for name, call in calls.items()}
+        durations = {name: [] for name in calls}
+        for _ in range(100):
+            for name in rng.permutation(list(calls)):
+                start = perf_counter()
+                calls[name]()
+                durations[name].append(perf_counter() - start)
+        for name, seconds in durations.items():
+            measurements[name].update(
+                raw_seconds=seconds,
+                median_seconds=float(np.median(seconds)),
+                p10_seconds=float(np.percentile(seconds, 10)),
+                p90_seconds=float(np.percentile(seconds, 90)),
+            )
+        result["batches"][str(size)] = measurements
+    return result
 
 
 def plot(report):
@@ -285,7 +384,12 @@ def plot(report):
     for i, (row, color) in enumerate(zip(rows, METHOD_COLORS)):
         label = f"{row['backend']} / {row['sampler']}"
         history = row.get("sampling_history", row.get("autocorrelation_history"))
-        times = [h["elapsed_seconds"] + row["initialization_seconds"] for h in history]
+        times = [
+            h["elapsed_seconds"]
+            + row["initialization_seconds"]
+            + row.get("backend_setup_seconds", 0.0)
+            for h in history
+        ]
         ess = [h["min_ess"] for h in history]
         axes[0].plot(times, ess, "o-", ms=3, color=color, label=label)
         axes[0].plot(row["total_seconds"], row["min_ess"], "o", ms=7, color=color)
@@ -434,16 +538,16 @@ def plot_posterior_comparison(draws, emcee_chains, singlens_chains, truth):
     return fig
 
 
-def plot_trace_comparison(draws, emcee_trace, singlens_trace, truth):
+def plot_trace_comparison(draws, emcee_trace, truth):
     """Fixed NUTS chain 0 and emcee ensemble 0 / walker 0; no time flattening."""
-    blue, burgundy, green = METHOD_COLORS
+    blue, burgundy = METHOD_COLORS[:2]
     nuts = np.column_stack([draws[name][0] for name in recovery.NAMES])
     values = (
         (8, truth["a1"], r"$a_1$"),
         (2, truth["t_e"], r"$t_E$ [day]"),
     )
     fig, axes = plt.subplots(2, 1, figsize=(14, 6), sharex=True, layout="constrained")
-    ratio = (max(len(emcee_trace), len(singlens_trace)) - 1) / (len(nuts) - 1)
+    ratio = (len(emcee_trace) - 1) / (len(nuts) - 1)
     for ax, (column, injected, label) in zip(axes, values):
         ax.plot(
             np.arange(len(nuts)),
@@ -453,27 +557,24 @@ def plot_trace_comparison(draws, emcee_trace, singlens_trace, truth):
             lw=0.6,
             label="singlens / NUTS",
         )
-        for trace, color, name in zip(
-            (emcee_trace, singlens_trace), (burgundy, green), METHOD_LABELS[1:]
-        ):
-            ax.plot(
-                np.arange(len(trace)) / ratio,
-                trace[:, column],
-                color=color,
-                lw=0.6,
-                alpha=0.75,
-                label=name,
-            )
+        ax.plot(
+            np.arange(len(emcee_trace)) / ratio,
+            emcee_trace[:, column],
+            color=burgundy,
+            lw=0.6,
+            alpha=0.75,
+            label="VBM / emcee",
+        )
         ax.axhline(injected, color="0.3", lw=0.7, ls="--", label="Injected")
         ax.set_ylabel(label)
         ax.grid(False)
     top = axes[0].secondary_xaxis("top", functions=(lambda x: x * ratio, lambda x: x / ratio))
-    top.set_xlabel("Post-warmup steps (emcee)", color=burgundy)
+    top.set_xlabel("Post-warmup steps (VBM / emcee)", color=burgundy)
     top.tick_params(axis="x", colors=burgundy)
     axes[-1].set(xlim=(0, len(nuts) - 1), xlabel="Post-warmup steps (singlens / NUTS)")
     axes[-1].xaxis.label.set_color(blue)
     axes[-1].tick_params(axis="x", colors=blue)
-    axes[0].legend(loc="upper right", ncol=4, fontsize=9)
+    axes[0].legend(loc="upper right", ncol=3, fontsize=9)
     return fig
 
 
@@ -490,6 +591,13 @@ def main():
     parser.add_argument("--max-steps", type=int, default=16000)
     parser.add_argument("--walkers", type=int, default=32)
     parser.add_argument("--seed", type=int, default=18)
+    parser.add_argument(
+        "--vbm-interface",
+        choices=("array", "python"),
+        default="array",
+        help="array uses the original VBM binary through a C++17 buffer adapter; "
+        "python explicitly selects the stock list API",
+    )
     parser.add_argument("--output-dir", type=Path, default=OUTPUT)
     args = parser.parse_args()
     if (
@@ -507,6 +615,13 @@ def main():
         )
     jax.config.update("jax_enable_x64", True)
     model, data = recovery.synthetic_event()
+    # Fail before sampling if the requested interface cannot be built/loaded.
+    # This cold setup is charged once to VBM, separately from the common MAP.
+    try:
+        vbm_posterior = Posterior(model, data, "VBM", vbm_interface=args.vbm_interface)
+    except RuntimeError as error:
+        parser.error(str(error))
+    sl_posterior = Posterior(model, data, "singlens")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     np.savetxt(
         args.output_dir / "inference_event.csv",
@@ -579,26 +694,33 @@ def main():
         warmup_steps_per_chain=hmc["warmup_per_chain"],
         sampling_history=hmc["sampling_history"],
         warmup_seconds_including_compile=hmc["warmup_seconds_including_compile"],
+        production_draws=hmc["production_draws"],
+        production_leapfrog_steps=hmc["production_leapfrog_steps"],
         diagnostics_pass=bool(hmc["stopping_check"]["done"]),
     )
     report = dict(
         **experiment,
         versions_external={name: version(name) for name in ("emcee", "VBMicrolensing")},
         vbm_settings=dict(Tol=1e-3, RelTol=1e-3, minannuli=2),
+        vbm_interface=args.vbm_interface,
+        vbm_adapter=(vbm_posterior.vbm_array.metadata if args.vbm_interface == "array" else None),
+        benchmark_source_sha256={
+            p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(Path(__file__).parent.iterdir())
+            if p.suffix in (".py", ".cpp")
+        },
         seed=args.seed,
         target_ess=args.target_ess,
         common_initialization="Joint singlens MAP and covariance; measured cost charged to every method",
         ess_estimator="emcee integrated_time(c=5), physical parameter ACFs averaged over series; ESS=N/tau",
-        scope="Nine event, parallax, limb-darkening and flux parameters on newly generated Roman-like independent-noise data. No GP is evaluated. Total time includes common MAP, JIT, warmup and production; excludes IO, plots, diagnostics and numerical validation. Two NUTS chains or two independent emcee ensembles; all runs require minimum ESS>=target and convergence checks. VBM Tol=RelTol=1e-3 and minannuli=2; stricter VBM validation is outside timing. Numerical lens approximations differ. Single seed; rates are not universal speedups.",
+        scope="Nine event, parallax, limb-darkening and flux parameters on newly generated Roman-like independent-noise data. No GP is evaluated. Total time includes common MAP, backend setup (including cold VBM adapter compilation), JIT, warmup and production; excludes IO, plots, diagnostics and numerical validation. Two NUTS chains or two independent emcee ensembles; all runs require minimum ESS>=target and convergence checks. VBM uses the recorded interface, Tol=RelTol=1e-3 and minannuli=2; stricter VBM validation is outside timing. Numerical lens approximations differ; this is not an equal-error comparison. Single seed; rates are not universal speedups.",
         results=[row],
     )
     save_json(report, "inference_speed", args.output_dir)
-    sl_posterior = Posterior(model, data, "singlens")
-    vbm_posterior = Posterior(model, data, "VBM")
     theta_nuts = transformed(
         np.stack([draws[name].reshape(-1) for name in recovery.NAMES], axis=-1)
     )
-    report["vbm_convergence"] = {"nuts_states": check_vbm_convergence(vbm_posterior, theta_nuts)}
+    report["vbm_convergence"] = {}
     for posterior in (vbm_posterior, sl_posterior):
         chains, seconds, info = run_emcee(
             posterior,
@@ -611,9 +733,18 @@ def main():
             output=args.output_dir,
             target_ess=args.target_ess,
         )
-        result = {**info, **efficiency(chains, seconds, initialization_seconds=init_seconds)}
+        result = {
+            **info,
+            **efficiency(
+                chains,
+                seconds,
+                initialization_seconds=init_seconds,
+                backend_setup_seconds=posterior.backend_setup_seconds,
+            ),
+        }
         result["diagnostics_pass"] &= result["min_ess"] >= args.target_ess
         if posterior.backend == "VBM":
+            result["interface"] = args.vbm_interface
             values = chains.reshape(-1, len(recovery.NAMES))
             indices = np.linspace(0, len(values) - 1, 64, dtype=int)
             report["vbm_convergence"]["vbm_states"] = check_vbm_convergence(
@@ -634,6 +765,8 @@ def main():
         )
         save_json(report, "inference_speed", args.output_dir)
     theta = theta_nuts[np.linspace(0, len(theta_nuts) - 1, 64, dtype=int)]
+    report["vbm_interface_agreement"] = check_vbm_interface(vbm_posterior, theta)
+    report["vbm_convergence"]["nuts_states"] = check_vbm_convergence(vbm_posterior, theta_nuts)
     delta = vbm_posterior(theta) - sl_posterior(theta)
     report["backend_log_posterior_difference"] = dict(
         states=len(theta),
@@ -642,10 +775,16 @@ def main():
         maximum=float(delta.max()),
         range=float(np.ptp(delta)),
     )
-    report["posterior_evaluation"] = posterior_costs(model, data, initial.x)
+    report["posterior_evaluation"] = posterior_costs(
+        model, data, theta, walkers=args.walkers, vbm_interface=args.vbm_interface
+    )
     baseline = report["results"][0]["parameters"]
     for row in report["results"]:
-        overhead = row["initialization_seconds"] + row["warmup_seconds_including_compile"]
+        overhead = (
+            row["initialization_seconds"]
+            + row["backend_setup_seconds"]
+            + row["warmup_seconds_including_compile"]
+        )
         production = row["total_seconds"] - overhead
         row["estimated_seconds_to_target_ess"] = (
             overhead + production * args.target_ess / row["min_ess"]
@@ -666,6 +805,8 @@ def main():
     keys = (
         "backend",
         "sampler",
+        "interface",
+        "backend_setup_seconds",
         "total_seconds",
         "min_ess",
         "min_ess_per_second",
@@ -688,7 +829,7 @@ def main():
             args.output_dir,
         )
         save_figure(
-            plot_trace_comparison(draws, saved["trace"], singlens_saved["trace"], data.truth),
+            plot_trace_comparison(draws, saved["trace"], data.truth),
             "trace_comparison",
             args.output_dir,
         )

@@ -16,14 +16,24 @@ JAX_PLATFORMS=cpu python example/compare-single-vbml/code/inference_speed.py
 - `inference_speed.py`: **singlens/NUTS versus VBM/emcee** on freshly generated
   Roman-like independent-noise data, with **singlens/emcee** also shown to
   measure the sampler's contribution at a fixed lensing backend.
-  All nine event, parallax, limb-darkening,
-  and flux parameters are jointly inferred. Each run targets at least 5000
-  minimum parameter ESS and must pass convergence checks.
+  All nine event, parallax, limb-darkening, and flux parameters are jointly
+  inferred. Each run targets minimum parameter ESS ≥ 5000 and must pass
+  convergence checks.
+
+Inference defaults to a VBM array adapter, which builds automatically and
+requires a C++17 compiler and VBMicrolensing 5.x on macOS or Linux. See the
+[interface details](../../docs/benchmark-methods.md#vbm-inference-interface)
+for details. To use the stock Python interface instead:
+
+```bash
+JAX_PLATFORMS=cpu python example/compare-single-vbml/code/inference_speed.py \
+  --vbm-interface python --output-dir local/benchmark-vbm-python
+```
 
 [Benchmark results](../../docs/benchmarks.md) describe the input data,
 recovery intervals, accuracy, and inference efficiency.
-[Measurement details](../../docs/benchmark-methods.md) give the reference
-integral, separation grid, and native batch interfaces. Figures show:
+[Measurement details](../../docs/benchmark-methods.md) give the numerical
+reference, interfaces, and timing and sampling protocols. Figures show:
 
 - [Data and recovery](outputs/inference_recovery.png): all three recovered curves
   and magnitude residuals relative to truth, over the season and peak.
@@ -34,7 +44,7 @@ integral, separation grid, and native batch interfaces. Figures show:
 - [Corner comparison](outputs/posterior_comparison.png): all three posteriors,
   68%/95% contours, and truth on shared axes.
 - [Trace comparison](outputs/trace_comparison.png): limb darkening and
-  event timescale, with each sampler's step axis.
+  event timescale for singlens/NUTS and VBM/emcee, with each sampler's step axis.
 
 JSON/CSV reports, posterior samples, and PNG/PDF figures are saved in
 `outputs/`. Use `--help` for settings, and run timing experiments without

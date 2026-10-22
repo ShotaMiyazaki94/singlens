@@ -55,7 +55,9 @@ At `rho=.01`, maximum sampled errors are:
 | MulensModel, Gould94/Yoo04 | 0.001251% | 0.001113% |
 
 **Use 4096 bins by default.** Increasing the resolution further gives little
-improvement in this comparison. A wider check over `1e-6 <= rho <= 10`
+improvement in this comparison; see
+[why accuracy levels off](benchmark-methods.md#why-accuracy-levels-off).
+A wider check over `1e-6 <= rho <= 10`
 finds a largest sampled error of **0.101%**, for a uniform source.
 These measurements are not an error bound for every event; see
 [numerical accuracy](numerics.md) for the tested range and derivative guidance.
@@ -115,8 +117,7 @@ reconstructs the corresponding grid. These timings include that work;
 they do not reuse magnification grids between sampler steps.
 An event evaluation with **all positions at `u/rho >= 20` skips the FFT**
 and uses a far-field expansion. The batches measured here contain closer
-positions and build the grid. The inference advantage also depends
-on how efficiently NUTS uses gradients to explore the posterior.
+positions and build the grid.
 
 Actual errors are evaluated separately above; nominal tolerances do not
 guarantee equal achieved accuracy. Each package retains its normal
@@ -205,8 +206,9 @@ Compare **singlens + NUTS (HMC)**, **singlens + emcee**, and
 **VBMicrolensing + emcee** on the same Roman-like event, with independent
 Gaussian measurement noise and common priors. The two singlens runs measure
 the sampler's contribution with the magnification backend held fixed.
+VBM/emcee uses the installed VBM numerical library through an
+[array adapter](benchmark-methods.md#vbm-inference-interface).
 Nine event, parallax, limb-darkening, and flux parameters are jointly inferred.
-The [stellar GP recovery](tutorials/inference.ipynb) is a separate application.
 
 ### Data and recovery
 
@@ -250,10 +252,7 @@ def white_log_likelihood(A, f_s, f_b, flux, flux_error):
 ```
 
 Add the listed log priors to this quantity. `A` comes from singlens or VBM
-at the same event parameters and annual-parallax separations. The
-[NumPyro tutorial](tutorials/inference.ipynb) shows how to define the event
-priors and run NUTS; this benchmark uses the white-noise likelihood above
-without GP parameters or a latent source process.
+at the same event parameters and annual-parallax separations.
 
 ```{image} ../example/compare-single-vbml/outputs/inference_recovery.png
 :alt: Independent-noise Roman-like data and three recovered lens curves over the season and peak
@@ -264,22 +263,9 @@ Blue, burgundy, and green curves and bands show each method's posterior median a
 pointwise 90% interval. Dark residual points are 0.1-day bins with white-noise
 error bars; all original observations enter all three fits.
 
-| Parameter | Injected | NUTS median | Central 90% interval |
-| --- | ---: | ---: | --- |
-| `t0` [day] | 0.2 | 0.199967 | [0.199813, 0.200119] |
-| `u0` | 0.005 | 0.00495772 | [0.00488336, 0.00503207] |
-| `t_e` | 16.235 | 16.321 | [16.1271, 16.5156] |
-| `rho` | 0.01 | 0.00992374 | [0.00980417, 0.0100468] |
-| `f_s` | 1.2659 | 1.25816 | [1.24256, 1.27431] |
-| `f_b` | 1.93891 | 1.94433 | [1.93229, 1.95572] |
-| `pi_e_n` | 0.2 | -0.0537824 | [-0.843226, 0.797893] |
-| `pi_e_e` | -0.1 | -0.0992806 | [-0.183292, -0.0150317] |
-| `a1` | 0.5 | 0.481231 | [0.446447, 0.512813] |
-
 The source radius, limb darkening, and event timescale are constrained in this
 realization. The north parallax component is weakly constrained: its posterior
-remains broad, close to its prior. Including both parallax components does
-not imply a precise measurement of both.
+remains broad, close to its prior.
 
 ```{image} ../example/compare-single-vbml/outputs/posterior_comparison.png
 :alt: Overlaid nine-parameter corner plot of singlens NUTS, VBM emcee, and singlens emcee samples
@@ -297,10 +283,13 @@ how many independent draws would give the same precision for a parameter
 mean. We compare **the smallest ESS among the nine parameters per second**,
 so a rapidly sampled parameter cannot hide a slowly sampled one.
 
-Timing includes the initial fit, JAX compilation, warmup, and sampling.
+Timing includes the initial fit, backend setup (including the VBM adapter build),
+JAX compilation, warmup, and sampling.
 Every method is charged the same initial-fit cost. Data preparation, plots,
 and convergence checks are outside the timer. All runs reach minimum
 ESS ≥ 5000 and pass the [stopping checks](benchmark-methods.md#sampling-protocol).
+All three methods were measured sequentially on the CPU of a MacBook Pro with
+an Apple M5 Pro chip.
 
 ```{image} ../example/compare-single-vbml/outputs/inference_speed.png
 :alt: Minimum ESS against elapsed time and ESS per second for the nine inferred parameters
@@ -312,16 +301,23 @@ Right: ESS per second for each parameter.
 
 | Method | Total [s] | Minimum ESS | ESS/s |
 | --- | ---: | ---: | ---: |
-| singlens + NUTS | 64.9 | 5163 | 79.50 |
-| VBM + emcee | 468.9 | 5143 | 10.97 |
-| singlens + emcee | 205.3 | 5048 | 24.59 |
+| singlens + NUTS | 63.6 | 5163 | 81.13 |
+| VBM + emcee | 225.6 | 5143 | 22.80 |
+| singlens + emcee | 207.8 | 5048 | 24.29 |
 
-singlens/NUTS reaches **7.25× the ESS/s of VBM/emcee** on this event.
+singlens/NUTS reaches **3.56× the ESS/s of VBM/emcee** on this event.
 This comparison changes both the magnification calculation and the sampler.
-Keeping singlens fixed, **NUTS reaches 3.23× the ESS/s of emcee**
-(79.50 versus 24.59 ESS/s). That comparison measures the benefit of NUTS
-with gradients for this event. Rates will depend on the data, posterior,
-and hardware.
+Keeping singlens fixed, **NUTS reaches 3.34× the ESS/s of emcee**
+for this event. Rates will depend on the data, posterior, and hardware.
+
+Inference time depends on both the cost of each posterior evaluation and the
+number of evaluations needed to reach the target ESS. Magnification runtime
+alone therefore does not predict sampling efficiency.
+
+These rates compare the stated numerical settings, not matched achieved
+accuracy. The [numerical checks](benchmark-methods.md#sampling-protocol)
+report the effect of tightening VBM's tolerance and the posterior differences
+between backends.
 
 ### Compute ESS per second
 
@@ -365,6 +361,15 @@ is also checked using separate ensembles; see the
 [sampling protocol](benchmark-methods.md#sampling-protocol).
 The downloadable emcee samples keep every tenth step for posterior plots.
 Use the unthinned chains when reproducing the reported ESS.
+
+```{image} ../example/compare-single-vbml/outputs/trace_comparison.png
+:alt: singlens NUTS and VBM emcee traces for limb darkening and event timescale
+```
+
+singlens/NUTS chain 0 and VBM/emcee ensemble 0, walker 0, without thinning.
+Bottom and top axes count NUTS and emcee production steps; matching horizontal
+positions do not represent equal elapsed time. All chains and walkers enter ESS.
+Download the {download}`trace comparison PDF <../example/compare-single-vbml/outputs/trace_comparison.pdf>`.
 
 Download the {download}`inference report <../example/compare-single-vbml/outputs/inference_speed.json>`,
 {download}`summary CSV <../example/compare-single-vbml/outputs/inference_speed.csv>`,

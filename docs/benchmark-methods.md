@@ -10,6 +10,11 @@ JAX_PLATFORMS=cpu python example/compare-single-vbml/code/benchmark.py
 JAX_PLATFORMS=cpu python example/compare-single-vbml/code/inference_speed.py
 ```
 
+The inference benchmark automatically builds a VBM array adapter. It requires
+a C++17 compiler and a VBMicrolensing 5.x wheel on macOS or Linux.
+See [VBM inference interface](#vbm-inference-interface) for the alternative
+Python interface.
+
 ## Accuracy reference
 
 Integrate in lens-centered polar coordinates. The area element cancels the
@@ -62,6 +67,13 @@ reference. Comparing quadrature tolerances `1e-9` and `1e-11` changes the
 reference by at most `2.42e-12` relative on this grid. Each FFT size uses the
 same 105 separations and six source radii (`1e-6`, `1e-5`, `1e-4`, `.01`,
 `.1`, `1`).
+
+### Why accuracy levels off
+
+singlens applies a fixed high-frequency damping filter in its FFTLog
+calculation. Increasing `n_fft` refines the grid but leaves this filter
+unchanged. Once discretization error is small, the remaining smoothing bias
+near source contact ($u/\rho\simeq1$) limits further accuracy gains.
 
 ### Reference package settings
 
@@ -137,15 +149,16 @@ The uniform comparison uses `source="uniform"`, VBM `a1=0`, and
 MulensModel's `finite_source_uniform_Gould94` method. The recorded experiment
 also shuffles measurement order; timing variation between machines is expected.
 
-### VBM's far-field approximation
+## VBM inference interface
 
-In VBM 5.6.1, `ESPLMag2` estimates the leading uniform-source correction `Q`.
-When `10*Q < Tol`, it returns the point-source magnification plus `Q`;
-otherwise it evaluates the finite source. This decision uses the absolute
-tolerance `Tol`, rather than a fixed `u/rho` or `RelTol`.
-See [the implementation](https://github.com/valboz/VBMicrolensing/blob/main/VBMicrolensing/lib/VBMicrolensingLibrary.cpp#L539-L565).
-Its limb-darkening integration also uses `RelTol`. Comparisons retain each
-package's normal approximations and assess achieved errors independently.
+The default `--vbm-interface array` passes annual-parallax separations to the
+installed library's `ESPLMag2` using NumPy arrays. VBM calls are serial, with
+the numerical core, ESPL table, and tolerance settings unchanged. Numerical
+agreement with the stock Python interface is checked on posterior states.
+
+Use `--vbm-interface python` to select the stock `ESPLLightCurve` interface.
+The standalone magnification benchmark always uses native light-curve APIs;
+the inference results identify the selected interface in the JSON report.
 
 ## Sampling protocol
 
@@ -153,7 +166,8 @@ All three runs start from one fit that maximizes the singlens posterior
 (the maximum a posteriori, or MAP, fit), using the data and stated priors.
 Injected parameter values are not used for initialization. The fit's
 measured cost is included in every method's total time. Timing also includes
-likelihood compilation, warmup, and production sampling. Preparing inputs,
+backend setup (including one VBM adapter build and load), likelihood compilation,
+warmup, and production sampling. Preparing inputs,
 convergence checks, file IO, plots, and numerical validation are outside
 the timer. VBM uses `Tol=RelTol=1e-3` and `minannuli=2`.
 
@@ -178,3 +192,9 @@ available for download keep every tenth step for plotting; rerun the script
 to obtain the unthinned chains used for ESS. Seeds, package versions,
 timings, and diagnostics are recorded in the
 {download}`inference report <../example/compare-single-vbml/outputs/inference_speed.json>`.
+
+Numerical accuracy is checked separately from sampler convergence. Tightening
+VBM to `Tol=RelTol=1e-6`, `minannuli=4` changes the log posterior by about
+−1.7 to +1.7 on sampled states. The largest singlens–VBM posterior mean
+difference is 0.17 pooled posterior standard deviations. The speed comparison
+therefore uses the stated settings without claiming equal achieved accuracy.

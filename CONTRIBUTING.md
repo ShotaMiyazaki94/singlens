@@ -93,6 +93,13 @@ transformation has a constant Jacobian. Diagnostics and IO are excluded from
 both benchmark samplers' timings. The speed comparison generates independent
 noise directly; GP injection–recovery remains a separate example.
 
+The [VBM inference adapter](docs/benchmark-methods.md#vbm-inference-interface)
+must keep calls serial and the installed numerical core unchanged, with no
+silent interface fallback. Include its build/load cost once in VBM's total
+and check agreement with the stock API outside sampling timers. Record the
+interface and source provenance in the report. Regenerate all three inference
+runs together when publishing new speed ratios, without concurrent intensive work.
+
 The independent accuracy reference cancels the point-lens singularity with
 the lens-centered area element. Its convergence and center checks are in
 `example/compare-single-vbml/code/accuracy.py`. The default-domain check is

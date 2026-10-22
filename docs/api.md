@@ -40,8 +40,8 @@ disk. For a static event, omit the geometry and both parallax components.
 | `pi_e_n`, `pi_e_e` | North/east microlensing parallax components; both required with geometry |
 | `fft` | Optional fixed `FFTConfig`; finite sources only |
 
-All event parameters are scalars. Results preserve the shape of `times`,
-including scalar input. Use `jax.vmap` to batch events.
+Results preserve the shape of `times`, including scalar input. Use `jax.vmap`
+to batch events.
 Missing or unused parameters raise errors; invalid numeric `t_e`, `rho`, or
 `a1` yield NaN. Physical linear coefficients satisfy
 `0 <= a1 <= 1`. Derivatives follow the [numerical approximation](numerics.md).

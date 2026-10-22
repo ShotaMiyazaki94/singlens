@@ -8,7 +8,7 @@
     "matplotlib": "3.11.2",
     "numpyro": "0.22.0"
   },
-  "created_utc": "2026-10-15T09:41:08.152458+00:00",
+  "created_utc": "2026-10-22T02:08:42.965721+00:00",
   "source_sha256": {
     "__init__.py": "f1becf1f799a5451b59ab980584b77ecf2d9900b4b18a0684b69d786371e78b5",
     "data/__init__.py": "d70619eabe4596e50812c14996eda1caf558d008f6ab25488a15d7dc6eede19d",
@@ -17,7 +17,7 @@
     "lensing/finite.py": "ff7f1b93682965c4ba64e464abe61708fef080936d3150c8b135b91e18cf4288",
     "lensing/point.py": "8c1789dc00649749a27a13ae7578ff547ffbd6d2f2d709815852546173bac14e",
     "lightcurve.py": "e6712c411124abce2ba1b9eadf542975da84b10338b72d64c1aa051a190c2d77",
-    "model.py": "fc97945c0c5fd0c739ce423aae7bf73217e76f70bc4b05b234d9a1e687b85f08",
+    "model.py": "f608e05bbe0e20150210d56088a7ed17dc61f325742d17a9050fedf6527c68d1",
     "numerics/__init__.py": "8ff1c38fca896fab741a1b171ee779ff7148aa286680b5c2e83a98cac621197e",
     "numerics/fftlog.py": "23b03ad8f8ce1bc0ca06ab4aee636a4030c2b64b23e1a72720f5926e21b772ab",
     "numerics/interpolate.py": "a71f4b975d62da427f25b42c307d205d1aac785aa3f5a7a58807be9a7532f3dd",
@@ -239,7 +239,7 @@
       0.006442693415216047
     ]
   ],
-  "elapsed_seconds_including_compile": 0.8827603342942894,
+  "elapsed_seconds_including_compile": 0.915021541994065,
   "map": {
     "t0": 0.19996631337824441,
     "u0": 0.004956294394742346,
@@ -250,5 +250,9 @@
     "pi_e_n": -0.048494141362956614,
     "pi_e_e": -0.10016928653939317,
     "a1": 0.4823139039181522
+  },
+  "hardware": {
+    "chip": "Apple M5 Pro",
+    "machine_name": "MacBook Pro"
   }
 }

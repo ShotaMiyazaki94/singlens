@@ -71,7 +71,8 @@ def test_reference_near_limb_against_elliptic_small_source_limit():
         np.testing.assert_allclose(integral(ratio * rho, rho), expected, rtol=1e-10)
 
 
-def test_parallax_backend_mapping_and_common_white_likelihood():
+@pytest.mark.parametrize("vbm_interface", ["array", "python"])
+def test_parallax_backend_mapping_and_common_white_likelihood(vbm_interface):
     """VBM must see identical separations, likelihood, and priors."""
     pytest.importorskip("emcee")
     pytest.importorskip("VBMicrolensing")
@@ -96,7 +97,7 @@ def test_parallax_backend_mapping_and_common_white_likelihood():
         + jnp.array([0.01, -0.02, 0.03, 0.01, 0.0, -0.03, 0.02])
     )
     data = Injection(times, flux, jnp.full_like(times, 0.02), p, flux, jnp.zeros_like(times))
-    posterior = benchmark.Posterior(model, data, "VBM")
+    posterior = benchmark.Posterior(model, data, "VBM", vbm_interface=vbm_interface)
     u = posterior.separations(theta)[0]
     np.testing.assert_allclose(
         u, np.abs(model.trajectory(times, recovery.event_parameters(p))), atol=1e-13
@@ -110,6 +111,7 @@ def test_parallax_backend_mapping_and_common_white_likelihood():
         expected = [posterior.vbm.ESPLMag2(float(x), float(p["rho"])) for x in u]
         np.testing.assert_allclose(values, expected, rtol=1e-13)
     assert not np.allclose(*curves)
+    assert benchmark.check_vbm_interface(posterior, theta_batch)["passed"]
     np.testing.assert_allclose(benchmark.physical(theta_batch)[:, 8], [0.2, 0.8])
     magnification = model.magnification(times, recovery.event_parameters(p))
     common = posterior.log_prob(theta[None], magnification[None])[0]
@@ -117,6 +119,48 @@ def test_parallax_backend_mapping_and_common_white_likelihood():
         theta, model, times, flux, data.error
     )
     np.testing.assert_allclose(common, original, atol=1e-10)
+
+
+def test_emcee_counts_initial_states_and_cached_production_states(tmp_path, monkeypatch):
+    """Record evaluations, including warmup's initial ensemble but not cached states."""
+    pytest.importorskip("emcee")
+    pytest.importorskip("tinygp")
+    from importlib import import_module
+    from types import SimpleNamespace
+
+    benchmark = import_module("example.compare-single-vbml.code.inference_speed")
+    dimensions = len(benchmark.recovery.NAMES)
+    initial = SimpleNamespace(x=np.zeros(dimensions), hess_inv=np.eye(dimensions))
+
+    class Posterior:
+        backend = "test"
+
+        def __call__(self, theta):
+            return -0.5 * np.sum(theta**2, axis=1)
+
+    monkeypatch.setattr(benchmark, "autocorrelation", lambda chains: np.ones(dimensions))
+    chains, seconds, info = benchmark.run_emcee(
+        Posterior(),
+        initial,
+        warmup=3,
+        chunk=50,
+        max_steps=100,
+        walkers=20,
+        seed=2,
+        output=tmp_path,
+        target_ess=1,
+    )
+    counts = info["posterior_evaluations"]
+    assert counts["warmup_including_initial"] == 2 * 20 * 4
+    assert counts["production"] == 2 * 20 * 100
+    assert counts["total"] == 4160
+    assert counts["warmup_callback_calls"] == 2 * (1 + 2 * 3)
+    assert counts["production_callback_calls"] == 2 * 2 * 100
+    result = benchmark.efficiency(
+        chains, seconds, initialization_seconds=2, backend_setup_seconds=3
+    )
+    assert result["total_seconds"] == seconds + 5
+    assert result["min_ess_per_second"] == result["min_ess"] / (seconds + 5)
 
 
 def test_vbm_limb_integration_resolves_disk_point_coincidence():

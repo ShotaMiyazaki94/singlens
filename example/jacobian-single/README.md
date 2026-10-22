@@ -9,7 +9,6 @@ With the `examples` extra installed, run from the repository root.
 Jacobian components for `t0`, `t_e`, `u0`, `rho`, `pi_e_n`, `pi_e_e`, and
 the linear limb coefficient `a1`. Uniform and linear sources share the same
 geometry; only the linear source has an `a1` derivative.
-The portrait figure puts the light curve above seven shorter derivative panels.
 
 The event uses HJD − 2450000: `t0=8000`, `u0=.05`, `t_e=80` days,
 `rho=.1`, `pi_e_n=.2`, `pi_e_e=-.1`, and `a1=.5`.
