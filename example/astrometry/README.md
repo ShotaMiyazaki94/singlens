@@ -5,53 +5,69 @@ python example/astrometry/code/astrometry.py
 ```
 
 Run from the repository root with the `examples` extra installed. The script
-enables JAX 64-bit mode and writes three GIFs, numerical CSV data, and event
+enables JAX 64-bit mode and writes three GIFs, numerical CSV data, and physical
 configurations to `outputs/`. Override the destination with `--output-dir PATH`.
 
 Every movie puts the light curve on the left and the centroid-shift geometry
-on the right. A time cursor and distinct moving markers identify the same
-epoch in both panels. Faint curves show the complete paths; brighter trails
-show the elapsed interval. Each movie has 241 uniformly spaced epochs,
-played at 20 fps (12.05 seconds), on a landscape canvas.
+on the right. A time cursor and moving markers identify the same epoch in
+both panels. Faint curves show complete paths; brighter trails show the
+elapsed interval. Each movie has 241 uniformly spaced epochs, played at
+20 fps (12.05 seconds), on a 1155 × 440 landscape canvas.
 
-- `source_animation.gif`: point, uniform, and linear source profiles in a
-  source-crossing event. It covers -80 to +80 days; the vertical angular
-  scale is expanded by five to reveal the transit loop.
-- `long_event_animation.gif`: a long event with small finite-source effects,
-  comparing annual parallax with rectilinear motion. It covers -540 to +540
-  days and uses equal angular scales.
-- `blending_animation.gif`: the same long parallax event with and without
-  luminous-lens light, on the same time interval and equal angular scales.
-  Each light curve is normalized by its own baseline flux.
+| Movie | Physical example | Time interval |
+| --- | --- | --- |
+| `source_animation.gif` | Planetary-mass lens crossing a giant source | ±3.2 days |
+| `long_event_animation.gif` | Known black hole OGLE-2011-BLG-0462 | ±719.1 days |
+| `blending_animation.gif` | G-dwarf lens and bulge dwarf source, on Roman scales | ±170.21 days |
 
-Strong finite-source effects appear only in the first example: `t0=0 day`,
-`u0=0.1`, `t_e=20 day`, `rho=0.5`, and `theta_E=1.2 mas`; the linear profile
-uses `a1=0.6`. Dotted lines mark limb contact at approximately +/-9.80 days.
-Its faint background tracks extend to `abs(t-t0)/t_e=1000`, approaching the
-origin without artificially closing the curves.
+The first example has `u0=0.1`, `t_e=0.8 day`, `rho=0.5`, and
+`theta_E=0.012 mas`; the linear profile uses `a1=0.6`. Assuming `DS=8 kpc`
+and `pi_rel=0.1 mas` gives `DL=4.44 kpc`, `M=0.185 M_Jup`, and a giant
+source of radius `10.3 R_sun`. Dotted lines mark limb contact at ±0.392 days.
+The vertical angular scale is expanded by five, following
+[Mao & Witt (1998), Fig. 2](https://arxiv.org/pdf/astro-ph/9804045).
+Faint tracks extend to `abs(t-t0)/t_e=1000` as ideal rectilinear
+continuations, not long-term parallax predictions.
 
-The long event uses `t0=8000` in HJD - 2450000, `u0=0.35`, `t_e=180 day`,
-`rho=0.005`, and `theta_E=1.2 mas`, with a uniform source. Annual parallax
-uses `(pi_e_n, pi_e_e)=(0.12, 0.08)`, `(RA, Dec)=(266, -29)` degrees, and
-`t_ref=t0`. The luminous-lens comparison uses `F_L/F_s=0.5`.
+The BH example adopts the complete joint geocentric solution in
+[Mróz et al. (2022), Table 2, Sahu+ column](https://arxiv.org/html/2207.10729v2#S5.T2):
+`t0=t_ref=5763.3286`, `t_e=239.7 day`, `u0=0.00263`, `theta_E=5.68 mas`,
+and `(pi_e_n, pi_e_e)=(0.073, -0.050)`. Times use HJD − 2450000.
+The adopted `DS=5.9 kpc` gives `M=7.88 M_sun`, `DL=1.49 kpc`.
+The point-source light curve uses a logarithmic magnification axis;
+it excludes the neighboring light present in the ground-based photometry.
+The movie compares annual parallax with rectilinear motion, using equal
+angular scales. It is a calculation from published parameters, not a refit.
 
-Coordinates are `tau + 1j*beta`. Astrometric plots use microarcseconds;
-saved numerical data use mas. The source-only tracks show the displacement
-relative to the unlensed source. The source example's vertical expansion
-follows [Mao & Witt (1998), Fig. 2](https://arxiv.org/pdf/astro-ph/9804045).
-These are new `singlens` point-lens calculations; finite-lens occultation
-is not included.
+The luminous example is an independent stellar system: a `1 M_sun`
+G-dwarf lens at `6 kpc` and a solar-like dwarf source at `8 kpc`, with
+`R_source=1 R_sun`, `mu_rel_geo=5 mas/yr`, and `u0=0.3`. These imply
+`theta_E=0.5825 mas`, `t_e=42.55 day`, and `rho=0.0009979`.
+Annual parallax uses a direction 30 degrees east of north,
+`(RA, Dec)=(268.07, -29.23)` degrees, and `t0=t_ref=12030`.
+For Roman F146, equal intrinsic source/lens luminosity and equal foreground
+extinction imply `F_L/F_s=(8/6)^2=16/9`. This is a plausible illustrative
+G-dwarf event, not a survey-population median or observation forecast.
+The example uses Earth's orbit; it omits Roman's L2 displacement, seasonal
+sampling, cadence, and measurement errors. Each light curve is normalized
+by its own baseline flux, and both angular axes use the same scale.
+
+Coordinates are the fixed `tau + 1j*beta` frame. Astrometric plots use
+microarcseconds; saved numerical data use mas. The cross is **zero lensing
+displacement relative to the unlensed baseline at the same epoch**, not the
+lens location or a fixed sky position. For the first two movies that
+baseline is the source center. For the luminous comparison each curve uses
+its own baseline: source-only or combined source-plus-lens centroid.
 
 The example-local `blended_observables` function combines source images and
-lens light by their observed fluxes. It returns the total flux, observed
+lens light by their observed fluxes. It returns total flux, observed
 centroid, same-time unlensed combined-light centroid, and their displacement.
-For blending, source positions follow the same parallax trajectory in the
-lens-relative frame. All positions use the same frame and angular units.
+Source positions follow the same parallax trajectory used for lensing.
 The script checks the flux-weighted identity, physical limits, and JAX
-compilation/differentiation. Unrelated blended light can use the same
-composition; its flux and position trajectory belong in the observation
-model for each analysis.
+compilation/differentiation. Unrelated blends can use the same composition;
+their flux and position trajectory belong in each analysis's observation
+model. Finite-lens occultation is outside these point-lens examples.
 
-See the [astrometry chapter](../../docs/astrometry.md) for equations and
-coordinate conventions. This is an observation-model recipe; it does not
-add a public blending API to `singlens`.
+See the [astrometry chapter](../../docs/astrometry.md) for physical assumptions,
+sources, equations, and sky-coordinate conventions. This observation-model
+recipe does not add a public blending API to `singlens`.

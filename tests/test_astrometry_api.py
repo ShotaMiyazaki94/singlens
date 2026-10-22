@@ -8,6 +8,7 @@ import pytest
 import singlens as sl
 from singlens.lensing.point import point_source_shift
 from singlens.lightcurve import _prepared_model
+from singlens.trajectory import HeliocentricEphemeris
 
 
 def _cartesian(value):
@@ -182,6 +183,70 @@ def test_annual_parallax_reuses_the_trajectory_frame(finite):
             atol=1e-8,
         )
     assert result.shape == times.shape
+
+
+def test_annual_parallax_sky_rotation_matches_physical_source_and_lens_positions():
+    # At RA=Dec=0, north is +z and east is +y. A synthetic accelerated
+    # observer makes its geocentric displacement known independently of the
+    # package's projection and parallax-offset implementation.
+    times = np.arange(-20.0, 21.0, 10.0)
+    observer_position = np.column_stack(
+        (
+            np.ones_like(times),
+            0.1 + 0.02 * times + 2e-4 * times**2,
+            -0.2 - 0.01 * times - 1e-4 * times**2,
+        )
+    )
+    observer_velocity = np.column_stack(
+        (np.zeros_like(times), 0.02 + 4e-4 * times, -0.01 - 2e-4 * times)
+    )
+    ephemeris = HeliocentricEphemeris(
+        jnp.asarray(times), jnp.asarray(observer_position), jnp.asarray(observer_velocity)
+    )
+    geometry = sl.AnnualParallax(
+        ra_deg=0.0,
+        dec_deg=0.0,
+        t_ref=0.0,
+        time_origin=0.0,
+        use_hjd=False,
+        ephemeris=ephemeris,
+    )
+    model = sl.Model(parallax=geometry)
+    params = sl.Parameters(t0=0.0, u0=0.2, t_e=60.0, pi_e_n=0.12, pi_e_e=0.16)
+    theta_e = 0.6  # mas
+
+    # Independent apparent sky positions in north + i east, in mas. Their
+    # lens-minus-source proper motion is (0.006 + 0.008j) mas/day, parallel
+    # to pi_E, with theta_E / |mu_L - mu_S| = 60 days. Stellar parallax is
+    # minus the projected observer displacement; pi_L - pi_S = 0.12 mas.
+    observer_residual_ne = (-1e-4 + 2e-4j) * times**2
+    source_position = 0.496 - 0.372j + (0.003 - 0.002j) * times - 0.125 * observer_residual_ne
+    lens_position = 0.4 - 0.3j + (0.009 + 0.006j) * times - 0.245 * observer_residual_ne
+    separation = source_position - lens_position
+    # w denotes source minus lens, so its sky orientation is opposite to
+    # the standard microlensing-parallax vector's lens-minus-source motion.
+    phi = np.arctan2(params.pi_e_e, params.pi_e_n) + np.pi
+    rotation = np.exp(1j * phi)
+    np.testing.assert_allclose(
+        theta_e * rotation * model.trajectory(times, params), separation, atol=1e-14
+    )
+
+    # Form the image centroid from the two individual images and their
+    # positive flux weights, rather than reusing a centroid-shift formula.
+    u = np.abs(separation) / theta_e
+    direction = separation / np.abs(separation)
+    root = np.sqrt(u**2 + 4)
+    image_plus = lens_position + theta_e * direction * (u + root) / 2
+    image_minus = lens_position + theta_e * direction * (u - root) / 2
+    magnification = (u**2 + 2) / (u * root)
+    centroid = ((magnification + 1) * image_plus + (magnification - 1) * image_minus) / (
+        2 * magnification
+    )
+    np.testing.assert_allclose(
+        theta_e * rotation * model.astrometric_shift(times, params),
+        centroid - source_position,
+        atol=1e-14,
+    )
 
 
 def test_astrometry_parameter_validation():

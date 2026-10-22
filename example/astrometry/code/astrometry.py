@@ -17,6 +17,7 @@ from example._common import save_json
 from example.astrometry.code.animation import save_source_animation
 from example.astrometry.code.long_event import (
     calculate_long_event,
+    calculate_roman_event,
     save_blending_animation,
     save_long_event_animation,
     save_long_event_data,
@@ -106,10 +107,10 @@ def blended_observables(
 def calculate_examples():
     """Calculate the first, source-profile comparison only."""
     # BEGIN SOURCE EXAMPLE
-    times = jnp.linspace(-80.0, 80.0, 4801)  # days
-    event = dict(t0=0.0, u0=0.1, t_e=20.0)
+    event = dict(t0=0.0, u0=0.1, t_e=0.8)
+    times = event["t0"] + event["t_e"] * jnp.linspace(-4.0, 4.0, 4801)  # days
     rho = 0.5
-    theta_e_mas = 1.2
+    theta_e_mas = 0.012
 
     point_model = sl.Model(source="point")
     uniform_model = sl.Model(source="uniform")
@@ -127,8 +128,9 @@ def calculate_examples():
     # Real and imaginary parts are the signed tau and beta components.
     # END SOURCE EXAMPLE
 
-    # Track plots include logarithmic wings so all curves visibly approach the
-    # unlensed origin. No artificial segment closes the finite-time endpoints.
+    # The faint complete tracks show an ideal rectilinear continuation, not an
+    # annual-parallax prediction over the full wings. No artificial closing
+    # segment joins their finite-time endpoints.
     wings = event["t_e"] * np.geomspace(2.0, 1000.0, 1001)
     track_times = jnp.asarray(np.unique(np.concatenate((-wings, times, wings))))
     track_shifts = [
@@ -152,18 +154,19 @@ def calculate_examples():
     )
 
 
-def calculate_blending(long_event):
-    magnifications = long_event["magnifications"]
-    shifts = long_event["shifts"]
-    trajectories = long_event["trajectories"]
-    theta_e_mas = long_event["theta_e_mas"]
+def calculate_blending(roman_event):
     # BEGIN BLENDING EXAMPLE
+    magnifications = roman_event["magnifications"]
+    shifts = roman_event["shifts"]
+    trajectories = roman_event["trajectories"]
+    theta_e_mas = roman_event["theta_e_mas"]
     # Positions are relative to the lens and use the same annual-parallax
-    # trajectory as the long-event magnification and source centroid shift.
+    # trajectory as the independent Roman-scale stellar event.
     magnification = magnifications[1]
     source_shift = shifts[1]
     source_position_mas = theta_e_mas * trajectories[1]
-    source_flux, blend_flux = 1.0, 0.5
+    source_flux = 1.0
+    blend_flux = source_flux * roman_event["blend_to_source_flux"]
     lens_position_mas = 0.0 + 0.0j
     luminous_lens = blended_observables(
         magnification,
@@ -176,10 +179,11 @@ def calculate_blending(long_event):
     normalized_flux = luminous_lens.total_flux / (source_flux + blend_flux)
     # END BLENDING EXAMPLE
     return dict(
-        times=long_event["times"],
-        epochs=long_event["epochs"],
-        event=long_event["event"],
-        rho=long_event["rho"],
+        times=roman_event["times"],
+        epochs=roman_event["epochs"],
+        event=roman_event["event"],
+        rho=roman_event["rho"],
+        lensing_event=roman_event,
         magnification=magnification,
         source_shift=source_shift,
         source_position_mas=source_position_mas,
@@ -261,6 +265,89 @@ def verify_observables(data):
     assert np.all(np.isfinite(np.asarray(blend_gradient)))
 
 
+def physical_interpretation(data, *, pi_rel_mas, pi_rel_assumed, motion_frame):
+    """One illustrative physical realization, with assumptions kept explicit.
+
+    Angular Einstein radius and annual parallax constrain physical quantities;
+    the source distance is an additional assumption. The short rectilinear
+    example also needs an assumed relative parallax to assign a lens mass.
+    """
+    source_distance_kpc = data.get("source_distance_kpc", 8.0)
+    kappa_mas_per_solar_mass = 8.144
+    solar_to_jupiter_mass = 1047.348644
+    au_per_solar_radius = 149597870700.0 / 695700000.0
+    theta_e_mas = data["theta_e_mas"]
+    lens_mass_solar = theta_e_mas**2 / (kappa_mas_per_solar_mass * pi_rel_mas)
+    assumptions = dict(
+        data.get("physical_assumptions", {}), source_distance_kpc=source_distance_kpc
+    )
+    if pi_rel_assumed:
+        assumptions["relative_parallax_mas"] = pi_rel_mas
+    derived = dict(
+        relative_parallax_mas=float(pi_rel_mas),
+        lens_distance_kpc=float(1.0 / (1.0 / source_distance_kpc + pi_rel_mas)),
+        lens_mass_solar=float(lens_mass_solar),
+        lens_mass_jupiter=float(lens_mass_solar * solar_to_jupiter_mass),
+        relative_proper_motion_mas_per_year=float(theta_e_mas / data["event"]["t_e"] * 365.25),
+    )
+    if data.get("rho") is not None:
+        theta_star_mas = data["rho"] * theta_e_mas
+        derived.update(
+            source_angular_radius_mas=float(theta_star_mas),
+            source_radius_solar=float(theta_star_mas * source_distance_kpc * au_per_solar_radius),
+        )
+    return dict(
+        assumptions=assumptions,
+        relative_parallax_source=(
+            "assumed; annual parallax is omitted in this short-event example"
+            if pi_rel_assumed
+            else "theta_E * hypot(pi_E_N, pi_E_E) from the annual-parallax model inputs"
+        ),
+        derived=derived,
+        proper_motion_frame=motion_frame,
+        constants=dict(
+            kappa_mas_per_solar_mass=kappa_mas_per_solar_mass,
+            solar_to_jupiter_mass=solar_to_jupiter_mass,
+            au_per_solar_radius=au_per_solar_radius,
+            days_per_year=365.25,
+        ),
+    )
+
+
+def event_configuration(data):
+    """Self-contained parameters and physical interpretation for one event."""
+    config = dict(
+        name=data["name"],
+        event=data["event"],
+        rho=data["rho"],
+        source=data["source"],
+        theta_e_mas=data["theta_e_mas"],
+        parallax_geometry=data["parallax_geometry"],
+        pi_e_n=data["pi_e_n"],
+        pi_e_e=data["pi_e_e"],
+        time_convention="HJD - 2450000; plotted time is t - t0",
+        samples=len(data["times"]),
+        time_range_day=[float(data["times"][0]), float(data["times"][-1])],
+        minimum_u_over_rho=(
+            None
+            if data["minimum_u_over_rho"] is None
+            else dict(zip(("no_parallax", "annual_parallax"), data["minimum_u_over_rho"]))
+        ),
+        track_vertical_expansion=1.0,
+        shift_reference="same-epoch unlensed source center; origin is zero lensing displacement",
+        physical_interpretation=physical_interpretation(
+            data,
+            pi_rel_mas=data["theta_e_mas"] * np.hypot(data["pi_e_n"], data["pi_e_e"]),
+            pi_rel_assumed=False,
+            motion_frame="geocentric at t_ref",
+        ),
+    )
+    for key in ("reference", "references", "observer_model", "photometry_note"):
+        if key in data:
+            config[key] = data[key]
+    return config
+
+
 def save_data(source, long_event, blending, output):
     output.mkdir(parents=True, exist_ok=True)
     columns = [source["times"]]
@@ -339,32 +426,27 @@ def save_data(source, long_event, blending, output):
                     float(source["track_times"][-1]),
                 ],
                 track_max_abs_tau=1000.0,
+                track_interpretation="ideal rectilinear continuation, not an annual-parallax forecast",
                 track_vertical_expansion=5.0,
-                animation_time_range_day=[-80.0, 80.0],
-            ),
-            long_event=dict(
-                event=long_event["event"],
-                rho=long_event["rho"],
-                source=long_event["source"],
-                theta_e_mas=long_event["theta_e_mas"],
-                parallax_geometry=long_event["parallax_geometry"],
-                pi_e_n=long_event["pi_e_n"],
-                pi_e_e=long_event["pi_e_e"],
-                time_convention="HJD - 2450000; plotted time is t - t0",
-                samples=len(long_event["times"]),
-                time_range_day=[-540.0, 540.0],
-                minimum_u_over_rho=dict(
-                    zip(("no_parallax", "annual_parallax"), long_event["minimum_u_over_rho"])
+                animation_time_range_day=[float(source["times"][0]), float(source["times"][-1])],
+                shift_reference="same-epoch unlensed source center; origin is zero lensing displacement",
+                physical_interpretation=physical_interpretation(
+                    source,
+                    pi_rel_mas=0.1,
+                    pi_rel_assumed=True,
+                    motion_frame="rectilinear short-event approximation",
                 ),
-                track_vertical_expansion=1.0,
             ),
+            long_event=dict(event_configuration(long_event), flux_yscale="log"),
             blending=dict(
-                event="long_event with annual parallax",
+                event_configuration(blending["lensing_event"]),
                 source_flux=blending["source_flux"],
                 blend_flux=blending["blend_flux"],
                 lens_position_mas=[0.0, 0.0],
                 coordinate_frame="tau + 1j*beta; positions relative to the lens",
                 shift_reference="same-time unlensed source-plus-lens centroid",
+                comparison_reference="each curve uses its own same-epoch unlensed centroid",
+                flux_ratio_interpretation="F146: equal intrinsic band luminosity and foreground extinction; g=(D_S/D_L)^2=16/9",
                 track_vertical_expansion=1.0,
             ),
             animation=dict(frames=241, frames_per_second=20, duration_ms=50),
@@ -384,7 +466,8 @@ def main():
     publication_style()
     source = calculate_examples()
     long_event = calculate_long_event()
-    blending = calculate_blending(long_event)
+    roman_event = calculate_roman_event()
+    blending = calculate_blending(roman_event)
     verify_observables(blending)
     save_data(source, long_event, blending, args.output_dir)
     save_source_animation(source, args.output_dir)

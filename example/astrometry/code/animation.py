@@ -19,7 +19,7 @@ def save_source_animation(data, output):
     """Save a uniformly timed, looping GIF and return its path.
 
     The 241 epochs cover -4 to +4 Einstein times relative to closest approach
-    (-80 to +80 days for this example), at 20 frames per second. The right
+    (-3.2 to +3.2 days for this example), at 20 frames per second. The right
     panel expands the vertical display scale by five, retaining physical
     microarcsecond coordinates. Faint curves show the complete trajectories;
     the colored trails cover only the animated time interval.
@@ -34,6 +34,7 @@ def save_source_animation(data, output):
 
     event = data["event"]
     contact = event["t_e"] * np.sqrt(data["rho"] ** 2 - event["u0"] ** 2)
+    theta_e_microas = 1000 * data["theta_e_mas"]
     return save_event_animation(
         data["times"] - event["t0"],
         data["magnifications"],
@@ -47,12 +48,13 @@ def save_source_animation(data, output):
         contact_times=(-contact, contact),
         vertical_expansion=5,
         flux_ylim=(0.8, 10.8),
-        track_xlim=(-460, 460),
-        track_ylim=(-36, 66),
-        flux_xticks=np.arange(-80, 81, 40),
+        track_xlim=theta_e_microas * np.array([-460, 460]) / 1200,
+        track_ylim=theta_e_microas * np.array([-36, 66]) / 1200,
+        flux_xticks=event["t_e"] * np.arange(-4, 5, 2),
         flux_yticks=[2, 4, 6, 8, 10],
-        track_xticks=[-400, -200, 0, 200, 400],
-        track_yticks=[-20, 0, 20, 40, 60],
+        track_xticks=theta_e_microas * np.array([-400, -200, 0, 200, 400]) / 1200,
+        track_yticks=theta_e_microas * np.array([-20, 0, 20, 40, 60]) / 1200,
+        origin_label="Origin: unlensed source at each epoch",
     )
 
 
@@ -74,11 +76,14 @@ def save_event_animation(
     track_ylim=None,
     flux_xticks=None,
     flux_yticks=None,
+    flux_yscale="linear",
     track_xticks=None,
     track_yticks=None,
     flux_ylabel=r"Magnification $A$",
     track_xlabel=r"$\delta\theta_\tau$ ($\mu$as)",
     track_ylabel=r"$\delta\theta_\beta$ ($\mu$as)",
+    origin_label=None,
+    time_label_decimals=None,
 ):
     """Render synchronized light curves and centroid tracks from model arrays.
 
@@ -87,6 +92,9 @@ def save_event_animation(
     uniformly spaced epochs at 20 fps. One array per model is supplied in
     ``magnifications`` and ``shifts``; optional ``full_shifts`` supply longer
     faint background trajectories. Angular axes default to equal scales.
+    ``origin_label`` explains the same-epoch reference below the shift panel.
+    Time labels automatically retain enough decimals to distinguish frames,
+    unless ``time_label_decimals`` is specified.
     """
     from example.astrometry.code.astrometry import publication_style
 
@@ -98,13 +106,20 @@ def save_event_animation(
     if spacing[0] <= 0 or not np.allclose(spacing, spacing[0]):
         raise ValueError("Animation times must increase with uniform spacing.")
     frame_indices = np.linspace(0, len(relative_times) - 1, 241, dtype=int)
+    if time_label_decimals is None:
+        frame_spacing = relative_times[frame_indices[1]] - relative_times[frame_indices[0]]
+        time_label_decimals = max(1, int(np.ceil(-np.log10(frame_spacing))))
     magnifications = [np.asarray(A) for A in magnifications]
     shifts = [np.asarray(shift) for shift in shifts]
     full_shifts = shifts if full_shifts is None else [np.asarray(s) for s in full_shifts]
     if flux_ylim is None:
         flux_values = np.concatenate(magnifications)
-        flux_padding = 0.08 * np.ptp(flux_values)
-        flux_ylim = (flux_values.min() - flux_padding, flux_values.max() + flux_padding)
+        if flux_yscale == "log":
+            flux_padding = (flux_values.max() / flux_values.min()) ** 0.08
+            flux_ylim = (flux_values.min() / flux_padding, flux_values.max() * flux_padding)
+        else:
+            flux_padding = 0.08 * np.ptp(flux_values)
+            flux_ylim = (flux_values.min() - flux_padding, flux_values.max() + flux_padding)
 
     fig = plt.figure(figsize=(10.5, 4.0), dpi=110)
     # Matching panel heights, with room for a shared legend and axis labels.
@@ -128,6 +143,7 @@ def save_event_animation(
     ax_flux.set(
         xlim=(relative_times[0], relative_times[-1]),
         ylim=flux_ylim,
+        yscale=flux_yscale,
         xlabel=r"$t-t_0$ (day)",
         ylabel=flux_ylabel,
         title="Light curve",
@@ -207,10 +223,15 @@ def save_event_animation(
         handlelength=2.8,
         columnspacing=2.2,
     )
+    if origin_label:
+        fig.text(0.7775, 0.025, origin_label, ha="center", va="bottom", fontsize=8)
 
     def draw_frame(index):
         cursor.set_xdata([relative_times[index], relative_times[index]])
-        time_label.set_text(rf"$t-t_0 = {relative_times[index]:+.1f}$ day")
+        frame_time = round(float(relative_times[index]), time_label_decimals)
+        if frame_time == 0:
+            frame_time = 0.0  # Avoid displaying a rounded negative zero.
+        time_label.set_text(rf"$t-t_0 = {frame_time:+.{time_label_decimals}f}$ day")
         for A, shift, flux_trail, track_trail, flux_dot, track_dot in zip(
             magnifications, shifts, flux_trails, track_trails, flux_dots, track_dots
         ):
