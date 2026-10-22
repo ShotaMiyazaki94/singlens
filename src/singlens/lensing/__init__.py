@@ -1,8 +1,8 @@
-"""Point-lens magnification and circular finite-source profiles."""
+"""Point-lens magnification, centroid shifts, and circular source profiles."""
 
 from .config import FFTConfig
 from .finite import LinearLimbDarkened, QuadraticProfile, UniformDisk
-from .point import image_positions, pspl
+from .point import image_positions, point_source_shift, pspl
 
 __all__ = [
     "FFTConfig",
@@ -10,5 +10,6 @@ __all__ = [
     "LinearLimbDarkened",
     "QuadraticProfile",
     "pspl",
+    "point_source_shift",
     "image_positions",
 ]

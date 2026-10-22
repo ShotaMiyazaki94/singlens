@@ -3,7 +3,8 @@
 <img src="https://raw.githubusercontent.com/ShotaMiyazaki94/singlens/main/logo_transparent.png" alt="singlens logo" width="280">
 
 Differentiable single-lens microlensing in JAX: static and annual-parallax light
-curves, finite sources, limb darkening, and gradient-based inference.
+curves, astrometric centroid shifts, finite sources, limb darkening, and
+gradient-based inference.
 
 ```bash
 python -m pip install singlens
@@ -41,6 +42,23 @@ curve = jax.jit(lambda rho: magnification(times, t0=8000., u0=0.005,
 A = curve(0.01)
 dA_drho = jax.jacfwd(curve)(0.01)
 ```
+
+Use the same event parameters for the unresolved images' astrometric shift:
+
+```python
+from singlens import astrometric_shift
+
+shift = astrometric_shift(times, **event, parallax=geometry,
+                         pi_e_n=0.2, pi_e_e=-0.1)
+shift_mas = 1.2 * shift  # For an angular Einstein radius of 1.2 mas.
+```
+
+The complex shift is measured from the unlensed source center in the
+`tau + 1j*beta` trajectory frame. It assumes a dark point lens and a circular
+source. Rotate this frame into sky coordinates separately; source proper
+motion/parallax and blended light are not included. See
+[astrometric accuracy](https://singlens.readthedocs.io/en/latest/numerics.html#astrometric-shifts)
+before fitting precise positions.
 
 Use `Model`, `Parameters`, and `fit_flux` for named event parameters,
 source-position input, and source/blend flux fitting.

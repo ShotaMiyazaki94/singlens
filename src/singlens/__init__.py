@@ -4,7 +4,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 from .lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk
 from .lensing.point import image_positions, pspl
-from .lightcurve import magnification
+from .lightcurve import astrometric_shift, magnification
 from .model import Model
 from .parameters import Parameters
 from .photometry import FluxFit, fit_flux
@@ -18,6 +18,7 @@ except PackageNotFoundError:
 __all__ = [
     "__version__",
     "magnification",
+    "astrometric_shift",
     "Model",
     "Parameters",
     "FFTConfig",

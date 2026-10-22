@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Astrometric centroid shifts for dark point lenses with point sources or
+  circular uniform, linear limb-darkened, and pure `mu2` sources.
+- `astrometric_shift`, `Model.astrometric_shift`, and direct position evaluation
+  return source-relative shifts in Einstein-radius units, with annual
+  microlensing parallax, JIT, automatic differentiation, and event batching.
+- Separate finite-source flux and first-moment convolutions, analytic central
+  and distant limits, and lazy preparation of the astrometric kernels.
+
 ## 0.1.0
 
 - Event-parameter magnification API with annual parallax, finite sources,

@@ -63,7 +63,7 @@ directory and original snapshots in the ignored `archive/` directory.
 The package root holds the event API (`lightcurve.py`), prepared `Model`, and
 `Parameters`. Physical and numerical work is grouped by responsibility:
 
-- `lensing/`: point/finite-source magnification and `FFTConfig`.
+- `lensing/`: point/finite-source magnification, astrometric shifts, and `FFTConfig`.
 - `trajectory/`: `AnnualParallax`, ephemeris loading/projection, and Kepler geometry.
 - `photometry/`: weighted flux fitting and Gaussian marginal likelihoods.
 - `numerics/`: internal FFTLog, interpolation, and Bessel kernels.
@@ -152,6 +152,51 @@ the elliptic small-source limit.
 
 FFTLog uses JAX complex `loggamma`; the Bessel approximations have broad-argument
 tests because `bessel_jn` is not a drop-in replacement across that range.
+
+### Astrometric first moments
+
+`lensing/astrometry.py` prepares astrometric kernels from an existing circular
+source profile. `Model` constructs it lazily under `jax.ensure_compile_time_eval`
+so a cold first call under JIT does not cache tracers. Photometry-only use
+does not prepare these kernels or change the magnification algorithm.
+
+For the point-lens flux-weighted position kernel
+`K(r) = (r**2+3)/sqrt(r**2+4) * r_hat`, subtract the unlensed position:
+`q(r) = K(r) - r_vector`. Its radial magnitude decays as `1/r`, so transforming
+it directly gives difficult far endpoints. The implementation instead
+transforms its divergence,
+`T(r) = 2*(A_point(r)-1) - 4/(r*(r**2+4)**(3/2))`, which decays as `8/r**6`.
+Rationalized expressions and the missing-origin integral corrections retain
+accuracy at both ends of the logarithmic grid.
+
+The source Fourier transform multiplies the transforms of both `A_point-1`
+and `T`. An order-zero inverse Hankel transform gives the flux excess, while
+an order-one inverse with the appropriate factor of `1/k` recovers the radial
+excess moment. The existing FFTLog convention returns different reciprocal
+grids for `J0` and `J1`; interpolate each result on its own output grid.
+Astrometry uses its own jointly validated flux/moment calculation. Do not
+replace either quantity with a separately tuned approximation without
+checking the resulting centroid and derivatives: correlated errors may
+cancel or reinforce after taking the ratio and subtracting the source position.
+The shared high-frequency damping smooths a uniform disk's sharp contact
+feature. Dense samples on both sides of `u/rho=1` are required; a coarse grid
+can miss the largest displacement errors, and increasing FFT resolution
+alone does not remove the fixed damping bias.
+
+The small-source limit uses `K(r)=3/2*r_hat+O(r**2)` and the existing normalized
+source basis transforms. A central even series gives the displacement as a
+coefficient times the Cartesian input position, retaining finite derivatives
+at zero separation. The far-field expansion retains the source profile's
+second radial moment and the astrometric `1/u` tail. Do not apply a
+photometric far-wing truncation to astrometric displacement.
+
+Validate absolute shifts in Einstein-radius units against independent
+lens-centered integration, including brightness basis profiles, source
+contact, approximation boundaries, and far wings. Validate flux and moment
+separately as well. Analytic checks include the point-source limit, rotational
+covariance, exact central slope, the uniform-source contact zero, and forward/
+reverse Cartesian derivatives. A resolution comparison measures numerical
+convergence but cannot establish correctness on its own.
 
 ## Publication
 

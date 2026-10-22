@@ -50,6 +50,44 @@ Missing or unused parameters raise errors; invalid numeric `t_e`, `rho`, or
 .. autofunction:: singlens.magnification
 ```
 
+(astrometric-shift-api)=
+## Event parameters → astrometric shift
+
+`astrometric_shift` accepts the same event parameters and source profiles as
+`magnification`. It returns the unresolved image centroid's displacement from
+the unlensed source center, in angular Einstein-radius units:
+
+```python
+shift = sl.astrometric_shift(
+    times,
+    t0=8000.0,
+    u0=0.005,
+    t_e=20.0,
+    rho=0.01,
+    a1=0.5,
+    parallax=geometry,
+    pi_e_n=0.2,
+    pi_e_e=-0.1,
+)
+theta_e_mas = 1.2
+shift_mas = theta_e_mas * shift
+```
+
+Both arrays preserve `times.shape`. The real and imaginary components are
+along `tau` and `beta` in the trajectory frame; they are not RA/Dec components.
+Apply the event's sky rotation separately. The model assumes a dark point
+lens, unresolved images, and a circular brightness profile. Source proper
+motion/parallax, an absolute sky position, and the flux and positions of
+blended light must be supplied by an observation model.
+
+JIT, derivatives, and `jax.vmap` work as for magnification. Astrometric accuracy
+must be assessed in angular units, including near sign changes; see
+[numerical accuracy](numerics.md#astrometric-shifts).
+
+```{eval-rst}
+.. autofunction:: singlens.astrometric_shift
+```
+
 ## Annual parallax
 
 ```{eval-rst}
@@ -72,15 +110,22 @@ model = sl.Model(source="linear", parallax=geometry)
 p = sl.Parameters(t0=8000.0, u0=0.005, t_e=20.0, rho=0.01, a1=0.5, pi_e_n=0.2, pi_e_e=-0.1)
 A = jax.jit(model.magnification)(times, p)
 A_at_position = model.magnification_at(0.01 + 0.002j, rho=0.01, a1=0.5)
+shift = jax.jit(model.astrometric_shift)(times, p)
+shift_at_position = model.astrometric_shift_at(0.01 + 0.002j, rho=0.01, a1=0.5)
 ```
 
 `source` is `point`, `uniform`, `linear`, or `mu2`. The last is the pure
 `I(mu)=mu**2` profile, not a two-coefficient quadratic law. Position evaluation
 uses separation or complex position directly, without applying a trajectory.
+For `astrometric_shift_at`, a real position gives a signed real shift and a
+complex position gives a complex shift in the input coordinate frame. The
+shape is preserved, and exact alignment returns zero. Finite-source
+astrometric kernels are prepared on the first astrometric call; evaluating
+photometry alone does not prepare them.
 
 ```{eval-rst}
 .. autoclass:: singlens.Model
-   :members: magnification, magnification_at, trajectory, flux, fit_flux
+   :members: magnification, magnification_at, astrometric_shift, astrometric_shift_at, trajectory, flux, fit_flux
 ```
 
 ```{eval-rst}
@@ -127,4 +172,5 @@ and limb-darkening uncertainty.
 profile classes. They accept the same `fft=FFTConfig(...)` as `Model`;
 their `.A` methods return at least 1D arrays. `pspl`,
 `image_positions`, and `singlens.trajectory` provide analytic lens and
-trajectory utilities.
+trajectory utilities. `singlens.lensing.point_source_shift` evaluates the
+analytic point-source displacement directly at signed real or complex positions.
