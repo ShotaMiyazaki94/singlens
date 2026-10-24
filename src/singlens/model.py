@@ -1,11 +1,13 @@
 """Prepared single-lens models, separated from differentiable parameters."""
 
 from dataclasses import dataclass, field, fields
+from functools import cached_property
 
+import jax
 import jax.numpy as jnp
 
 from .lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk
-from .lensing.point import pspl
+from .lensing.point import point_source_shift, pspl
 from .parameters import Parameters
 from .photometry import fit_flux
 from .trajectory import AnnualParallax
@@ -48,6 +50,16 @@ class Model:
             self.source
         ]
         object.__setattr__(self, "_solver", factory(fft=config))
+
+    @cached_property
+    def _astrometric_solver(self):
+        # Photometry-only models do not prepare the extra moment kernels.
+        # The first astrometric call may occur inside jit/grad: cached arrays
+        # must be concrete rather than tracers belonging to that first call.
+        from .lensing.astrometry import FiniteSourceAstrometry
+
+        with jax.ensure_compile_time_eval():
+            return FiniteSourceAstrometry(self._solver)
 
     def _validate(self, params):
         if not isinstance(params, Parameters):
@@ -119,6 +131,46 @@ class Model:
     def magnification(self, times, params):
         """Evaluate a magnification light curve, preserving ``times.shape``."""
         return self.magnification_at(self.trajectory(times, params), rho=params.rho, a1=params.a1)
+
+    def astrometric_shift_at(self, position, *, rho=None, a1=None):
+        """Centroid shift from the unlensed source center, in ``theta_E`` units.
+
+        The unresolved images are produced by a dark point lens at the origin.
+        Real positions give signed real shifts and complex positions give
+        complex shifts in the same coordinate frame. Input shape is preserved.
+        ``rho=0`` gives the point-source limit. Invalid radii or linear
+        coefficients outside [0, 1] return NaN, including under JIT.
+
+        This is a dimensionless lensing shift. An angular Einstein radius,
+        sky rotation, source proper motion/parallax, and the flux and positions
+        of blended light are needed to model an observed sky centroid.
+        """
+        self._validate_source(rho, a1)
+        position = jnp.asarray(position)
+        if self.source == "point":
+            return point_source_shift(position)
+        if self.source == "linear":
+            a1 = jnp.asarray(a1)
+            valid = jnp.isfinite(a1) & (a1 >= 0) & (a1 <= 1)
+            safe_a1 = jnp.where(valid, a1, 0.0)
+            result = jnp.where(
+                valid, self._astrometric_solver.shift(position, rho, a1=safe_a1), jnp.nan
+            )
+        else:
+            result = self._astrometric_solver.shift(position, rho)
+        return result.reshape(position.shape)
+
+    def astrometric_shift(self, times, params):
+        """Complex source-relative shift in the ``tau + 1j*beta`` trajectory frame.
+
+        Results preserve ``times.shape`` and are in angular Einstein-radius
+        units, not RA/Dec. This models the unresolved images of a dark lens;
+        angular scaling, sky rotation, source proper motion/parallax, and
+        blended light are outside this method.
+        """
+        return self.astrometric_shift_at(
+            self.trajectory(times, params), rho=params.rho, a1=params.a1
+        )
 
     def flux(self, times, params, *, f_s=1.0, f_b=0.0):
         """Observed flux with scalar coefficients: ``f_s*magnification + f_b``."""

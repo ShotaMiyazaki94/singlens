@@ -1,8 +1,9 @@
 """Analytic single point-mass lens, in Einstein-radius units."""
 
 import jax.numpy as jnp
+from jax import lax
 
-__all__ = ["pspl", "image_positions", "lens_eq", "lens_eq_det_jac"]
+__all__ = ["pspl", "point_source_shift", "image_positions", "lens_eq", "lens_eq_det_jac"]
 
 
 def pspl(u):
@@ -15,6 +16,22 @@ def pspl(u):
     # Dividing first avoids overflow for large separations.
     h = jnp.hypot(u, 2.0)
     return u / h + (2.0 / h) / u
+
+
+def point_source_shift(position):
+    """Unresolved point-source centroid shift relative to its unlensed position.
+
+    The dark point lens is at the origin and angles are in Einstein-radius
+    units. Real input retains its sign; complex input retains its direction.
+    Shapes are preserved, including scalar input. The shift vanishes at exact
+    alignment, where its Cartesian Jacobian is one half of the identity.
+    """
+    position = jnp.asarray(position)
+    # Divide twice instead of squaring the separation, which can overflow.
+    h = jnp.hypot(jnp.abs(position), jnp.sqrt(2.0))
+    # Keep XLA from reassociating the divisions into position * (1/h**2),
+    # which underflows before multiplying a very large finite position.
+    return lax.optimization_barrier(position / h) / h
 
 
 def image_positions(w):

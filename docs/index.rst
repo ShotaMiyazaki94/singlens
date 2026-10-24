@@ -2,8 +2,9 @@ singlens
 ========
 
 Single-lens microlensing in JAX. Pass observation times and microlensing
-parameters to ``magnification`` to compute static or annual-parallax light
-curves, then differentiate or fit the same function.
+parameters to ``magnification`` and ``astrometric_shift`` to compute static
+or annual-parallax light curves and centroid shifts, then differentiate or
+fit the same functions.
 
 Point sources, uniform disks, and linear limb darkening are supported.
 Use Python 3.12+, JAX 0.11.2+, and float64.
@@ -28,6 +29,7 @@ trajectory, omit the parallax inputs.
 
    installation
    tutorials/quickstart
+   astrometry
    tutorials/autodiff
    tutorials/inference
    api

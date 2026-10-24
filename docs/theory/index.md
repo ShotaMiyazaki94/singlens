@@ -65,6 +65,65 @@ def event_magnification(times, t0, u0, t_e, rho, a1, pi_e_n, pi_e_e):
     )
 ```
 
+## Astrometric centroid shift
+
+The flux-weighted finite-source centroid follows
+[Mao & Witt (1998)](https://arxiv.org/abs/astro-ph/9804045) and
+[Lee et al. (2010)](https://arxiv.org/abs/1005.3021).
+Here its radial convolutions are evaluated with FFTLog.
+
+For a dark point lens with unresolved images, the point-source image centroid
+relative to the lens is
+
+$$
+\boldsymbol c_{\mathrm{PS}}(\boldsymbol r)
+=\frac{r^2+3}{r^2+2}\boldsymbol r,
+\qquad
+\delta\boldsymbol u_{\mathrm{PS}}
+=\frac{\boldsymbol u}{u^2+2}.
+$$
+
+Let $S(\boldsymbol s)$ be the circular source brightness normalized to unit
+unlensed flux. The finite-source flux $D$ and its image-position first moment
+$\boldsymbol M$ are separate convolutions:
+
+$$
+D(\boldsymbol u)=\int S(\boldsymbol s)
+ A_{\mathrm{PS}}(|\boldsymbol u-\boldsymbol s|)\,d^2\boldsymbol s,
+$$
+
+$$
+\boldsymbol M(\boldsymbol u)=\int S(\boldsymbol s)
+ A_{\mathrm{PS}}(|\boldsymbol u-\boldsymbol s|)
+ \boldsymbol c_{\mathrm{PS}}(\boldsymbol u-\boldsymbol s)\,d^2\boldsymbol s,
+\qquad
+\delta\boldsymbol u_{\mathrm{FS}}=
+\frac{\boldsymbol M(\boldsymbol u)}{D(\boldsymbol u)}-\boldsymbol u.
+$$
+
+Thus averaging point-source shifts alone does not give the finite-source
+shift: differential magnification also changes the weighting across the
+source. Circular symmetry makes $\boldsymbol M$ radial. The flux convolution
+uses the order-zero Hankel kernel $J_0$, while the radial first moment uses
+$J_1$, with the same source-brightness Fourier transform. Linear
+limb-darkening basis weights apply to $D$ and $\boldsymbol M$ before taking
+their ratio.
+
+The shift is zero at exact alignment. For a uniform disk it also vanishes
+at $u=\rho$, and its central expansion starts with
+$\delta\boldsymbol u=-\boldsymbol u/(\rho^2+4)+O(u^3)$.
+Its direction can therefore reverse during a source transit. These zeroes
+make an absolute angular error more useful than a pointwise relative error.
+
+`astrometric_shift` returns this dimensionless displacement in the same
+trajectory frame as `Model.trajectory`. Multiplying by $\theta_E$ converts it
+to an angle; a separate sky rotation maps it into astrometric coordinate
+components. Annual microlensing parallax changes $\boldsymbol u(t)$, while
+source proper motion/parallax and blended light require a separate observed
+centroid model. See the [astrometry chapter](../astrometry.md) for light
+curves, centroid tracks, sky coordinates, and blending, and
+[numerical accuracy](../numerics.md#astrometric-shifts) for validation guidance.
+
 ## Flux, optimization, and probability
 
 For one dataset, $F_i=f_s A(t_i;\theta)+f_b$ with known independent Gaussian
@@ -112,7 +171,7 @@ $$\log p(F^{\mathrm{obs}}|\theta,f_s,f_b,\sigma_{\mathrm{GP}},\tau_{\mathrm{GP}}
 The latent GP is marginalized with tinygp. Event parameters, limb darkening,
 fluxes, and GP amplitude, period, and coherence time are jointly sampled
 with the stated priors. The [inference tutorial](../tutorials/inference.ipynb)
-shows posterior light curves, residuals, parameter correlations, and traces.
+shows posterior light curves, residuals, and parameter correlations.
 
 The example fits the `u0 > 0` branch. Other solutions, including negative
 `u0` and parallax degeneracies, may require separate exploration. See [numerical limits](../numerics.md) for accuracy limits.

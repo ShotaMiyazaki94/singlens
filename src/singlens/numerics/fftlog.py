@@ -2,9 +2,8 @@
 
 Adapted from microJAX and fft-extended-source (see NOTICE). This keeps
 the code JIT-friendly and differentiable. It provides a minimal FFTLog class
-for logarithmically spaced inputs and a thin ``hankel`` wrapper that evaluates
-zero-th order Hankel transforms (spherical Bessel ``j_ell`` integrals) that
-appear in the FFT-based microlensing algorithm.
+for logarithmically spaced inputs and a ``hankel`` wrapper for cylindrical
+Bessel transforms. Magnification uses order zero and astrometry order one.
 """
 
 from functools import partial
@@ -104,7 +103,7 @@ class fftlog:
 
 
 class hankel:
-    """Zero-th order Hankel transform wrapper built on :class:`fftlog`."""
+    """Integer-order Hankel transform wrapper built on :class:`fftlog`."""
 
     def __init__(self, x, fx, nu, N_extrap_low=0, N_extrap_high=0, c_window_width=0.25, N_pad=0):
         self.myfftlog = fftlog(
@@ -112,7 +111,7 @@ class hankel:
         )
 
     def hankel(self, n):
-        """Evaluate ``∫ dx/x fx(x) J_n(xy)`` via the FFTLog core."""
+        """Evaluate ``∫ dx/x fx(x) J_n(xy)`` on ``y=(n+0.5)/x[::-1]``."""
         y, Fy = self.myfftlog.fftlog(n - 0.5)
         Fy *= jnp.sqrt(2 * y / jnp.pi)
         return y, Fy

@@ -1,4 +1,4 @@
-"""Event parameters to single-lens magnification."""
+"""Event parameters to single-lens magnification and astrometric shifts."""
 
 from functools import lru_cache
 
@@ -48,3 +48,41 @@ def magnification(
     model = _prepared_model(source, parallax, fft, jax.config.x64_enabled)
     params = Parameters(t0=t0, u0=u0, t_e=t_e, rho=rho, a1=a1, pi_e_n=pi_e_n, pi_e_e=pi_e_e)
     return model.magnification(times, params)
+
+
+def astrometric_shift(
+    times,
+    t0,
+    u0,
+    t_e,
+    *,
+    rho=None,
+    a1=None,
+    parallax=None,
+    pi_e_n=None,
+    pi_e_e=None,
+    fft=None,
+):
+    """Return the source-relative centroid shift in Einstein-radius units.
+
+    Results are complex ``delta_tau + 1j*delta_beta`` in the trajectory frame,
+    with the shape of ``times``; they are not RA/Dec offsets. The images are
+    unresolved and the point lens is dark. Angular scaling by ``theta_E``,
+    sky rotation, source proper motion/parallax, and blended light are outside
+    this interface.
+
+    Times, ``t0`` and positive ``t_e`` share units (days for annual parallax).
+    ``u0`` is signed. Omit ``rho`` for a point source, supply a nonnegative
+    radius for a uniform disk, or also give ``a1`` for linear limb darkening
+    ``I(mu) = 1 - a1*(1-mu)`` with ``0 <= a1 <= 1``.
+
+    Prepare :class:`AnnualParallax` outside JIT and supply both ``pi_e_n`` and
+    ``pi_e_e`` for annual parallax. Capture geometry and :class:`FFTConfig` in
+    a closure when compiling. Enable JAX float64 for finite sources. Event
+    parameters are scalar; use ``jax.vmap`` to evaluate multiple events.
+    :class:`Model` also provides named parameters and direct position input.
+    """
+    source = "point" if rho is None else ("uniform" if a1 is None else "linear")
+    model = _prepared_model(source, parallax, fft, jax.config.x64_enabled)
+    params = Parameters(t0=t0, u0=u0, t_e=t_e, rho=rho, a1=a1, pi_e_n=pi_e_n, pi_e_e=pi_e_e)
+    return model.astrometric_shift(times, params)

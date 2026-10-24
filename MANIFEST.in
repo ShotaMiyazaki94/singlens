@@ -9,7 +9,8 @@ prune docs/_autoapi
 prune docs/reference
 prune docs/.jupyter_cache
 prune docs/.mplconfig
-recursive-include example *.py *.cpp *.md *.json *.csv *.png *.pdf *.npz
+prune docs/local
+recursive-include example *.py *.cpp *.md *.json *.csv *.png *.pdf *.gif *.npz
 recursive-exclude example progress_*.json
 recursive-include tests *.py *.json
 include CONTRIBUTING.md
