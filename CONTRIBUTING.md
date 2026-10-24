@@ -233,3 +233,14 @@ workflow verifies that match, builds and checks the wheel and source archive,
 and uploads both to PyPI. No API token is stored in GitHub. The first successful
 upload creates the PyPI project; a pending publisher does not reserve its name.
 Use a new version for subsequent releases. Regular pushes only run CI.
+
+## CI runtime
+
+The complete test suite runs in three required jobs, keeping each file on one
+worker so module fixtures and independent-reference caches are shared. New test
+files enter the general job automatically. Per-test durations and verbose
+progress identify expensive cases. Latest Python also runs general tests;
+Linux, macOS, and Windows run installed-wheel and focused core compatibility
+checks, while lint/distribution and notebook documentation checks run separately.
+Pull requests targeting develop or main are checked; main pushes are checked
+again after integration.
