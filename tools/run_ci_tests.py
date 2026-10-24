@@ -66,6 +66,10 @@ COMPATIBILITY_CASES = {
         "test_default_domain_edges_point_limit_and_no_fallback",
         "test_closed_ratio_endpoint_survives_coordinate_roundoff",
     ),
+    "tests/test_joint_basis_table.py": (
+        "test_small_source_fixed_separation_gradients",
+        "test_unresolved_flux_retains_the_source_second_moment",
+    ),
 }
 DEFAULT_IGNORED = (
     ".*",

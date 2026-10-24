@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Explicit low-level finite-source quadrature, Gould--Yoo approximations,
+  and reusable cubic basis tables for photometry and astrometry.
+- A bundled finite-source basis table, an offline generation tool, and
+  numerical tests for values, gradients, precision changes, and table reuse.
+  Model continues to use its existing FFTLog configuration.
+
 - Astrometric centroid shifts for dark point lenses with point sources or
   circular uniform, linear limb-darkened, and pure `mu2` sources.
 - `astrometric_shift`, `Model.astrometric_shift`, and direct position evaluation
