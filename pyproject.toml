@@ -47,7 +47,7 @@ docs = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-"singlens.data" = ["*.txt"]
+"singlens.data" = ["*.txt", "*.npz", "*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
