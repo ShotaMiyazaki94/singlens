@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `Model.marginalize_flux` and `singlens.photometry.marginalize_flux`
+  for normalized Gaussian-prior integration of source and blend fluxes,
+  conditional flux means/covariances, and differentiable event inference.
+  Preserve prior uncertainty for constant curves with diffuse proper priors.
+
 - Explicit low-level finite-source quadrature, Gould--Yoo approximations,
   and reusable cubic basis tables for photometry and astrometry.
 - A bundled finite-source basis table, an offline generation tool, and

@@ -9,7 +9,7 @@ import jax.numpy as jnp
 from .lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk
 from .lensing.point import point_source_shift, pspl
 from .parameters import Parameters
-from .photometry import fit_flux
+from .photometry import fit_flux, marginalize_flux
 from .trajectory import AnnualParallax
 
 
@@ -183,6 +183,25 @@ class Model:
 
         Event parameters are held fixed while fitting the two coefficients.
         Reported flux errors assume those event parameters are known. For HMC,
-        sample fluxes with the event parameters and give them explicit priors.
+        either sample fluxes with explicit priors or use ``marginalize_flux``
+        with Gaussian priors.
         """
         return fit_flux(self.magnification(times, params), observed_flux, flux_err)
+
+    def marginalize_flux(
+        self, times, params, observed_flux, flux_err, *, prior_mean, prior_covariance
+    ):
+        """Integrate source/blend fluxes under a Gaussian prior for one dataset.
+
+        Supply ``prior_mean`` (2,) and ``prior_covariance`` (2, 2) in
+        ``(f_s, f_b)`` order, and measurement standard deviations ``flux_err``.
+        Returns the normalized log likelihood and conditional flux posterior
+        mean/covariance. Gaussian priors allow negative fluxes.
+        """
+        return marginalize_flux(
+            self.magnification(times, params),
+            observed_flux,
+            flux_err,
+            prior_mean=prior_mean,
+            prior_covariance=prior_covariance,
+        )

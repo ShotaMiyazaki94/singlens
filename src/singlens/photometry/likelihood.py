@@ -1,175 +1,176 @@
-"""Gaussian-prior marginal likelihoods for microlensing photometry.
+"""Gaussian marginalization of linear source and blend fluxes."""
 
-Source and blend fluxes are integrated out analytically.
-Two NLL variants are implemented:
+from typing import NamedTuple
 
-- ``nll_ulens``: fast path with diagonal observational noise and diagonal
-  Gaussian priors on source and blend fluxes.
-- ``nll_ulens_general``: full-rank observational covariance and arbitrary
-  Gaussian priors (mean and covariance).
-
-The Gaussian normalization constant ``N/2 * log(2*pi)`` is omitted from both
-NLL functions, matching microJAX.
-
-All routines operate on ``jnp.ndarray`` inputs and are differentiable, making
-them suitable for gradient-based optimization or inference.
-"""
-
-__all__ = [
-    "nll_ulens",
-    "nll_ulens_general",
-]
-
+import jax
 import jax.numpy as jnp
-from jax.scipy.linalg import solve
+from jax.scipy.linalg import solve_triangular
 
-# Consistent array alias used across modules
-Array = jnp.ndarray
+__all__ = ["FluxMarginalization", "marginalize_flux", "nll_ulens", "nll_ulens_general"]
 
 
-def nll_ulens(
-    flux: Array,
-    M: Array,
-    sigma2_obs: Array,
-    sigma2_fs: float,
-    sigma2_fb: float,
-) -> float:
-    """Negative log-likelihood with diagonal noise and diagonal priors.
+class FluxMarginalization(NamedTuple):
+    """Normalized log likelihood and conditional Gaussian flux posterior.
 
-    Assumes a linear flux model ``flux ≈ M @ [fs, fb]`` with independent
-    observational errors ``C = diag(sigma2_obs)`` and independent Gaussian
-    priors on ``fs`` and ``fb`` with variances ``sigma2_fs`` and ``sigma2_fb``.
-    All integrals over ``fs, fb`` are done analytically, yielding the standard
-    marginalized Gaussian NLL.
-
-    Parameters
-    ----------
-    flux : jnp.ndarray, shape (n,)
-        Observed fluxes.
-    M : jnp.ndarray, shape (n, 2)
-        Design matrix with columns ``[m_fs, 1]`` where ``m_fs`` is the source
-        model term and the constant column captures blend flux.
-    sigma2_obs : jnp.ndarray, shape (n,)
-        Observational variances (diagonal of the noise covariance).
-    sigma2_fs : float
-        Prior variance for source flux ``fs``.
-    sigma2_fb : float
-        Prior variance for blend flux ``fb``.
-
-    Returns
-    -------
-    nll : float
-        Negative log-likelihood value.
-
-    Notes
-    -----
-    The expression equals 0.5 * (mahalanobis + log|C| + log|Lambda| + log|A|)
-    where ``A = M^T C^{-1} M + Lambda^{-1}`` and ``Lambda`` is diagonal with
-    entries ``[sigma2_fs, sigma2_fb]``.
+    ``mean`` and ``covariance`` use coefficient order ``(f_s, f_b)`` and
+    condition on the supplied magnification and measurement errors.
     """
-    flux, M, sigma2_obs = jnp.asarray(flux), jnp.asarray(M), jnp.asarray(sigma2_obs)
-    sigma2_obs = jnp.broadcast_to(sigma2_obs, flux.shape)
-    # Prior precision matrix Lambda^{-1} = diag(1/sigma2_fs, 1/sigma2_fb)
-    lambda_fs = 1.0 / sigma2_fs
-    lambda_fb = 1.0 / sigma2_fb
 
-    # Compute C^{-1} @ M, using element-wise division since C is diagonal
-    Cinv_M = M / sigma2_obs[:, None]  # shape (n, 2)
-
-    # Compute matrix A = M^T @ C^{-1} @ M + Lambda^{-1}
-    # A is 2x2 symmetric matrix
-    a11 = lambda_fs + jnp.dot(M[:, 0], Cinv_M[:, 0])
-    a22 = lambda_fb + jnp.dot(M[:, 1], Cinv_M[:, 1])
-    a12 = jnp.dot(M[:, 0], Cinv_M[:, 1])  # same as a21
-
-    # Compute vector b = M^T @ C^{-1} @ flux
-    Cinv_flux = flux / sigma2_obs
-    b1 = jnp.dot(M[:, 0], Cinv_flux)
-    b2 = jnp.dot(M[:, 1], Cinv_flux)
-
-    # Solve A @ mu = b for posterior mean mu = (mu_fs, mu_fb)
-    detA = a11 * a22 - a12 * a12
-    invA00 = a22 / detA
-    invA11 = a11 / detA
-    invA01 = -a12 / detA
-    mu_fs = invA00 * b1 + invA01 * b2
-    mu_fb = invA01 * b1 + invA11 * b2
-
-    # Compute Mahalanobis part: flux^T @ C^{-1} @ flux - b^T @ A^{-1} @ b
-    # Compute log-determinant terms
-    mahalanobis = jnp.dot(flux, Cinv_flux) - (mu_fs * b1 + mu_fb * b2)
-    logdet_C = jnp.sum(jnp.log(sigma2_obs))  # log|C|
-    logdet_Lambda = jnp.log(sigma2_fs) + jnp.log(sigma2_fb)  # log|Lambda|
-    logdet_A = jnp.log(detA)  # log|A|
-
-    # Final NLL value
-    nll = 0.5 * (mahalanobis + logdet_C + logdet_Lambda + logdet_A)
-    return nll
+    log_likelihood: jax.Array
+    mean: jax.Array
+    covariance: jax.Array
 
 
-def nll_ulens_general(
-    flux: Array,
-    M: Array,
-    C: Array,
-    mu: Array,
-    Lambda: Array,
-) -> float:
-    """Negative log-likelihood with full-rank noise and Gaussian priors.
+def _arrays(*values):
+    arrays = tuple(map(jnp.asarray, values))
+    if any(jnp.iscomplexobj(value) for value in arrays):
+        raise ValueError("Flux data, design, errors, and Gaussian priors must be real.")
+    dtype = jnp.result_type(*arrays, 1.0)
+    return tuple(value.astype(dtype) for value in arrays)
 
-    Generalizes :func:`nll_ulens` to non-diagonal observational covariance
-    ``C`` and an arbitrary Gaussian prior ``N(mu, Lambda)`` over ``[fs, fb]``.
-    The result is the marginalized NLL after integrating out the linear
-    parameters analytically.
 
-    Parameters
-    ----------
-    flux : jnp.ndarray, shape (n,)
-        Observed fluxes.
-    M : jnp.ndarray, shape (n, 2)
-        Design matrix mapping ``[fs, fb]`` to the model flux.
-    C : jnp.ndarray, shape (n, n)
-        Observational covariance matrix (symmetric positive definite).
-    mu : jnp.ndarray, shape (2,)
-        Prior mean for ``[fs, fb]``.
-    Lambda : jnp.ndarray, shape (2, 2)
-        Prior covariance for ``[fs, fb]`` (symmetric positive definite).
+def _validate_shapes(flux, design, mean, covariance):
+    if flux.ndim != 1 or not flux.size:
+        raise ValueError("observed_flux must be a nonempty 1D array.")
+    if design.shape != (flux.size, 2):
+        raise ValueError("The design matrix must have shape (n, 2).")
+    if mean.shape != (2,) or covariance.shape != (2, 2):
+        raise ValueError("prior_mean and prior_covariance must have shapes (2,) and (2, 2).")
 
-    Returns
-    -------
-    nll : float
-        Negative log-likelihood value.
 
-    Notes
-    -----
-    Defines ``A = Lambda^{-1} + M^T C^{-1} M`` and posterior mean
-    ``m = A^{-1} M^T C^{-1} (flux - M mu)``. The NLL equals
-    ``0.5 * ( (flux - M mu)^T C^{-1} (flux - M mu) - m^T A m + log|C| + log|Lambda| + log|A| )``.
+def _symmetric_finite(matrix):
+    tolerance = 32 * jnp.finfo(matrix.dtype).eps * jnp.max(jnp.abs(matrix))
+    return jnp.all(jnp.isfinite(matrix)) & jnp.all(jnp.abs(matrix - matrix.T) <= tolerance)
+
+
+def _marginalize(flux, design, noise, mean, covariance, *, diagonal):
+    """Prior-whitened Gaussian integral; noise is SD or a dense covariance."""
+    _validate_shapes(flux, design, mean, covariance)
+    prior_chol = jnp.linalg.cholesky(covariance)
+    valid = (
+        jnp.all(jnp.isfinite(flux))
+        & jnp.all(jnp.isfinite(design))
+        & jnp.all(jnp.isfinite(mean))
+        & _symmetric_finite(covariance)
+        & jnp.all(jnp.isfinite(prior_chol))
+    )
+    residual = flux - design @ mean
+    scaled_design = design @ prior_chol
+    if diagonal:
+        if noise.ndim != 0 and noise.shape != flux.shape:
+            raise ValueError("flux_err must be scalar or have the same shape as observed_flux.")
+        noise = jnp.broadcast_to(noise, flux.shape)
+        valid &= jnp.all(jnp.isfinite(noise) & (noise > 0))
+        residual = residual / noise
+        scaled_design = scaled_design / noise[:, None]
+        logdet_noise = 2 * jnp.sum(jnp.log(noise))
+    else:
+        if noise.shape != (flux.size, flux.size):
+            raise ValueError("The noise covariance must have shape (n, n).")
+        noise_chol = jnp.linalg.cholesky(noise)
+        valid &= _symmetric_finite(noise) & jnp.all(jnp.isfinite(noise_chol))
+        residual = solve_triangular(noise_chol, residual, lower=True)
+        scaled_design = solve_triangular(noise_chol, scaled_design, lower=True)
+        logdet_noise = 2 * jnp.sum(jnp.log(jnp.diag(noise_chol)))
+    # Eliminate one whitened coefficient after projecting out its design
+    # column. Forming I + Z.T @ Z instead loses the unit prior precision for
+    # nearly proportional columns and diffuse priors, even in float64.
+    # Pivoting bounds the projection coefficient and also handles zero columns.
+    swap = jnp.sum(scaled_design[:, 1] ** 2) > jnp.sum(scaled_design[:, 0] ** 2)
+    pivoted = jnp.where(swap, scaled_design[:, ::-1], scaled_design)
+    first, second = pivoted.T
+    norm = first @ first
+    projection = (first @ second) / jnp.where(norm > 0, norm, 1.0)
+    orthogonal = second - projection * first
+    inverse = 1 / (1 + norm)
+    saturation = norm * inverse
+    schur = 1 + orthogonal @ orthogonal + projection**2 * saturation
+    rhs = first @ residual
+    # Project both vectors: a rounding-sized parallel component of the
+    # second column must not pull its unconstrained coefficient away from
+    # the prior when the data follow the first column exactly.
+    orthogonal_residual = residual - first * (rhs / jnp.where(norm > 0, norm, 1.0))
+    mean_second = (orthogonal @ orthogonal_residual + projection * rhs * inverse) / schur
+    mean_first = rhs * inverse - projection * saturation * mean_second
+    mean_white = jnp.stack((mean_first, mean_second))
+    # Combine the parallel prediction analytically, avoiding cancellation
+    # between two large, opposing source/blend contributions.
+    remaining = (
+        residual - first * ((rhs + projection * mean_second) * inverse) - orthogonal * mean_second
+    )
+    covariance_factor = jnp.array(
+        [
+            [jnp.sqrt(inverse), -projection * saturation / jnp.sqrt(schur)],
+            [0.0, 1 / jnp.sqrt(schur)],
+        ],
+        dtype=flux.dtype,
+    )
+    mean_white = jnp.where(swap, mean_white[::-1], mean_white)
+    covariance_factor = jnp.where(swap, covariance_factor[::-1], covariance_factor)
+    # Residual plus prior penalty avoids subtracting two large quadratic forms.
+    quadratic = remaining @ remaining + mean_white @ mean_white
+    logdet = logdet_noise + jnp.log1p(norm) + jnp.log(schur)
+    log_likelihood = -0.5 * (quadratic + logdet + flux.size * jnp.log(2 * jnp.pi))
+    posterior_mean = mean + prior_chol @ mean_white
+    factor = prior_chol @ covariance_factor
+    posterior_covariance = factor @ factor.T
+    return FluxMarginalization(
+        *(
+            jnp.where(valid, value, jnp.nan)
+            for value in (log_likelihood, posterior_mean, posterior_covariance)
+        )
+    )
+
+
+def marginalize_flux(magnification, observed_flux, flux_err, *, prior_mean, prior_covariance):
+    """Integrate source/blend fluxes with an explicit Gaussian prior.
+
+    The model is ``observed_flux = f_s*magnification + f_b + noise``.
+    Supply matching nonempty 1D magnification/flux arrays and positive
+    measurement standard deviations (scalar or matching array). The prior
+    mean has shape ``(2,)`` and its positive-definite covariance ``(2, 2)``,
+    both in ``(f_s, f_b)`` order. Gaussian priors allow negative fluxes.
+
+    Returns the normalized log likelihood and conditional flux mean/covariance.
+    Constant magnification and single observations are supported. Invalid
+    numeric inputs return NaN in every field, including under JIT; shape
+    mistakes raise ``ValueError``. Use ``jax.vmap`` for independent datasets.
     """
-    flux, M, C, mu, Lambda = map(jnp.asarray, (flux, M, C, mu, Lambda))
-    # Inverse of prior covariance
-    Lambda_inv = jnp.linalg.inv(Lambda)  # shape (2, 2)
+    magnification, observed_flux, flux_err, prior_mean, prior_covariance = _arrays(
+        magnification, observed_flux, flux_err, prior_mean, prior_covariance
+    )
+    if magnification.ndim != 1 or magnification.shape != observed_flux.shape:
+        raise ValueError("magnification and observed_flux must be matching 1D arrays.")
+    design = jnp.column_stack((magnification, jnp.ones_like(magnification)))
+    return _marginalize(
+        observed_flux, design, flux_err, prior_mean, prior_covariance, diagonal=True
+    )
 
-    r = flux - M @ mu
-    inverse_products = solve(C, jnp.column_stack((M, r)))
-    Cinv_M, Cinv_r = inverse_products[:, :2], inverse_products[:, 2]
-    Mt_Cinv_M = M.T @ Cinv_M  # shape (2, 2)
 
-    # Posterior precision matrix
-    A = Lambda_inv + Mt_Cinv_M  # shape (2, 2)
+def nll_ulens(flux, M, sigma2_obs, sigma2_fs, sigma2_fb):
+    """Marginal NLL with diagonal noise and zero-mean independent flux priors.
 
-    Mt_Cinv_r = M.T @ Cinv_r  # shape (2,)
+    ``M`` has shape ``(n, 2)``. ``sigma2_obs`` is a scalar or length-n array
+    of observational variances; ``sigma2_fs`` and ``sigma2_fb`` are positive
+    scalar prior variances. The constant ``n/2 * log(2*pi)`` is omitted.
+    """
+    flux, M, sigma2_obs, sigma2_fs, sigma2_fb = _arrays(flux, M, sigma2_obs, sigma2_fs, sigma2_fb)
+    if sigma2_fs.ndim or sigma2_fb.ndim:
+        raise ValueError("Source and blend prior variances must be scalar.")
+    prior = jnp.diag(jnp.stack((sigma2_fs, sigma2_fb)))
+    result = _marginalize(
+        flux, M, jnp.sqrt(sigma2_obs), jnp.zeros(2, dtype=flux.dtype), prior, diagonal=True
+    )
+    return -result.log_likelihood - 0.5 * flux.size * jnp.log(2 * jnp.pi)
 
-    # Posterior mean (optional, not returned but used for Mahalanobis term)
-    posterior_mean = jnp.linalg.solve(A, Mt_Cinv_r)  # shape (2,)
 
-    # Mahalanobis term
-    mahal_term = jnp.dot(r, Cinv_r) - Mt_Cinv_r @ posterior_mean
+def nll_ulens_general(flux, M, C, mu, Lambda):
+    """Marginal NLL with dense noise covariance and a Gaussian flux prior.
 
-    # Log-determinant terms
-    _, logdet_C = jnp.linalg.slogdet(C)
-    _, logdet_Lambda = jnp.linalg.slogdet(Lambda)
-    _, logdet_A = jnp.linalg.slogdet(A)
-
-    # Final negative log-likelihood
-    nll = 0.5 * (mahal_term + logdet_C + logdet_Lambda + logdet_A)
-    return nll
+    ``M``, ``C``, ``mu`` and ``Lambda`` have shapes ``(n, 2)``, ``(n, n)``,
+    ``(2,)`` and ``(2, 2)``. Both covariance matrices must be symmetric and
+    positive definite. The constant ``n/2 * log(2*pi)`` is omitted.
+    """
+    flux, M, C, mu, Lambda = _arrays(flux, M, C, mu, Lambda)
+    result = _marginalize(flux, M, C, mu, Lambda, diagonal=False)
+    return -result.log_likelihood - 0.5 * flux.size * jnp.log(2 * jnp.pi)
