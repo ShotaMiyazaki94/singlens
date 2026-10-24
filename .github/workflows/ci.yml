@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'
 
 permissions:
   contents: read
@@ -15,7 +17,110 @@ concurrency:
 
 jobs:
   test:
+    name: Tests / ${{ matrix.shard }} / Python 3.12
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [photometry, astrometry_tables, general]
+    env:
+      JAX_PLATFORMS: cpu
+      JAX_NUM_CPU_DEVICES: "4"
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install '.[test,examples,validation]' 'jax==0.11.2'
+      - run: python tools/run_ci_tests.py ${{ matrix.shard }} --junitxml local/ci-results/${{ matrix.shard }}.xml
+
+  latest-general:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: General / Python 3.14 / latest JAX
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JAX_PLATFORMS: cpu
+      JAX_NUM_CPU_DEVICES: "4"
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install '.[test,examples,validation]'
+      - run: python tools/run_ci_tests.py general --junitxml local/ci-results/latest-general.xml
+
+  compatibility:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Core / ${{ matrix.os }} / Python ${{ matrix.python }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            python: "3.13"
+            dependencies: "jax pytest"
+          - os: windows-latest
+            python: "3.12"
+            dependencies: "jax==0.11.2 pytest==8.0.0"
+    runs-on: ${{ matrix.os }}
+    env:
+      JAX_PLATFORMS: cpu
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: python -m pip install build "setuptools>=77" ${{ matrix.dependencies }}
+      - run: python -m build --wheel --no-isolation
+      - name: Install wheel without example or reference-library extras
+        shell: bash
+        run: python -m pip install dist/*.whl
+      - run: python tools/check_installed_wheel.py
+      - name: Collect every test without optional extras
+        run: python -m pytest --collect-only -q
+      - run: python tools/run_ci_tests.py compatibility --junitxml local/ci-results/compatibility.xml
+
+  quality:
+    name: Quality / minimum dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JAX_PLATFORMS: cpu
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install '.[dev]' 'jax==0.11.2' 'numpy==2.1.0' 'scipy==1.15.0' 'ml_dtypes==0.5.0' 'pytest==8.0.0'
+      - run: python tools/run_ci_tests.py --list
+      - run: ruff check src tests example tools docs/conf.py
+      - run: ruff format --check src tests example tools docs/conf.py
+      - run: python -m build
+      - run: python -m twine check --strict dist/*
+      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
+      - run: python tools/check_installed_wheel.py
+      - name: Collect every test without optional extras
+        run: python -m pytest --collect-only -q
+      - run: python tools/run_ci_tests.py compatibility --junitxml local/ci-results/minimum-dependencies.xml
+
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       JAX_PLATFORMS: cpu
       MPLBACKEND: Agg
@@ -25,25 +130,5 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: python -m pip install '.[dev,examples,validation]' 'jax==0.11.2'
-      - run: ruff check src tests example tools docs/conf.py
-      - run: ruff format --check src tests example tools docs/conf.py
-      - run: python -m pytest
-      - run: python -m build
-      - run: python -m twine check --strict dist/*
-      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
-      - name: Check installed wheel
-        working-directory: ${{ runner.temp }}
-        run: |
-          python - <<'PY'
-          import jax
-          import numpy as np
-          import singlens
-          jax.config.update("jax_enable_x64", True)
-          geometry = singlens.AnnualParallax(t_ref=8000., ra_deg=266.4, dec_deg=-29.)
-          value = singlens.magnification(
-              8000., 8000., 0.01, 20., rho=0.01, a1=0.5,
-              parallax=geometry, pi_e_n=0.1, pi_e_e=0.1,
-          )
-          assert np.isfinite(value) and value > 1
-          PY
+      - run: python -m pip install '.[docs]' 'jax==0.11.2'
+      - run: python -m sphinx -E -b html -W --keep-going docs docs/_build/html
