@@ -97,6 +97,11 @@ brightness and image moments.
 The bundled table's maximum sampled relative magnification error is `1.28e-7`.
 The figure below compares astrometric errors, derivatives, and runtime.
 
+The {download}`current artifact validation <../src/singlens/data/finite_source_table_validation.json>`
+reevaluates values and derivatives after stabilizing unresolved-source flux
+residuals. Timing and NUTS results below describe the preceding artifact,
+preserved in the manifest history; those experiments were not rerun.
+
 Gradient checks use a separate grid at `a1=0.5`, approaching contact to
 `|u/rho-1|=1e-4`. The metric takes the largest absolute Cartesian Jacobian
 entry error, multiplying position/radius derivatives by `rho` and leaving

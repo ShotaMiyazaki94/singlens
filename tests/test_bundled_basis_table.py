@@ -213,6 +213,42 @@ def test_closed_ratio_endpoint_survives_coordinate_roundoff():
         assert np.isnan(value).all()
 
 
+@pytest.mark.parametrize("source", ["uniform", "linear"])
+def test_default_small_source_radius_gradients(source):
+    model = sl.Model(source=source)
+    coefficient = 0.43 if source == "linear" else None
+    gamma = 0 if coefficient is None else 2 * coefficient / (3 - coefficient)
+    moment2 = 0.5 - 0.1 * gamma
+
+    def observable(u, rho):
+        return jnp.stack(model.joint_at(u, rho=rho, a1=coefficient))
+
+    derivative = jax.jit(jax.jacfwd(observable, argnums=1))
+    for u in (1.0, 100.0):
+        # The source-average expansion gives these independent O(rho)
+        # responses. At fixed u the omitted relative terms are O(rho**2).
+        response = np.array(
+            [
+                16 * moment2 * (u * u + 1) / (u**3 * (u * u + 4) ** 2.5),
+                -8 * moment2 * (2 * u + 3 / u) / ((u * u + 2) ** 2 * (u * u + 4)),
+            ]
+        )
+        for rho in (1e-6, 1e-5, 1e-3):
+            actual = derivative(u, rho)
+            expected = rho * response
+            if u == 1.0:
+                for index, tolerance in enumerate((1e-8, 5e-9)):
+                    np.testing.assert_allclose(
+                        actual[index], expected[index], rtol=3e-3, atol=tolerance
+                    )
+            else:
+                # This signal is smaller than the absolute float64 flux
+                # resolution. Keep the same derivative floors as custom tables.
+                error = np.abs(actual - expected)
+                assert error[0] < 1e-8
+                assert error[1] < 1e-9
+
+
 @pytest.mark.parametrize("rho", [0.073, 0.73])
 def test_packaged_values_against_direct_and_independent_moments(rho):
     direct = ConcentricDisk(n_disk=96, n_limb=64)

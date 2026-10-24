@@ -88,7 +88,7 @@ timings can differ from the recorded photometry-only implementation.
 
 The bundled table uses 192 radii from `1e-6` to 10 and 947 ratios from 0 to
 `1e8`, dense near contact. Its four coefficient channels occupy 5.82 MB
-(5.03 MB compressed). Generation uses 96 angular nodes and 64 limb nodes
+(5.10 MB compressed). Generation uses 96 angular nodes and 64 limb nodes
 per contact subinterval. Radial disk integrals are analytic; angular and
 limb integrals use fixed Gauss quadrature, split where a disk crosses the lens.
 
@@ -109,6 +109,16 @@ $F_j=F_*\exp(L_j/q)$ and $C_j=C_*+D_j/q$. The even separation coordinate
 preserves central Cartesian derivatives; the analytic point-source terms
 avoid cancellation of large coordinate derivatives in the small-source wings.
 Outside the table domain values are NaN, except the analytic `rho=0` limit.
+
+For canonical disk quadrature with both orders at least 16, table generation
+forms the flux residual directly from analytic second moments at
+`u/rho >= 1e5`. The leading omitted relative term is below `4.7e-22` there;
+subtracting rounded absolute fluxes would instead introduce derivative noise.
+The packaged validation report compares the regenerated artifact with the
+predecessor on every grid point and midpoint and reevaluates the archived
+independent value/Jacobian references. The manifest preserves the complete
+previous generation and validation record; timing and NUTS measurements were
+not repeated for the new artifact.
 
 For batches sharing a source radius, evaluation contracts the radius spline
 once before gathering separation coefficients. Small batches retain the direct

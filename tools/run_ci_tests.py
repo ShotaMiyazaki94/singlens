@@ -65,6 +65,7 @@ COMPATIBILITY_CASES = {
         "test_default_joint_separate_shapes_and_event_batch",
         "test_default_domain_edges_point_limit_and_no_fallback",
         "test_closed_ratio_endpoint_survives_coordinate_roundoff",
+        "test_default_small_source_radius_gradients",
     ),
     "tests/test_joint_basis_table.py": (
         "test_small_source_fixed_separation_gradients",
