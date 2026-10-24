@@ -28,7 +28,7 @@ def main():
         samples = {k: jnp.asarray(v.reshape(-1)[indices]) for k, v in archive.items()}
     finer = sl.Model(
         source=model.source,
-        fft=replace(model.fft, n_fft=2 * model.fft.n_fft),
+        solver=replace(model.solver, n_fft=2 * model.solver.n_fft),
         parallax=model.parallax,
     )
 
@@ -50,12 +50,12 @@ def main():
         "data_sha256": data_hash(data),
         "source": model.source,
         "draws_checked": len(indices),
-        "n_fft": [model.fft.n_fft, finer.fft.n_fft],
+        "n_fft": [model.solver.n_fft, finer.solver.n_fft],
         "max_abs_flux_difference_over_error": float(results[:, 0].max()),
         "rms_flux_difference_over_error": float(np.sqrt(results[:, 1].mean())),
         "delta_gp_nll_median": float(np.median(results[:, 2])),
         "delta_gp_nll_range": [float(results[:, 2].min()), float(results[:, 2].max())],
-        "delta_convention": f"NLL({finer.fft.n_fft}) - NLL({model.fft.n_fft})",
+        "delta_convention": f"NLL({finer.solver.n_fft}) - NLL({model.solver.n_fft})",
     }
     save_json(report, "grid_convergence", OUTPUT)
     print(report)

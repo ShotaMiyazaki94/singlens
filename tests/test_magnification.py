@@ -1,4 +1,4 @@
-"""The function-first interface, including a cold first call under transformations."""
+"""Explicit event models under JIT, differentiation, and event batching."""
 
 import jax
 import jax.numpy as jnp
@@ -6,27 +6,29 @@ import numpy as np
 import pytest
 
 import singlens as sl
-from singlens.lightcurve import _prepared_model
+from singlens.lensing import FFTConfig, pspl
 
 
-@pytest.mark.parametrize("source", ["point", "uniform", "linear"])
-def test_function_cold_jit_derivatives_and_batch(source):
-    _prepared_model.cache_clear()
-    config = None if source == "point" else sl.FFTConfig(n_fft=128)
-    t = jnp.array([-0.41, 0.07, 0.33])
+@pytest.mark.parametrize("source", ["point", "uniform", "linear", "mu2"])
+def test_model_first_jit_derivatives_and_event_batch(source):
+    config = None if source == "point" else FFTConfig(n_fft=128)
+    model = sl.Model(source=source, solver=config)
+    times = jnp.array([-0.41, 0.07, 0.33])
     theta = jnp.array([0.01, 0.006, 20.0, 0.012, 0.4])
 
     def evaluate(p):
-        return sl.magnification(
-            t,
-            *p[:3],
+        params = sl.Parameters(
+            t0=p[0],
+            u0=p[1],
+            t_e=p[2],
             rho=None if source == "point" else p[3],
             a1=p[4] if source == "linear" else None,
-            fft=config,
         )
+        return model.magnification(times, params)
 
-    # No eager preparation: a trace must not leak into the cached model.
-    actual = jax.jit(evaluate)(theta)
+    # The first evaluation is compiled, with the model prepared outside JIT.
+    with jax.checking_leaks():
+        actual = jax.jit(evaluate)(theta)
     np.testing.assert_allclose(evaluate(theta), actual, rtol=1e-12)
     derivative = jax.jit(jax.jacfwd(evaluate))(theta)
     np.testing.assert_allclose(derivative, jax.jacrev(evaluate)(theta), rtol=1e-10, atol=1e-8)
@@ -39,33 +41,29 @@ def test_function_cold_jit_derivatives_and_batch(source):
     np.testing.assert_allclose(
         jax.jit(jax.vmap(evaluate))(batch), jnp.stack([evaluate(p) for p in batch])
     )
-    model = sl.Model(source=source, fft=config)
-    expected = model.magnification(
-        t,
-        sl.Parameters(
-            t0=theta[0],
-            u0=theta[1],
-            t_e=theta[2],
-            rho=theta[3] if source != "point" else None,
-            a1=theta[4] if source == "linear" else None,
-        ),
-    )
-    np.testing.assert_allclose(actual, expected, rtol=1e-12)
 
 
 @pytest.mark.parametrize("finite", [False, True])
-def test_parallax_function(finite):
+def test_model_parallax_zero_limit_and_amplitude_derivatives(finite):
     geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0, use_hjd=False)
     times = jnp.array([[7950.0, 8000.0, 8050.0]])
-    kwargs = dict(rho=0.01, a1=0.5, fft=sl.FFTConfig(n_fft=128)) if finite else {}
+    source = "linear" if finite else "point"
+    config = FFTConfig(n_fft=128) if finite else None
+    model = sl.Model(source=source, parallax=geometry, solver=config)
+    static = sl.Model(source=source, solver=config)
+    params = sl.Parameters(
+        t0=8000.0,
+        u0=0.05,
+        t_e=30.0,
+        rho=0.01 if finite else None,
+        a1=0.5 if finite else None,
+    )
 
     def evaluate(pi):
-        return sl.magnification(
-            times, 8000.0, 0.05, 30.0, parallax=geometry, pi_e_n=pi[0], pi_e_e=pi[1], **kwargs
-        )
+        return model.magnification(times, params.replace(pi_e_n=pi[0], pi_e_e=pi[1]))
 
     zero = jax.jit(evaluate)(jnp.zeros(2))
-    np.testing.assert_allclose(zero, sl.magnification(times, 8000.0, 0.05, 30.0, **kwargs))
+    np.testing.assert_allclose(zero, static.magnification(times, params))
     theta = jnp.array([0.2, -0.1])
     derivative = jax.jacfwd(evaluate)(theta)
     for i in range(2):
@@ -79,20 +77,22 @@ def test_parallax_function(finite):
     assert evaluate(theta).shape == times.shape
 
 
-def test_function_parameter_errors_and_scalar():
-    assert sl.magnification(1.0, 0.0, 0.1, 20.0).shape == ()
+def test_event_parameter_errors_and_scalar():
+    model = sl.Model(source="point")
+    params = sl.Parameters(t0=0.0, u0=0.1, t_e=20.0)
+    assert jax.jit(model.magnification)(1.0, params).shape == ()
     with pytest.raises(ValueError, match="rho or a1"):
-        sl.magnification(1.0, 0.0, 0.1, 20.0, a1=0.5)
+        model.magnification(1.0, params.replace(a1=0.5))
     with pytest.raises(ValueError, match="Parallax amplitudes"):
-        sl.magnification(1.0, 0.0, 0.1, 20.0, pi_e_n=0.2)
+        model.magnification(1.0, params.replace(pi_e_n=0.2))
 
 
 def test_static_point_source_against_analytic_curve():
     times = jnp.linspace(-10, 10, 21)
-    expected = sl.pspl(jnp.hypot(times / 20, 0.1))
-    np.testing.assert_allclose(sl.magnification(times, 0.0, -0.1, 20.0), expected)
-    model = sl.Model()
+    expected = pspl(jnp.hypot(times / 20, 0.1))
+    model = sl.Model(source="point")
     params = sl.Parameters(t0=0.0, u0=-0.1, t_e=20.0)
+    np.testing.assert_allclose(model.magnification(times, params), expected)
     np.testing.assert_allclose(model.flux(times, params, f_s=2.0, f_b=0.3), 2 * expected + 0.3)
     np.testing.assert_allclose(model.trajectory(times, params), times / 20 - 0.1j)
-    assert np.isnan(sl.magnification(times, 0.0, 0.1, -20.0)).all()
+    assert np.isnan(model.magnification(times, params.replace(t_e=-20.0))).all()

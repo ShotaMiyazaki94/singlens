@@ -11,34 +11,33 @@ python -m pip install singlens
 ```
 
 Requires Python 3.12+ and JAX 0.11.2+. Install `singlens[examples]` for plotting
-and inference dependencies. Enable float64 before evaluation.
+and inference dependencies. Enable float64 before constructing models or JAX arrays.
 
-See the [documentation](https://singlens.readthedocs.io/en/latest/) for
-installation, tutorials, and the API.
+## Quickstart
 
 ```python
 import jax
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
-from singlens import magnification, AnnualParallax
+from singlens import AnnualParallax, Model, Parameters
 
 times = jnp.linspace(7980., 8020., 501)
-event = dict(t0=8000., u0=0.005, t_e=20., rho=0.01, a1=0.5)
 geometry = AnnualParallax(ra_deg=266., dec_deg=-29., t_ref=8000.)
-A = magnification(times, **event, parallax=geometry,
-                          pi_e_n=0.2, pi_e_e=-0.1)
+model = Model(source="linear", parallax=geometry)
+params = Parameters(t0=8000., u0=0.005, t_e=20., rho=0.01, a1=0.5,
+                    pi_e_n=0.2, pi_e_e=-0.1)
+A = jax.jit(model.magnification)(times, params)
 ```
 
-`magnification` takes event parameters and returns an array with the shape of
-`times`. Omit `rho` for a point source; supply `rho` for a uniform disk, or
-`rho` and physical `a1` for linear limb darkening. Times above are HJD − 2450000
-in days. `AnnualParallax` holds fixed sky geometry; parallax amplitudes remain
-fitted inputs.
+`Model` fixes the source profile and geometry; `Parameters` holds fitted values.
+Choose `source="point"`, `"uniform"`, `"linear"`, or `"mu2"` explicitly.
+Results preserve the shape of `times`. Parallax times are HJD − 2450000 in days.
+See [finite-source effects](docs/finite-source-effects.md) for supported
+profiles, solver choices, and accuracy.
+Differentiate a parameter with JAX:
 
 ```python
-curve = jax.jit(lambda rho: magnification(times, t0=8000., u0=0.005,
-                                        t_e=20., rho=rho, parallax=geometry,
-                                        pi_e_n=.2, pi_e_e=-.1))
+curve = jax.jit(lambda rho: model.magnification(times, params.replace(rho=rho)))
 A = curve(0.01)
 dA_drho = jax.jacfwd(curve)(0.01)
 ```
@@ -46,37 +45,30 @@ dA_drho = jax.jacfwd(curve)(0.01)
 Use the same event parameters for the unresolved images' astrometric shift:
 
 ```python
-from singlens import astrometric_shift
-
-shift = astrometric_shift(times, **event, parallax=geometry,
-                         pi_e_n=0.2, pi_e_e=-0.1)
+A, shift = jax.jit(model.joint)(times, params)
 shift_mas = 1.2 * shift  # For an angular Einstein radius of 1.2 mas.
 ```
 
-The complex shift is measured from the unlensed source center in the
-`tau + 1j*beta` trajectory frame. It assumes a dark point lens and a circular
-source. The [astrometry chapter](https://singlens.readthedocs.io/en/latest/astrometry.html)
-shows light curves and centroid tracks, the sky rotation, and an observation
-model that adds luminous-lens or unrelated blended light. Source proper
-motion and absolute parallax are supplied separately. See
-[astrometric accuracy](https://singlens.readthedocs.io/en/latest/numerics.html#astrometric-shifts)
-before fitting precise positions.
+The shift is relative to the unlensed source center in the `tau + 1j*beta`
+trajectory frame, for a dark point lens and a circular source.
 
-Use `Model`, `Parameters`, and `fit_flux` for named event parameters,
-source-position input, and source/blend flux fitting.
-See the [API](https://singlens.readthedocs.io/en/latest/api.html) and
-[examples](https://github.com/ShotaMiyazaki94/singlens/tree/main/example).
-[Benchmarks](https://singlens.readthedocs.io/en/latest/benchmarks.html) compare
-magnification accuracy, CPU runtime,
-and inference efficiency with VBMicrolensing and MulensModel.
+## Documentation
+
+- [Getting started](https://singlens.readthedocs.io/en/latest/): installation, light curves, and autodiff.
+- [Finite-source effects](docs/finite-source-effects.md): source profiles, methods, and accuracy.
+- [Astrometry](https://singlens.readthedocs.io/en/latest/astrometry.html): sky coordinates, source motion, and blended light.
+- [Inference examples](https://singlens.readthedocs.io/en/latest/examples/index.html): photometry with a GP, flux marginalization, and joint photometry/astrometry.
+- [API](https://singlens.readthedocs.io/en/latest/api.html) and [benchmarks](https://singlens.readthedocs.io/en/latest/benchmarks.html).
 
 For source installation and development, see
 [CONTRIBUTING](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md).
 
 ## Attribution
 
-Adapted from [microJAX](https://github.com/ShotaMiyazaki94/microjax) and the
-FFT method of [Sugiyama (2022)](https://arxiv.org/abs/2203.06637).
+Adapted from [microJAX](https://github.com/ShotaMiyazaki94/microjax).
+Table generation uses the disk-mixture method of
+[Wang (2026)](https://arxiv.org/abs/2607.12483); the FFT backend follows
+[Sugiyama (2022)](https://arxiv.org/abs/2203.06637).
 See [attribution](https://singlens.readthedocs.io/en/latest/attribution.html),
 [NOTICE](https://github.com/ShotaMiyazaki94/singlens/blob/main/NOTICE), and
 [LICENSES](https://github.com/ShotaMiyazaki94/singlens/tree/main/LICENSES) for

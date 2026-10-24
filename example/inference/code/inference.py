@@ -29,6 +29,7 @@ from scipy.optimize import least_squares, minimize
 from tinygp import GaussianProcess, kernels
 
 import singlens as sl
+from singlens.lensing import FFTConfig
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
@@ -167,7 +168,7 @@ def unpack(theta):
 
 def synthetic_event(seed=42, *, variability=True):
     """One unthinned Roman-like season, with separate GP and white-noise draws."""
-    model = sl.Model(source="linear", parallax=sl.AnnualParallax(**PARALLAX))
+    model = sl.Model(source="linear", solver="fft", parallax=sl.AnnualParallax(**PARALLAX))
     f_s = 10 ** (-0.4 * (24.744 - MAG_ZEROPOINT))
     truth = dict(
         t0=0.2,
@@ -209,7 +210,7 @@ def load_injection(output=OUTPUT):
     values = np.genfromtxt(output / "synthetic_event.csv", delimiter=",", names=True)
     model = sl.Model(
         source=report["source"],
-        fft=sl.FFTConfig(**report.get("fft", {"n_fft": report["n_fft"]})),
+        solver=FFTConfig(**report.get("fft", {"n_fft": report["n_fft"]})),
         parallax=sl.AnnualParallax(**report["parallax"]),
     )
     return model, Injection(
@@ -606,8 +607,8 @@ def experiment_metadata(data):
         "source_fraction": 0.395,
         "magnitude_zeropoint": MAG_ZEROPOINT,
         "source": "linear",
-        "n_fft": sl.FFTConfig().n_fft,
-        "fft": asdict(sl.FFTConfig()),
+        "n_fft": FFTConfig().n_fft,
+        "fft": asdict(FFTConfig()),
         "parallax": PARALLAX,
         "gp_kernel": "SHO (rotation proxy)",
         "gp_units": {"gp_sigma": "unmagnified source flux", "gp_scale": "day", "gp_period": "day"},

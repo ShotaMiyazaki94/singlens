@@ -5,7 +5,8 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from singlens import AnnualParallax, LinearLimbDarkened, Model, Parameters, UniformDisk
+from singlens import AnnualParallax, Model, Parameters
+from singlens.lensing import LinearLimbDarkened, UniformDisk
 
 pytestmark = pytest.mark.reference
 
@@ -47,7 +48,7 @@ def test_mulensmodel_parallax():
     ref.parallax(earth_orbital=True, satellite=False)
     trajectory = ref.get_trajectory(times=t + 2450000.0)
     geometry = AnnualParallax(t_ref=8000.0, ra_deg=c.ra.deg, dec_deg=c.dec.deg)
-    model = Model(parallax=geometry)
+    model = Model(source="point", parallax=geometry)
     params = Parameters(t0=8000.0, u0=0.01, t_e=30.0, pi_e_n=0.7, pi_e_e=-0.7)
     w = model.trajectory(jnp.array(t), params)
     residual = abs(np.asarray(w) - (trajectory.x + 1j * trajectory.y))

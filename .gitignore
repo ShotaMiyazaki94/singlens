@@ -4,6 +4,40 @@
 /tools/validation/outputs/
 /example/**/outputs/progress_*.json
 
+# Full chains, sample-level diagnostics, and duplicate products remain local.
+# Public documentation uses summaries and selected joint posterior draws.
+/example/parallax_inference/outputs/*_chains.npz
+/example/parallax_inference/outputs/seed-*/*_chains.npz
+/example/parallax_inference/outputs/complete.json
+/example/parallax_inference/outputs/seed-*/complete.json
+/example/parallax_inference/outputs/nuts_diagnostics.json
+/example/parallax_inference/outputs/seed-*/nuts_diagnostics.json
+/example/parallax_inference/outputs/seed-*/*.png
+/example/parallax_inference/outputs/seed-*/*.pdf
+/example/roman_astrometry/outputs/predictive.npz
+
+# Deterministic astrometry grids and spot-check arrays are regenerated locally.
+/example/astrometry/outputs/*.csv
+/example/inference/outputs/active_ffp/spatial_spot_check.npz
+
+# The current GP tutorial uses active_ffp/. Keep only JSON summaries of the
+# earlier inference example; its raw data, posterior, and figures stay local.
+/example/inference/outputs/*.csv
+/example/inference/outputs/*.npz
+/example/inference/outputs/*.png
+/example/inference/outputs/*.pdf
+
+# CK04 atmosphere values are fetched and checked locally; their upstream
+# redistribution permission is unconfirmed, so the derived table is not shipped.
+/example/inference/data/ck04_5000_4000_logg4p5_solar.csv
+
+# Historical numerical summaries stay public; old raw data, samples, and
+# rendered figures are preserved locally without expanding repository history.
+/example/compare-single-vbml/reference/*/*.csv
+/example/compare-single-vbml/reference/*/*.npz
+/example/compare-single-vbml/reference/*/*.png
+/example/compare-single-vbml/reference/*/*.pdf
+
 # Python environments, caches, and build products
 .venv*/
 venv/

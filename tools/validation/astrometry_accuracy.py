@@ -18,6 +18,7 @@ import numpy as np
 from scipy.integrate import quad_vec
 
 import singlens as sl
+from singlens.lensing import FFTConfig
 
 OUTPUT = Path(__file__).parent / "outputs"
 RADII = np.array([1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.1, 1.0, 10.0])
@@ -153,7 +154,7 @@ def main():
     cache = cached.get("values", {}) if cached.get("signature") == signature else {}
     rows, max_wing_change, max_overlap_change = [], 0.0, 0.0
     for source, a1 in PROFILES:
-        model = sl.Model(source=source)
+        model = sl.Model(source=source, solver="fft")
         evaluate = jax.jit(model.astrometric_shift_at)
         for rho in RADII:
             # Absolute u samples also exercise the weak-lensing wings when rho is tiny.
@@ -201,7 +202,7 @@ def main():
     report = dict(
         package_version=sl.__version__,
         jax_version=jax.__version__,
-        fft=asdict(sl.FFTConfig()),
+        fft=asdict(FFTConfig()),
         reference="Independent image-moment adaptive integration and source-centered wing quadrature",
         reference_signature=signature,
         radii=RADII.tolist(),

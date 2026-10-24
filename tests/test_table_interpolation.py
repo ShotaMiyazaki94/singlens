@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
+import singlens as sl
 from singlens.lensing.basis_table import BasisTable
 from singlens.lensing.point import pspl
 
@@ -87,3 +88,20 @@ def test_shared_radius_contraction_matches_small_batches_and_gradients(custom_ta
     )
     np.testing.assert_allclose(actual_value, expected_value, rtol=4e-14, atol=2e-14)
     np.testing.assert_allclose(actual_gradient, expected_gradient, rtol=3e-12, atol=3e-12)
+
+
+def test_model_radius_vmap_matches_independent_batches_and_gradients(custom_table):
+    model = sl.Model(source="linear", solver=custom_table)
+    positions = jnp.linspace(0.0, 0.9, 257) * np.exp(0.31j)
+    radii = jnp.array([0.03, 0.1, 0.7])
+
+    def evaluate(rho):
+        if custom_table.has_astrometry:
+            flux, shift = model.joint_at(positions, rho=rho, a1=0.43)
+            return jnp.stack((flux, shift.real, shift.imag), axis=-1)
+        return model.magnification_at(positions, rho=rho, a1=0.43)
+
+    for function in (evaluate, jax.jacfwd(evaluate)):
+        actual = jax.jit(jax.vmap(function))(radii)
+        expected = jnp.stack([function(r) for r in radii])
+        np.testing.assert_allclose(actual, expected, rtol=2e-11, atol=2e-11)

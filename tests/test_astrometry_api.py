@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 import singlens as sl
+from singlens.lensing import FFTConfig
 from singlens.lensing.point import point_source_shift
-from singlens.lightcurve import _prepared_model
 from singlens.trajectory import HeliocentricEphemeris
 
 
@@ -16,7 +16,7 @@ def _cartesian(value):
 
 
 def test_point_shift_signed_positions_shapes_and_large_separations():
-    model = sl.Model()
+    model = sl.Model(source="point")
     for position in (0.0, -0.3, 0.3 + 0.4j, [[-2.0, 0.0], [0.2, 3.0]]):
         position = jnp.asarray(position)
         actual = jax.jit(model.astrometric_shift_at)(position)
@@ -42,18 +42,20 @@ def test_point_alignment_has_finite_cartesian_derivatives():
     np.testing.assert_allclose(jax.jacrev(shift)(jnp.zeros(2)), expected, atol=1e-14)
 
 
-def test_point_function_uses_signed_trajectory_and_preserves_time_shape():
+def test_point_event_uses_signed_trajectory_and_preserves_time_shape():
     times = jnp.array([[-10.0, 0.0, 10.0]])
     position = times / 20 - 0.1j
     expected = position / (jnp.abs(position) ** 2 + 2)
-    np.testing.assert_allclose(sl.astrometric_shift(times, 0.0, -0.1, 20.0), expected)
-    assert sl.astrometric_shift(1.0, 0.0, 0.1, 20.0).shape == ()
-    assert np.isnan(sl.astrometric_shift(times, 0.0, 0.1, -20.0)).all()
+    model = sl.Model(source="point")
+    params = sl.Parameters(t0=0.0, u0=-0.1, t_e=20.0)
+    np.testing.assert_allclose(model.astrometric_shift(times, params), expected)
+    assert model.astrometric_shift(1.0, params).shape == ()
+    assert np.isnan(model.astrometric_shift(times, params.replace(t_e=-20.0))).all()
 
 
 @pytest.mark.parametrize("source", ["uniform", "linear", "mu2"])
 def test_finite_zero_radius_coordinate_covariance_and_shapes(source):
-    model = sl.Model(source=source, fft=sl.FFTConfig(n_fft=128))
+    model = sl.Model(source=source, solver=FFTConfig(n_fft=128))
     profile = {"a1": 0.4} if source == "linear" else {}
     positions = jnp.array([[-0.02, 0.0, 0.03]])
     compiled = jax.jit(model.astrometric_shift_at)
@@ -81,21 +83,22 @@ def test_finite_zero_radius_coordinate_covariance_and_shapes(source):
     assert float(result[0, 1]) == 0
 
 
-@pytest.mark.parametrize("source", ["point", "uniform", "linear"])
-def test_function_cold_jit_jacobians_and_event_batch(source):
-    _prepared_model.cache_clear()
-    config = None if source == "point" else sl.FFTConfig(n_fft=128)
+@pytest.mark.parametrize("source", ["point", "uniform", "linear", "mu2"])
+def test_model_first_jit_jacobians_and_event_batch(source):
+    config = None if source == "point" else FFTConfig(n_fft=128)
+    model = sl.Model(source=source, solver=config)
     times = jnp.array([-0.41, 0.07, 0.33])
     theta = jnp.array([0.01, 0.006, 20.0, 0.012, 0.4])
 
     def evaluate(p):
-        return sl.astrometric_shift(
-            times,
-            *p[:3],
+        params = sl.Parameters(
+            t0=p[0],
+            u0=p[1],
+            t_e=p[2],
             rho=None if source == "point" else p[3],
             a1=p[4] if source == "linear" else None,
-            fft=config,
         )
+        return model.astrometric_shift(times, params)
 
     # Kernels must remain usable after a first call that occurs inside tracing.
     with jax.checking_leaks():
@@ -118,7 +121,6 @@ def test_function_cold_jit_jacobians_and_event_batch(source):
     np.testing.assert_allclose(
         jax.jit(jax.vmap(evaluate))(batch), jnp.stack([evaluate(p) for p in batch]), atol=1e-14
     )
-    model = sl.Model(source=source, fft=config)
     params = sl.Parameters(
         t0=theta[0],
         u0=theta[1],
@@ -140,7 +142,7 @@ def test_function_cold_jit_jacobians_and_event_batch(source):
 
 
 def test_moment_kernels_are_lazy_and_cold_model_jit_does_not_leak():
-    model = sl.Model(source="uniform", fft=sl.FFTConfig(n_fft=128))
+    model = sl.Model(source="uniform", solver=FFTConfig(n_fft=128))
     assert "_astrometric_solver" not in model.__dict__
     model.magnification_at(0.02, rho=0.01)
     assert "_astrometric_solver" not in model.__dict__
@@ -155,16 +157,24 @@ def test_moment_kernels_are_lazy_and_cold_model_jit_does_not_leak():
 def test_annual_parallax_reuses_the_trajectory_frame(finite):
     geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0, use_hjd=False)
     times = jnp.array([[7950.0, 8000.0, 8050.0]])
-    kwargs = {"rho": 0.01, "a1": 0.5, "fft": sl.FFTConfig(n_fft=128)} if finite else {}
+    source = "linear" if finite else "point"
+    config = FFTConfig(n_fft=128) if finite else None
+    model = sl.Model(source=source, parallax=geometry, solver=config)
+    static = sl.Model(source=source, solver=config)
+    params = sl.Parameters(
+        t0=8000.0,
+        u0=-0.05,
+        t_e=30.0,
+        rho=0.01 if finite else None,
+        a1=0.5 if finite else None,
+    )
 
     def evaluate(pi):
-        return sl.astrometric_shift(
-            times, 8000.0, -0.05, 30.0, parallax=geometry, pi_e_n=pi[0], pi_e_e=pi[1], **kwargs
-        )
+        return model.astrometric_shift(times, params.replace(pi_e_n=pi[0], pi_e_e=pi[1]))
 
     np.testing.assert_allclose(
         jax.jit(evaluate)(jnp.zeros(2)),
-        sl.astrometric_shift(times, 8000.0, -0.05, 30.0, **kwargs),
+        static.astrometric_shift(times, params),
         atol=1e-14,
     )
     pi = jnp.array([0.2, -0.1])
@@ -211,7 +221,7 @@ def test_annual_parallax_sky_rotation_matches_physical_source_and_lens_positions
         use_hjd=False,
         ephemeris=ephemeris,
     )
-    model = sl.Model(parallax=geometry)
+    model = sl.Model(source="point", parallax=geometry)
     params = sl.Parameters(t0=0.0, u0=0.2, t_e=60.0, pi_e_n=0.12, pi_e_e=0.16)
     theta_e = 0.6  # mas
 
@@ -250,13 +260,15 @@ def test_annual_parallax_sky_rotation_matches_physical_source_and_lens_positions
 
 
 def test_astrometry_parameter_validation():
+    point = sl.Model(source="point")
+    params = sl.Parameters(t0=0.0, u0=0.1, t_e=20.0)
     with pytest.raises(ValueError, match="rho or a1"):
-        sl.astrometric_shift(1.0, 0.0, 0.1, 20.0, a1=0.5)
+        point.astrometric_shift(1.0, params.replace(a1=0.5))
     with pytest.raises(ValueError, match="Parallax amplitudes"):
-        sl.astrometric_shift(1.0, 0.0, 0.1, 20.0, pi_e_n=0.2)
+        point.astrometric_shift(1.0, params.replace(pi_e_n=0.2))
     with pytest.raises(TypeError, match="Parameters"):
-        sl.Model().astrometric_shift(1.0, {})
-    model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=128))
+        point.astrometric_shift(1.0, {})
+    model = sl.Model(source="linear", solver=FFTConfig(n_fft=128))
     with pytest.raises(ValueError, match="require rho"):
         model.astrometric_shift_at(0.01, a1=0.5)
     with pytest.raises(ValueError, match="requires a1"):

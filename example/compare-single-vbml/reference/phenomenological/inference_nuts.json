@@ -1,0 +1,495 @@
+{
+  "versions": {
+    "singlens": "0.1.0",
+    "jax": "0.11.2",
+    "jaxlib": "0.11.2",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "numpyro": "0.22.0"
+  },
+  "created_utc": "2026-10-24T00:16:21.575481+00:00",
+  "source_sha256": {
+    "__init__.py": "dfda54d9cdaaf52bd3c5f7e5bbb4ac09a4944cb61afd3043771afc714365ae5c",
+    "data/__init__.py": "eb4ee9198fa0bd58395f35997a40d21913c6e1569cc247358e956c9d2c3bcf32",
+    "lensing/__init__.py": "f4eb436570c1d29e07d73bd1f507651d7c1bf4cac7f3193090095e8fea28760d",
+    "lensing/astrometry.py": "0944a257064ff5839a457435257eb7139b23300dec9198cc05b8069c83b4ed24",
+    "lensing/basis_table.py": "7a4ccd431a2be89e66735219fee2ebbaedd5b43fb6edf2e4a92aef59bf73b063",
+    "lensing/concentric.py": "798065b6241da0d532d1802aa4cf869329452a49b53e30bff12958fb8343f373",
+    "lensing/config.py": "09c4916962429cdf27a04e8a412fec348d01cffb90a8ca21dfafaa87a2c5b1cb",
+    "lensing/finite.py": "ff7f1b93682965c4ba64e464abe61708fef080936d3150c8b135b91e18cf4288",
+    "lensing/gould.py": "a7bee7e0dd02bd21aa74c287f5e2a0d7c86f55fc22cb4cfc3ec777e2b3eef663",
+    "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557",
+    "model.py": "515b9f5dd6c371c5ab13e322ca5dcbc961be2cd8da3fa34413d819aca1befdb8",
+    "numerics/__init__.py": "8ff1c38fca896fab741a1b171ee779ff7148aa286680b5c2e83a98cac621197e",
+    "numerics/fftlog.py": "4ae03cc4722dcd04bc929344c20df0e0c1b84293ecc92a2a0d76dc15c7a0226b",
+    "numerics/interpolate.py": "a71f4b975d62da427f25b42c307d205d1aac785aa3f5a7a58807be9a7532f3dd",
+    "numerics/special.py": "82687c650342c2f91c2af498464549bcc7e5e8461a71e9c9d7e65feac040f3c5",
+    "parameters.py": "d059ac946d0f886842c1e513cdcb8901a0f0d457c173484c7cddda8d4d9ca0fe",
+    "photometry/__init__.py": "ae2a4fd28945dd30d8245da8d538c2ee84d9e8acd4ad1cfa0db970e85a861f85",
+    "photometry/fit.py": "f1d3a106c5fe40d7afc7ca501765f36f9674e7205f641636dcd4c1c3b73638cd",
+    "photometry/likelihood.py": "84fd9a38c9394e7ba7d860bf7eb77a463050de6eee18db3cd1cfbbd2728f79a9",
+    "trajectory/__init__.py": "25dbd3c6fc24dad2d83a178977857bdec2813bb2052d5c93c6f363898993eaab",
+    "trajectory/_geometry.py": "d7f85b30765e6a5be07cf3655bc9182c75c34cef008a879187e56476a3c3d627",
+    "trajectory/ephemeris.py": "38ad85b663f68810ac628ca9035b78d2735a39c8e1c5a8ff12879e339e5f2c83",
+    "trajectory/kepler.py": "055f8c6feb3ac98c3202f5117a939f4c7b15f054b85eab216b4872da35d1cda9",
+    "trajectory/parallax.py": "293229b92cc8226168969ca35c6ef7afe0a03232a6340a9dd5f2c98bd6568b99"
+  },
+  "python": "3.12.10",
+  "platform": "macOS-26.5-arm64-arm-64bit",
+  "hardware": {
+    "chip": "Apple M5 Pro",
+    "machine_name": "MacBook Pro"
+  },
+  "devices": [
+    "cpu:0"
+  ],
+  "device_kind": "cpu",
+  "x64": true,
+  "fft_defaults": {
+    "n_fft": 4096,
+    "log_u_min": -8,
+    "log_u_max": 4,
+    "rho_switch": 0.0001,
+    "u_switch": 20
+  },
+  "data_seed": 43,
+  "data_sha256": "36367b82be45fbcaa4ea0d2fbfc27025bc96fa80534564bf07f4cba86a1c9cbe",
+  "observations": 8640,
+  "cadence_minutes": 12.0,
+  "season_days": 72.0,
+  "band": "W149 (reference convention)",
+  "source_magnitude": 24.744,
+  "source_fraction": 0.395,
+  "magnitude_zeropoint": 25.0,
+  "source": "linear",
+  "fit_solver": {
+    "source": "linear",
+    "configuration": {
+      "rho": [
+        1e-06,
+        10.0
+      ],
+      "u_over_rho": [
+        0.0,
+        100000000.0
+      ],
+      "rho_count": 192,
+      "u_over_rho_count": 947,
+      "coefficient_shape": [
+        192,
+        947,
+        4
+      ],
+      "dtype": "float64",
+      "coordinate": "log1p_ratio2",
+      "representation": "point_residual",
+      "has_astrometry": true,
+      "outside_domain": "NaN; rho=0 uses the analytic point-source limit"
+    },
+    "solver": "table",
+    "origin": "bundled",
+    "artifact": {
+      "file": "finite_source_table.npz",
+      "zip_sha256": "760401c275eb00231f24d12a9271d7b0b6f297e1fe6f3fef0620af1a3d740d39",
+      "numeric_payload_sha256": "202e91f3a2c33dadff7357ae3068d54b157c2f95cc4413cb9654e52513da4809",
+      "format_version": 3,
+      "manifest_sha256": "fa2a1c035f54422d7203607013c232b1cc71d88e287c1584f69f8de191ff9760"
+    },
+    "generation": {
+      "builder": "BasisTable.build(astrometry=True, batch_size=64)",
+      "environment": {
+        "backend": "cpu",
+        "device_kind": "cpu",
+        "python": "3.12.10",
+        "versions": {
+          "jax": "0.11.2",
+          "jaxlib": "0.11.2",
+          "numpy": "2.5.4",
+          "scipy": "1.18.1"
+        }
+      },
+      "generator": "singlens.lensing.concentric.ConcentricDisk",
+      "provenance": "Copied unchanged from the independently validated astrometry_methods_table_192.npz; no regeneration during packaging",
+      "settings": {
+        "n_disk": 96,
+        "n_limb": 64,
+        "split": true
+      },
+      "source_sha256": {
+        "lensing/basis_table.py": "b38fb57281fe880914bb8ef63b49028681bbc6aebad4eb56d97c0bb30a3befac",
+        "lensing/concentric.py": "a95ceec44ff8cc2dfc29e66ee87eb37f4440d31055411d683376fe43eec71665",
+        "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557"
+      }
+    },
+    "validation_report": "docs/_static/astrometry-methods-summary.json"
+  },
+  "injection_solver": {
+    "source": "linear",
+    "configuration": {
+      "n_fft": 4096,
+      "log_u_min": -8,
+      "log_u_max": 4,
+      "rho_switch": 0.0001,
+      "u_switch": 20
+    },
+    "solver": "fft"
+  },
+  "injection_scope": "Fixed seed-43 FFT curve and white-noise draw; fitting solver does not change observations",
+  "parallax": {
+    "ra_deg": 266.0,
+    "dec_deg": -29.0,
+    "t_ref": 0.0,
+    "time_origin": 2458000.0
+  },
+  "noise_model": "Independent Gaussian measurement noise; no GP or source variability",
+  "error_table_sha256": "3a609809483a075e83bcfb5970381c44aa5dcbfcc2c85142da9df9b3127bcbc3",
+  "injected": {
+    "t0": 0.2,
+    "u0": 0.005,
+    "t_e": 16.235,
+    "rho": 0.01,
+    "f_s": 1.265901749300245,
+    "f_b": 1.9389128058902485,
+    "pi_e_n": 0.2,
+    "pi_e_e": -0.1,
+    "a1": 0.5
+  },
+  "priors_transformed": {
+    "order": [
+      "t0",
+      "u0",
+      "t_e",
+      "rho",
+      "f_s",
+      "f_b",
+      "pi_e_n",
+      "pi_e_e",
+      "a1"
+    ],
+    "log_parameters": [
+      "u0",
+      "t_e",
+      "rho",
+      "f_s"
+    ],
+    "logit_parameters": [
+      "a1"
+    ],
+    "location": [
+      0.0,
+      -4.605170185988091,
+      2.70805020110221,
+      -4.605170185988091,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.5,
+      1.0,
+      0.6,
+      0.7,
+      1.0,
+      5.0,
+      0.5,
+      0.5,
+      1.0
+    ]
+  },
+  "fit_solvers": {
+    "table": {
+      "source": "linear",
+      "configuration": {
+        "rho": [
+          1e-06,
+          10.0
+        ],
+        "u_over_rho": [
+          0.0,
+          100000000.0
+        ],
+        "rho_count": 192,
+        "u_over_rho_count": 947,
+        "coefficient_shape": [
+          192,
+          947,
+          4
+        ],
+        "dtype": "float64",
+        "coordinate": "log1p_ratio2",
+        "representation": "point_residual",
+        "has_astrometry": true,
+        "outside_domain": "NaN; rho=0 uses the analytic point-source limit"
+      },
+      "solver": "table",
+      "origin": "bundled",
+      "artifact": {
+        "file": "finite_source_table.npz",
+        "zip_sha256": "760401c275eb00231f24d12a9271d7b0b6f297e1fe6f3fef0620af1a3d740d39",
+        "numeric_payload_sha256": "202e91f3a2c33dadff7357ae3068d54b157c2f95cc4413cb9654e52513da4809",
+        "format_version": 3,
+        "manifest_sha256": "fa2a1c035f54422d7203607013c232b1cc71d88e287c1584f69f8de191ff9760"
+      },
+      "generation": {
+        "builder": "BasisTable.build(astrometry=True, batch_size=64)",
+        "environment": {
+          "backend": "cpu",
+          "device_kind": "cpu",
+          "python": "3.12.10",
+          "versions": {
+            "jax": "0.11.2",
+            "jaxlib": "0.11.2",
+            "numpy": "2.5.4",
+            "scipy": "1.18.1"
+          }
+        },
+        "generator": "singlens.lensing.concentric.ConcentricDisk",
+        "provenance": "Copied unchanged from the independently validated astrometry_methods_table_192.npz; no regeneration during packaging",
+        "settings": {
+          "n_disk": 96,
+          "n_limb": 64,
+          "split": true
+        },
+        "source_sha256": {
+          "lensing/basis_table.py": "b38fb57281fe880914bb8ef63b49028681bbc6aebad4eb56d97c0bb30a3befac",
+          "lensing/concentric.py": "a95ceec44ff8cc2dfc29e66ee87eb37f4440d31055411d683376fe43eec71665",
+          "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557"
+        }
+      },
+      "validation_report": "docs/_static/astrometry-methods-summary.json"
+    },
+    "fft": {
+      "source": "linear",
+      "configuration": {
+        "n_fft": 4096,
+        "log_u_min": -8,
+        "log_u_max": 4,
+        "rho_switch": 0.0001,
+        "u_switch": 20
+      },
+      "solver": "fft"
+    }
+  },
+  "model_setup_seconds": {
+    "table": 0.06945637473836541,
+    "fft": 0.09522245917469263
+  },
+  "map_seconds_including_compile": 0.5069743329659104,
+  "common_initialization_seconds": 0.5764307077042758,
+  "model_setup_scope": "Measured fitting-model construction; table setup is part of common initialization. FFT injection prepares FFT code before fitting, so additional FFT setup is not claimed cold.",
+  "warmup_per_chain": 500,
+  "draws_per_chain": 1800,
+  "chains": 2,
+  "seed": 18,
+  "elapsed_seconds_including_compile": 49.38502916600555,
+  "warmup_seconds_including_compile": 10.84982066694647,
+  "sampling_history": [
+    {
+      "draws_per_chain": 100,
+      "elapsed_seconds": 13.046403833664954,
+      "min_ess": 350.44176561346916,
+      "done": false
+    },
+    {
+      "draws_per_chain": 200,
+      "elapsed_seconds": 15.29445141600445,
+      "min_ess": 690.1735250846302,
+      "done": false
+    },
+    {
+      "draws_per_chain": 300,
+      "elapsed_seconds": 17.508035165723413,
+      "min_ess": 1107.628489009688,
+      "done": false
+    },
+    {
+      "draws_per_chain": 400,
+      "elapsed_seconds": 19.654909832403064,
+      "min_ess": 1578.7686941044083,
+      "done": false
+    },
+    {
+      "draws_per_chain": 500,
+      "elapsed_seconds": 21.719580623321235,
+      "min_ess": 1956.6225697455152,
+      "done": false
+    },
+    {
+      "draws_per_chain": 600,
+      "elapsed_seconds": 23.84101895755157,
+      "min_ess": 2038.496768210062,
+      "done": false
+    },
+    {
+      "draws_per_chain": 700,
+      "elapsed_seconds": 25.905361748766154,
+      "min_ess": 2531.916761418728,
+      "done": false
+    },
+    {
+      "draws_per_chain": 800,
+      "elapsed_seconds": 27.884550456888974,
+      "min_ess": 2905.7083767945287,
+      "done": false
+    },
+    {
+      "draws_per_chain": 900,
+      "elapsed_seconds": 29.8816399150528,
+      "min_ess": 3336.478596644205,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1000,
+      "elapsed_seconds": 32.0174188320525,
+      "min_ess": 3534.71285728634,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1100,
+      "elapsed_seconds": 34.04016658291221,
+      "min_ess": 3297.9307112848646,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1200,
+      "elapsed_seconds": 36.03067820798606,
+      "min_ess": 3458.128070264289,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1300,
+      "elapsed_seconds": 38.21356383431703,
+      "min_ess": 3606.492716282545,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1400,
+      "elapsed_seconds": 40.576540084090084,
+      "min_ess": 3920.8246294484206,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1500,
+      "elapsed_seconds": 42.92253070930019,
+      "min_ess": 4288.906283355,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1600,
+      "elapsed_seconds": 45.02285525016487,
+      "min_ess": 4609.281603085744,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1700,
+      "elapsed_seconds": 47.181947249919176,
+      "min_ess": 4837.906906384952,
+      "done": false
+    },
+    {
+      "draws_per_chain": 1800,
+      "elapsed_seconds": 49.38502916600555,
+      "min_ess": 5097.325627016014,
+      "done": true
+    }
+  ],
+  "divergences": 0,
+  "max_r_hat": 1.0002215577394011,
+  "min_effective_sample_size": 5408.856803601442,
+  "mean_accept_prob": 0.9237389156174113,
+  "production_draws": 3600,
+  "production_leapfrog_steps": 24728,
+  "mean_num_steps": 6.868888888888889,
+  "max_num_steps": 15,
+  "tree_depth_saturations": 0,
+  "parameters": {
+    "a1": {
+      "mean": 0.481021536062763,
+      "std": 0.020626296156911608,
+      "median": 0.481195670717929,
+      "5.0%": 0.4481024511661991,
+      "95.0%": 0.5159281506568594,
+      "n_eff": 5867.703204456563,
+      "r_hat": 0.9996413471081689
+    },
+    "f_b": {
+      "mean": 1.9441165529107958,
+      "std": 0.0069789187598845795,
+      "median": 1.9441201485590005,
+      "5.0%": 1.9331274788606594,
+      "95.0%": 1.9558720722750336,
+      "n_eff": 5580.931069826891,
+      "r_hat": 0.9996432612348896
+    },
+    "f_s": {
+      "mean": 1.2583392051028452,
+      "std": 0.009472607605565392,
+      "median": 1.2582238084927244,
+      "5.0%": 1.24295267783861,
+      "95.0%": 1.2737934139886509,
+      "n_eff": 5973.028713719256,
+      "r_hat": 0.99968579465166
+    },
+    "pi_e_e": {
+      "mean": -0.10040676694806053,
+      "std": 0.05221880366301896,
+      "median": -0.10129189402623308,
+      "5.0%": -0.1828681498122658,
+      "95.0%": -0.015320362701271448,
+      "n_eff": 6559.417663476296,
+      "r_hat": 0.999501666253446
+    },
+    "pi_e_n": {
+      "mean": -0.04321525559010585,
+      "std": 0.5025617784499862,
+      "median": -0.045829730964251705,
+      "5.0%": -0.8659811787293572,
+      "95.0%": 0.7645946682581627,
+      "n_eff": 5408.856803601442,
+      "r_hat": 1.0002215577394011
+    },
+    "rho": {
+      "mean": 0.009926322909595586,
+      "std": 7.317541994240204e-05,
+      "median": 0.009927230918293721,
+      "5.0%": 0.009803605765134445,
+      "95.0%": 0.010040766903156789,
+      "n_eff": 6019.559197448781,
+      "r_hat": 0.9996856546464417
+    },
+    "t0": {
+      "mean": 0.19996621874242074,
+      "std": 9.277492173747473e-05,
+      "median": 0.19996660031737334,
+      "5.0%": 0.19981326667062976,
+      "95.0%": 0.20011316646337823,
+      "n_eff": 7118.9397481799515,
+      "r_hat": 0.9997726331779894
+    },
+    "t_e": {
+      "mean": 16.320149490617286,
+      "std": 0.11586834089649824,
+      "median": 16.320376582829127,
+      "5.0%": 16.138847055674454,
+      "95.0%": 16.518020220436426,
+      "n_eff": 5874.8282386594265,
+      "r_hat": 0.9996808668825953
+    },
+    "u0": {
+      "mean": 0.004957528289476381,
+      "std": 4.411869852635423e-05,
+      "median": 0.004956740324153745,
+      "5.0%": 0.004884955016175833,
+      "95.0%": 0.00502942020883118,
+      "n_eff": 6022.278632338203,
+      "r_hat": 0.999715915922811
+    }
+  },
+  "stopping_check": {
+    "min_ess": 5097.325627016014,
+    "done": true
+  }
+}

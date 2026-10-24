@@ -1,135 +1,77 @@
 # API
 
-## Event parameters → magnification
+## Event evaluation
 
-The main entry point takes observation times and scalar event parameters.
-For example, evaluate a limb-darkened annual-parallax event:
+Construct a `Model` with an explicit source profile and fixed geometry.
+Pass fitted values in `Parameters`. Methods preserve the shape of the
+observation times; use `jax.vmap` to batch events.
+
+(event-parameters-magnification)=
+### Magnification
 
 ```python
 import jax
-
 jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 import singlens as sl
 
 times = 8000.0 + jnp.linspace(-40.0, 40.0, 501)
-geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0)
-A = sl.magnification(
-    times,
-    t0=8000.0,
-    u0=0.005,
-    t_e=20.0,
-    rho=0.01,
-    a1=0.5,
-    parallax=geometry,
-    pi_e_n=0.2,
-    pi_e_e=-0.1,
-)
+model = sl.Model(source="linear")
+params = sl.Parameters(t0=8000.0, u0=0.005, t_e=20.0, rho=0.01, a1=0.5)
+A = jax.jit(model.magnification)(times, params)
+dA_drho = jax.jacfwd(lambda rho: model.magnification(times, params.replace(rho=rho)))(0.01)
 ```
 
-`A.shape` is `(501,)`. Omit `rho` for a point source, or `a1` for a uniform
-disk. For a static event, omit the geometry and both parallax components.
+| `Model(source=...)` | Required source parameters | Brightness profile |
+| --- | --- | --- |
+| `"point"` | None; omit `rho` and `a1` | Point source |
+| `"uniform"` | `rho`; omit `a1` | Uniform disk |
+| `"linear"` | `rho`, `a1` | `I(mu)=1-a1*(1-mu)` |
+| `"mu2"` | `rho`; omit `a1` | `I(mu)=mu**2` |
 
-| Input | Meaning |
-| --- | --- |
-| `times`, `t0`, `t_e` | Observation times, peak time, positive Einstein timescale; days for parallax |
-| `u0` | Signed impact parameter in Einstein-radius units |
-| `rho` | Source radius in Einstein-radius units; omit or set to zero for a point source |
-| `a1` | Physical coefficient in `I(mu)=1-a1*(1-mu)`; omit for a uniform disk |
-| `parallax` | `AnnualParallax` sky position, reference epoch, and time convention |
-| `pi_e_n`, `pi_e_e` | North/east microlensing parallax components; both required with geometry |
-| `fft` | Optional fixed `FFTConfig`; finite sources only |
-
-Results preserve the shape of `times`, including scalar input. Use `jax.vmap`
-to batch events.
-Missing or unused parameters raise errors; invalid numeric `t_e`, `rho`, or
-`a1` yield NaN. Physical linear coefficients satisfy
-`0 <= a1 <= 1`. Derivatives follow the [numerical approximation](numerics.md).
-
-```{eval-rst}
-.. autofunction:: singlens.magnification
-```
+The `mu2` profile is a pure radial basis, not a two-coefficient quadratic law.
+All events require `t0`, signed `u0`, and positive `t_e`. Separations and
+source radii use Einstein-radius units; `rho=0` gives the point-source limit.
+The physical linear coefficient satisfies `0 <= a1 <= 1`. Missing or unused
+parameters raise errors; invalid numeric `t_e`, `rho`, or `a1` yield NaN.
+Derivatives follow the [numerical approximation](numerics.md).
 
 (astrometric-shift-api)=
-## Event parameters → astrometric shift
+(event-parameters-astrometric-shift)=
+(astrometric-shift)=
+### Astrometry and joint evaluation
 
-`astrometric_shift` accepts the same event parameters and source profiles as
-`magnification`. It returns the unresolved image centroid's displacement from
-the unlensed source center, in angular Einstein-radius units:
-
-```python
-shift = sl.astrometric_shift(
-    times,
-    t0=8000.0,
-    u0=0.005,
-    t_e=20.0,
-    rho=0.01,
-    a1=0.5,
-    parallax=geometry,
-    pi_e_n=0.2,
-    pi_e_e=-0.1,
-)
-theta_e_mas = 1.2
-shift_mas = theta_e_mas * shift
-```
-
-Both arrays preserve `times.shape`. The real and imaginary components are
-along `tau` and `beta` in the trajectory frame; they are not RA/Dec components.
-Apply the event's sky rotation separately. The model assumes a dark point
-lens, unresolved images, and a circular brightness profile. Source proper
-motion/parallax, an absolute sky position, and the flux and positions of
-blended light must be supplied by an observation model.
-
-The [astrometry chapter](astrometry.md) compares light curves and centroid
-tracks for point and finite sources, and shows how to add a luminous lens
-or an unrelated blend to the observed centroid.
-
-JIT, derivatives, and `jax.vmap` work as for magnification. Astrometric accuracy
-must be assessed in angular units, including near sign changes; see
-[numerical accuracy](numerics.md#astrometric-shifts).
-
-```{eval-rst}
-.. autofunction:: singlens.astrometric_shift
-```
-
-## Annual parallax
-
-```{eval-rst}
-.. autoclass:: singlens.AnnualParallax
-   :members: offsets
-```
-
-By default, times are HJD − 2450000. For absolute times use `time_origin=0`;
-for JD TDB set `use_hjd=False`. Keep the geocentric reference epoch `t_ref`
-fixed while fitting `t0`. The built-in Earth ephemeris covers 2000–2050;
-queries outside its usable range return NaN.
-
-## Models and source positions
-
-Use `Model` to select a source profile and evaluate named event parameters.
-Create the model and sky geometry before compiling its evaluation function:
+Use the same model and parameters for the unresolved image centroid's
+shift from the unlensed source center:
 
 ```python
-model = sl.Model(source="linear", parallax=geometry)
-p = sl.Parameters(t0=8000.0, u0=0.005, t_e=20.0, rho=0.01, a1=0.5, pi_e_n=0.2, pi_e_e=-0.1)
-A = jax.jit(model.magnification)(times, p)
-A_at_position = model.magnification_at(0.01 + 0.002j, rho=0.01, a1=0.5)
-shift = jax.jit(model.astrometric_shift)(times, p)
-shift_at_position = model.astrometric_shift_at(0.01 + 0.002j, rho=0.01, a1=0.5)
+A, shift = jax.jit(model.joint)(times, params)
+shift_mas = 1.2 * shift  # Angular Einstein radius: 1.2 mas.
 ```
 
-`source` is `point`, `uniform`, `linear`, or `mu2`. The last is the pure
-`I(mu)=mu**2` profile, not a two-coefficient quadratic law. Position evaluation
-uses separation or complex position directly, without applying a trajectory.
-For `astrometric_shift_at`, a real position gives a signed real shift and a
-complex position gives a complex shift in the input coordinate frame. The
-shape is preserved, and exact alignment returns zero. Finite-source
-astrometric kernels are prepared on the first astrometric call; evaluating
-photometry alone does not prepare them.
+The complex shift is in Einstein-radius units along the trajectory's
+`tau` and `beta` axes. `model.astrometric_shift(times, params)` evaluates
+it separately. A sky prediction adds rotation, source motion/parallax, and
+blended light through the [observation model](astrometry.md). The kernel
+assumes a dark point lens and a circular source.
+
+(models-and-source-positions)=
+### Evaluation at source positions
+
+Position methods bypass the event trajectory and preserve the input shape:
+
+```python
+position = jnp.array([0.01 + 0.002j, 0.04 - 0.003j])
+A_at, shift_at = model.joint_at(position, rho=0.01, a1=0.5)
+```
+
+Real inputs produce signed real shifts; complex inputs retain the supplied
+frame. Shifts vanish at alignment. The corresponding separate methods are
+`magnification_at` and `astrometric_shift_at`.
 
 ```{eval-rst}
 .. autoclass:: singlens.Model
-   :members: magnification, magnification_at, astrometric_shift, astrometric_shift_at, trajectory, flux, fit_flux, marginalize_flux
+   :members: magnification, magnification_at, astrometric_shift, astrometric_shift_at, joint, joint_at, trajectory, flux, fit_flux, marginalize_flux
 ```
 
 ```{eval-rst}
@@ -137,72 +79,93 @@ photometry alone does not prepare them.
    :members: replace
 ```
 
+## Annual parallax
+
+Configure fixed sky geometry on the model and fitted north/east components
+on the parameters:
+
+```python
+geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0)
+model = sl.Model(source="linear", parallax=geometry)
+params = params.replace(pi_e_n=0.2, pi_e_e=-0.1)
+A, shift = model.joint(times, params)
+```
+
+Both components are required with parallax geometry and omitted for a
+rectilinear model. Times default to HJD − 2450000 in days. Use
+`time_origin=0` for absolute times and `use_hjd=False` for JD TDB. Keep
+`t_ref` fixed while fitting `t0`. The Earth ephemeris covers 2000–2050;
+queries outside its usable range return NaN.
+
 ```{eval-rst}
-.. autoclass:: singlens.FFTConfig
+.. autoclass:: singlens.AnnualParallax
+   :members: offsets
 ```
 
 ## Flux and inference
 
-For a dataset, `flux = f_s * A + f_b`. Coefficients and limb darkening can differ
-between passbands while geometry is shared. `fit_flux` finds the best-fitting
-source and blend fluxes by weighted least squares for a given magnification
-curve. For Bayesian inference, sample the fluxes with the event parameters
-and give them explicit priors, as in the
-[inference tutorial](tutorials/inference.ipynb).
-
-Astrometric blending also needs the blend's position: a fitted `f_b` alone
-does not specify the observed centroid. See the
-[blended-centroid model](astrometry.md#blending-and-the-observed-centroid).
-
-With measured arrays `observed_flux` and `flux_error` at the same times:
+`model.flux(times, params, f_s=..., f_b=...)` predicts `f_s*A + f_b`.
+At fixed event parameters, fit both fluxes by weighted least squares:
 
 ```python
-fit = sl.fit_flux(A, observed_flux, flux_error)
-fitted_flux = fit.f_s * A + fit.f_b
-chi2 = jnp.sum(((observed_flux - fitted_flux) / flux_error) ** 2)
+observed_flux = 1.3 * A + 0.2
+flux_error = jnp.full_like(times, 0.01)
+fit = model.fit_flux(times, params, observed_flux, flux_error)
+fitted_flux = model.flux(times, params, f_s=fit.f_s, f_b=fit.f_b)
+chi2 = fit.chi2
 ```
 
-`fit.chi2` gives the same weighted residual sum. Its flux uncertainties are
-conditional on this event curve; a joint posterior also propagates event
-and limb-darkening uncertainty.
+Flux uncertainties are conditional on the event curve. A joint posterior
+also propagates event and limb-darkening uncertainty; see the
+[Photometry + GP example](tutorials/inference.ipynb).
 
-```{eval-rst}
-.. autofunction:: singlens.fit_flux
+With Gaussian flux priors and known Gaussian errors, integrate both
+coefficients analytically while sampling the event parameters:
+
+```python
+marginal = model.marginalize_flux(
+    times, params, observed_flux, flux_error,
+    prior_mean=jnp.array([1.0, 0.0]),
+    prior_covariance=jnp.eye(2),
+)
+log_likelihood = marginal.log_likelihood
 ```
+
+Pass this normalized density to `numpyro.factor`. `mean` and `covariance`
+describe the conditional Gaussian distribution of `(f_s, f_b)`; draw from
+it at each event sample to recover flux uncertainty. The prior is explicit
+and permits signed coefficients. Positive-only or non-Gaussian flux priors
+require separate treatment.
+
+See [Flux marginalization](examples/flux-marginalization.md) for a NumPyro
+model and a comparison with joint flux sampling.
+
+Each passband can have its
+own fluxes and limb coefficient. Astrometric blending additionally requires
+the [blend's position](astrometry.md#observed-centroid).
 
 ```{eval-rst}
 .. autoclass:: singlens.FluxFit
 ```
 
-## Lower-level interfaces
+(solver-configuration)=
+## Solver selection
 
-`UniformDisk`, `LinearLimbDarkened`, and `QuadraticProfile` are the source
-profile classes. They accept the same `fft=FFTConfig(...)` as `Model`;
-their `.A` methods return at least 1D arrays. `pspl`,
-`image_positions`, and `singlens.trajectory` provide analytic lens and
-trajectory utilities. `singlens.lensing.point_source_shift` evaluates the
-analytic point-source displacement directly at signed real or complex positions.
+Uniform and linear models use a precomputed table for photometry and astrometry.
+Its domain is `1e-6 <= rho <= 10`, `0 <= u/rho <= 1e8`; values outside return
+NaN, and `rho=0` uses the analytic point-source limit. Point sources are
+analytic; pure `mu2` sources use FFTLog.
 
-## Gaussian-prior flux marginalization
+Use `solver="table"` to select the bundled table explicitly, or `solver="fft"`
+for FFTLog. Both use fixed numerical settings; the solver is fixed during a fit.
+See [finite-source effects](finite-source-effects.md#photometry-and-astrometry)
+for examples, supported profiles, and measured accuracy.
 
-With Gaussian measurement errors and a proper Gaussian prior on source and
-blend fluxes, integrate both coefficients with the prepared model:
+(lower-level-interfaces)=
+### Specialized submodules
 
-```python
-result = model.marginalize_flux(
-    times, p, observed_flux, flux_error,
-    prior_mean=jnp.array([1.0, 0.0]),
-    prior_covariance=jnp.eye(2),
-)
-log_likelihood = result.log_likelihood
-```
-
-The log likelihood includes the Gaussian normalization and can be passed to
-`numpyro.factor`. `result.mean` and `result.covariance` describe the conditional
-Gaussian distribution in `(f_s, f_b)` order; draw from it at each event sample
-to propagate flux uncertainty. Priors must have mean shape `(2,)` and a
-positive-definite covariance `(2, 2)`; measurement errors are positive standard
-deviations. Matching nonempty 1D curves, including constant curves and single
-observations, are supported. Gaussian flux priors permit negative coefficients.
-
-For supplied magnifications, use `singlens.photometry.marginalize_flux` directly.
+Kernel development and numerical validation use `singlens.lensing`;
+advanced settings are described in the
+[developer instructions](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md#numerical-maintenance).
+`singlens.photometry` provides fitting and Gaussian marginal likelihoods for
+supplied magnifications; `singlens.trajectory` contains trajectory utilities.

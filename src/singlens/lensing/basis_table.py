@@ -91,9 +91,10 @@ def _unresolved_flux_residual(rho, z, baseline_flux):
 class BasisTable:
     """Interpolated uniform/mu flux bases, optionally with astrometric moments.
 
-    Build or load an explicit table and evaluate :meth:`A`, :meth:`joint`,
-    or :meth:`shift` directly. A table needs four basis channels for
-    astrometry; photometry-only tables have two.
+    ``Model`` automatically loads the bundled joint table for uniform and
+    linear sources. Load a custom table with :meth:`load` and pass it to
+    ``Model(source=..., solver=table)``. A table needs four basis channels
+    for astrometry; photometry-only tables have two.
 
     Cubic B-splines interpolate the stored bases. Values outside the stored
     domain return NaN; ``rho=0`` gives the analytic point-source limit.
