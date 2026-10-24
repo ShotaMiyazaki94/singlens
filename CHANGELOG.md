@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-10-24
+
 - **Breaking API change:** event evaluation requires `Model(source=...)` and
   `Parameters`; `source` has no default. Top-level `magnification`,
   `astrometric_shift`, and `fit_flux` are removed. For example, replace
@@ -55,6 +57,15 @@
   including luminous-lens and unrelated blending with an explicit
   flux-weighted observation model, shared-time-axis figures, separate
   centroid tracks, and limb-darkening residuals.
+- Stable unresolved-source table generation and source-radius derivatives,
+  float32 table serialization, and supported-domain endpoint handling.
+- Stable flux marginalization for diffuse Gaussian priors and nearly collinear
+  design columns; explicit failure handling for optimization and convergence
+  in the scientific inference examples.
+- Portable Windows CPU timing and LF text checkouts, optional-dependency
+  collection, and verified local acquisition of CK04 atmosphere inputs.
+  Raw atmosphere extracts and unnecessary bulk outputs are excluded from
+  Git and source distributions.
 
 ## 0.1.0
 
