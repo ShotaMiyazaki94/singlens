@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 import singlens as sl
+from singlens.photometry import marginalize_flux
 
 
 @pytest.fixture(scope="module", params=["point", "uniform", "linear", "mu2"])
@@ -194,3 +195,26 @@ def test_annual_parallax_explicit_time_origin():
         model.magnification(times, params.replace(pi_e_e=None))
     with pytest.raises(FrozenInstanceError):
         model.source = "linear"
+
+
+def test_model_marginalize_flux_and_event_gradient():
+    model = sl.Model(source="point")
+    params = sl.Parameters(t0=0.3, u0=0.2, t_e=10.0)
+    times = jnp.array([-15.0, -2.0, 0.0, 1.0, 10.0])
+    observed = model.flux(times, params, f_s=0.8, f_b=0.2) + 0.03
+    prior = dict(prior_mean=jnp.array([0.9, 0.1]), prior_covariance=jnp.diag(jnp.array([0.2, 0.1])))
+    result = jax.jit(model.marginalize_flux)(times, params, observed, 0.1, **prior)
+    expected = marginalize_flux(model.magnification(times, params), observed, 0.1, **prior)
+    for actual, reference in zip(result, expected):
+        np.testing.assert_allclose(actual, reference, rtol=1e-12)
+
+    def objective(x):
+        p = params.replace(t0=x[0], u0=x[1], t_e=x[2])
+        return model.marginalize_flux(times, p, observed, 0.1, **prior).log_likelihood
+
+    x, direction = jnp.array([0.3, 0.2, 10.0]), jnp.array([0.2, -0.03, 0.7])
+    h = 1e-5
+    finite_difference = (objective(x + h * direction) - objective(x - h * direction)) / (2 * h)
+    np.testing.assert_allclose(
+        jax.jit(jax.grad(objective))(x) @ direction, finite_difference, rtol=1e-7
+    )

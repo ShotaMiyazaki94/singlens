@@ -129,7 +129,7 @@ photometry alone does not prepare them.
 
 ```{eval-rst}
 .. autoclass:: singlens.Model
-   :members: magnification, magnification_at, astrometric_shift, astrometric_shift_at, trajectory, flux, fit_flux
+   :members: magnification, magnification_at, astrometric_shift, astrometric_shift_at, trajectory, flux, fit_flux, marginalize_flux
 ```
 
 ```{eval-rst}
@@ -182,3 +182,27 @@ their `.A` methods return at least 1D arrays. `pspl`,
 `image_positions`, and `singlens.trajectory` provide analytic lens and
 trajectory utilities. `singlens.lensing.point_source_shift` evaluates the
 analytic point-source displacement directly at signed real or complex positions.
+
+## Gaussian-prior flux marginalization
+
+With Gaussian measurement errors and a proper Gaussian prior on source and
+blend fluxes, integrate both coefficients with the prepared model:
+
+```python
+result = model.marginalize_flux(
+    times, p, observed_flux, flux_error,
+    prior_mean=jnp.array([1.0, 0.0]),
+    prior_covariance=jnp.eye(2),
+)
+log_likelihood = result.log_likelihood
+```
+
+The log likelihood includes the Gaussian normalization and can be passed to
+`numpyro.factor`. `result.mean` and `result.covariance` describe the conditional
+Gaussian distribution in `(f_s, f_b)` order; draw from it at each event sample
+to propagate flux uncertainty. Priors must have mean shape `(2,)` and a
+positive-definite covariance `(2, 2)`; measurement errors are positive standard
+deviations. Matching nonempty 1D curves, including constant curves and single
+observations, are supported. Gaussian flux priors permit negative coefficients.
+
+For supplied magnifications, use `singlens.photometry.marginalize_flux` directly.
