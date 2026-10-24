@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from scipy.integrate import quad
 
-from singlens import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk, pspl
+from singlens.lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk, pspl
 
 
 @lru_cache(None)

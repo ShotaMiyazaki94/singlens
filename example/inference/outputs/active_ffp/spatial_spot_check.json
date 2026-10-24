@@ -1,0 +1,741 @@
+{
+  "n_fft": 4096,
+  "settings": {
+    "description": "Active main-sequence K source lensed by an isolated sub-Earth-mass planet",
+    "design_rationale": "An active K dwarf supplies observable variability while remaining faint enough for unsaturated Roman exposures. Solar-like variability in ordinary subgiants is much weaker; larger giants require unusually high extinction to remain unsaturated. This source-transiting example requires a separate spatial-spot check because a disk-integrated GP alone does not model differential spot magnification.",
+    "source_mass_solar": 0.8,
+    "source_radius_solar": 0.8,
+    "source_photosphere_teff_K": 5000.0,
+    "source_teff_K": 4924.507405167572,
+    "spot_teff_K": 4000.0,
+    "source_distance_kpc": 6.0,
+    "source_logg_cgs": 4.5349774634615505,
+    "atmosphere_logg_cgs": 4.5,
+    "atmosphere_metallicity": 0.0,
+    "source_luminosity_solar": 0.3390984961089202,
+    "source_theta_mas": 0.0006200623014616212,
+    "temperature_description": "5000 K unspotted photosphere and 4000 K spots. source_teff_K is the nominal bolometric mixture temperature if the mean 10% projected coverage also represents surface coverage; it is not a measured effective temperature. The log g = 4.5 CK04 grid approximates the physical gravity.",
+    "lens_mass_earth": 0.5,
+    "lens_mass_solar": 1.5017448074578e-06,
+    "lens_distance_kpc": 4.0,
+    "mu_rel_masyr": 5.0,
+    "theta_e_mas": 0.0010095465034664626,
+    "pi_rel_mas": 0.08333333333333334,
+    "pi_e": 82.54531420513379,
+    "t_e_days": 0.07374737207822508,
+    "rho": 0.6141988500108948,
+    "u0": 0.42993919500762634,
+    "impact_parameter_over_rho": 0.7,
+    "source_mag_ab": 20.793127868287517,
+    "source_fraction": 0.8,
+    "baseline_mag_ab": 20.550852835767376,
+    "unspotted_source_mag_ab": 20.74961708717848,
+    "unextincted_source_mag_ab": 19.38120883048194,
+    "extinction_at_1p65_micron_mag": 1.0,
+    "extinction_at_2p15_micron_mag": 0.588967009194159,
+    "effective_f146_extinction_mag": 1.4119190378055784,
+    "extinction_description": "Illustrative A(lambda) = A(1.65 micron) * (lambda / 1.65 micron)^-2. Monochromatic values are not broad-band H/Ks extinctions.",
+    "mean_projected_spot_coverage": 0.1,
+    "projected_spot_coverage_rms": 0.02,
+    "spot_to_photosphere_f146_ratio": 0.607174687398115,
+    "gp_rms": 0.008177748930019152,
+    "gp_period_days": 5.0,
+    "gp_coherence_days": 20.0,
+    "variability_description": "The fractional F146 RMS is (1-r)*coverage_rms/[1-mean_coverage*(1-r)] using the reddened CK04 spot/photosphere count-rate ratio r. Coverage, 5-day rotation and 20-day exponential coherence are explicit active-star scenario choices, not measurements or a population calibration. The temporal GP describes disk-integrated modulation, not individual resolved spots, flares, or differential spot magnification.",
+    "cadence_minutes": 12.1,
+    "exposure_seconds": 66.41188,
+    "season_days": 70.5,
+    "photon_rate_source": 499.1091374987053,
+    "photon_rate_source_units": "detected electrons / second; effective area includes quantum efficiency",
+    "source_counts_per_exposure": 33146.77614646751,
+    "baseline_counts_per_exposure": 41433.47018308439,
+    "ab_zeropoint_electron_per_second": 27.53861667037689,
+    "source_only_poisson_fraction": 0.005492617450156348,
+    "baseline_flux_sigma": 0.007472989627284876,
+    "noise_photon_fraction": 0.007416014446576464,
+    "systematic_floor_magnitude": 0.001,
+    "systematic_floor_flux": 0.0009210340371976184,
+    "noise_description": "Known Gaussian errors: official survey S/N = 100 at F146_AB = 21.2 scaled as source photon noise, plus an assumed independent 1 mmag per-exposure floor. Photon rates are a separate lower-bound check. This is not a pixel-level ETC or a crowded-field/detector-covariance forecast.",
+    "noise_anchor_location": "Official GBTDS page: High-Cadence Seasons / Observation Specifications / Exposure Specifications, first bullet; GBTDS Overview Table gives F146 exposure time per epoch 66 s and one dither per epoch. The S/N anchor applies to a single exposure, not combined visits.",
+    "saturation_guard_mag": 19.2,
+    "saturation_fullwell_electrons": 100000.0,
+    "representative_max_pixel_fraction": 0.34546,
+    "baseline_max_pixel_electrons": 14313.606609448334,
+    "guard_max_pixel_electrons": 49669.54839663808,
+    "guard_legacy_saturation_seconds": 121.0,
+    "saturation_description": "Check the total instantaneous flux including lensing, variability, and blend. Require magnitude >= 19.2; NASA's 2021 table gives 121 s to saturation at this brightness. Representative SCA01 centered K0V PSF pixel counts provide a separate comparison to the current 100,000 electron/pixel ETC threshold. This excludes later-resultant partial saturation, but is not a full SED/subpixel/detector-specific ETC guarantee.",
+    "provenance": {
+      "retrieved_utc_date": "2026-10-23",
+      "inputs": {
+        "roman_f146_sca01_effective_area.csv": {
+          "url": "https://raw.githubusercontent.com/RomanSpaceTelescope/roman-technical-information/main/roman_technical_information/data/WideFieldInstrument/Imaging/EffectiveAreas/Roman_effarea_v8_SCA01_20240301.ecsv",
+          "raw_sha256": "d116839810b69fa7e641ef70ed8d43789deb3e41c8c266914460ed0fc6b2d4cb",
+          "description": "NASA Roman effective area, SCA01, 2024-03-01 model. Extracted wavelength/F146 columns over 0.85\u20132.10 micron; no throughput rescaling.",
+          "license": "CC0-1.0",
+          "license_url": "https://github.com/RomanSpaceTelescope/roman-technical-information/blob/main/LICENSE.md",
+          "extracted_sha256": "a7e6f58eb6b1a014982aa292062c102d83a360dd6dd997e58daaa71257f2bfa0"
+        },
+        "ck04_5000_4000_logg4p5_solar.csv": {
+          "urls": [
+            "https://ssb.stsci.edu/trds/grid/ck04models/ckp00/ckp00_5000.fits",
+            "https://ssb.stsci.edu/trds/grid/ck04models/ckp00/ckp00_4000.fits"
+          ],
+          "raw_sha256": {
+            "ckp00_5000.fits": "c89b206bb254360ff10cabfd0f6bab333e630129feafae6ad34f7300a93c5da5",
+            "ckp00_4000.fits": "9015ecd2129b7467db5e46ed4909b8b990f650328635855fd4bc4a2bbff1f948"
+          },
+          "description": "STScI Castelli & Kurucz 2004 ATLAS9 surface-flux grids at 5000 K (photosphere) and 4000 K (spot), [M/H] = 0, log g = 4.5. Native wavelength/g45 samples over 7500\u201323000 Angstrom, merged without resampling. Flux units erg s^-1 cm^-2 Angstrom^-1; multiply by (R/D)^2.",
+          "attribution": "Castelli & Kurucz 2004; STScI atmosphere reference archive.",
+          "license": "Publicly distributed numerical atmosphere grid; no explicit redistribution license was present in the FITS headers. No claim of a new license for these values.",
+          "documentation": "https://etc.stsci.edu/etcstatic/users_guide/1_ref_4_ck.html",
+          "extracted_sha256": "4f8aa86a9431a60254cd562a22c67461a8e012e2e8cbbfc949452024972b4be4"
+        }
+      },
+      "settings_script_sha256": "97610ca9d139da9da16472cafa3a6adadde42fbab7e2f28c6720822a06e1b67d"
+    },
+    "references": {
+      "survey": "https://roman-docs.stsci.edu/roman-community-defined-surveys/galactic-bulge-time-domain-survey",
+      "read_pattern": "https://roman-docs.stsci.edu/roman-instruments/the-wide-field-instrument/observing-with-the-wfi/wfi-multiaccum-ma-tables/imaging-multiaccum-tables",
+      "detector_threshold": "https://roman-docs.stsci.edu/simulation-tools/roman-wfi-exposure-time-calculator/etc-appendix-inputs-and-calculations",
+      "psf_and_effective_area": "https://science.nasa.gov/mission/roman-space-telescope/wfi-technical/",
+      "legacy_saturation_table": "https://roman.gsfc.nasa.gov/science/apttables2021/performance_tables/2021/run_time_to_saturation_20210614.txt",
+      "extinction_law": "https://arxiv.org/abs/0902.3095",
+      "young_fgk_rotation": "https://arxiv.org/abs/1606.00057",
+      "cool_spot_coverage": "https://arxiv.org/abs/1608.05452",
+      "active_k_star_example": "https://arxiv.org/abs/1106.4928",
+      "spot_evolution": "https://doi.org/10.1093/mnras/stx1931"
+    }
+  },
+  "truth": {
+    "t0": 0.2,
+    "rho": 0.6141988500108948,
+    "t_e": 0.0737473720782251,
+    "u0": 0.42993919500762634,
+    "fs": 0.8,
+    "fb": 0.19999999999999996
+  },
+  "a1": 0.4,
+  "spot_to_photosphere_ratio": 0.607174687398115,
+  "observations": 8391,
+  "source_transit_duration_hours": 1.5526796950441653,
+  "rotation_during_transit_degrees": 4.658039085132495,
+  "assumptions": [
+    "No noise draw: refits isolate systematic bias, not a detection or posterior.",
+    "Known locally constant disk-integrated variability and white errors. Fisher errors condition on the GP; they are not the joint GP-posterior errors.",
+    "Frozen spot map during the short transit; rotational motion is quantified separately, not modeled here.",
+    "Photosphere and spots share a1=0.4. The F146 CK04 contrast is a band-integrated ratio, not an angle-dependent atmosphere model.",
+    "All spherical caps are fully visible, non-overlapping, and strictly separated from the lens chord.",
+    "Source fraction and baseline flux refer to the normalized spotted source. Small-cap cases isolate a localized component, not the full 10% mean coverage.",
+    "A 2-percentage-point temporal coverage RMS does not determine the spatial spot map or certify a quiet chord.",
+    "Successful far-side cases support only that stated geometry and precision; nearby non-crossing counterexamples prevent a blanket scalar-GP claim."
+  ],
+  "radial_numerical_check": {
+    "reference": "ConcentricDisk; 96/48 and 192/96 orders",
+    "reference_order_max_difference": 1.575335417669521e-10,
+    "contact_grid_max_relative_error": 0.00037100811954915436,
+    "sampled_event_max_flux_error": 0.00030398210327646784,
+    "sampled_event_template_chi2": 0.002550476034449939
+  },
+  "cases": {
+    "opposite_2pct": {
+      "spots": [
+        {
+          "x": 0,
+          "y": -0.5,
+          "angular_radius_degrees": 8.740942279017384,
+          "projected_area": 0.02,
+          "area_quadrature_error": 7.632783294297951e-17,
+          "intensity_weighted_area": 0.02180940605637508,
+          "minimum_chord_clearance_source_radii": 1.0625853721323917
+        }
+      ],
+      "weighted_covering_fraction": 0.02180940605637508,
+      "unlensed_flux_deficit": 0.008567286751756985,
+      "template_chi2": 4.71575904199978,
+      "max_observed_anomaly_mmag": 4.00877580350264,
+      "quadrature_refinement_max_flux_error": 0.0,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 10,
+        "chi2": 0.0003838876215665131,
+        "physical": {
+          "t0": 0.20000072709879038,
+          "rho": 0.6144274136524441,
+          "t_e": 0.07363278970161119,
+          "u0": 0.4294908895387663,
+          "fs": 0.8045549923815332,
+          "fb": 0.1954450328035619
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011305732348040145,
+          "rho": 0.0316736879848155,
+          "t_e": 0.0025906888575482744,
+          "u0": 0.0317928756350972,
+          "fs": 0.06402405409739703,
+          "fb": 0.06402003488763744
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.006431240082352895,
+          "rho": 0.007216199189020963,
+          "t_e": -0.04422853646822912,
+          "u0": -0.01410081535264287,
+          "fs": 0.07114501644341055,
+          "fb": -0.07114908956910984
+        },
+        "relative_bias": {
+          "rho": 0.0003721329688997077,
+          "t_e": -0.0015537147071812418,
+          "u0": -0.0010427183054387834,
+          "fs": 0.005693740476916398
+        },
+        "q": [
+          9.859317964595881e-06,
+          -0.4870644795691121,
+          -2.6086648402082715,
+          -0.8451547495668134,
+          -0.21746595891130285,
+          0.1954450328035619
+        ],
+        "jacobian_condition": 2209.63014024628
+      }
+    },
+    "opposite_5pct": {
+      "spots": [
+        {
+          "x": 0,
+          "y": -0.5,
+          "angular_radius_degrees": 13.903134144308167,
+          "projected_area": 0.05,
+          "area_quadrature_error": 3.469446951953614e-17,
+          "intensity_weighted_area": 0.054407353927571935,
+          "minimum_chord_clearance_source_radii": 0.9772620971749791
+        }
+      ],
+      "weighted_covering_fraction": 0.054407353927571935,
+      "unlensed_flux_deficit": 0.02137258581443984,
+      "template_chi2": 29.389450487610432,
+      "max_observed_anomaly_mmag": 10.01205065854041,
+      "quadrature_refinement_max_flux_error": 3.552713678800501e-16,
+      "refit": {
+        "success": true,
+        "message": "`xtol` termination condition is satisfied.",
+        "nfev": 21,
+        "chi2": 0.002592509506791316,
+        "physical": {
+          "t0": 0.20000185471352375,
+          "rho": 0.6147109987198495,
+          "t_e": 0.073464335454579,
+          "u0": 0.42874225330824617,
+          "fs": 0.811271437626272,
+          "fb": 0.18872862722696238
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011325767754878532,
+          "rho": 0.03169289277040441,
+          "t_e": 0.0025920432167396267,
+          "u0": 0.03181509827693909,
+          "fs": 0.06406522157054977,
+          "fb": 0.06406120243882375
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.016376051177075947,
+          "rho": 0.016159733750556203,
+          "t_e": -0.10919440764653146,
+          "u0": -0.0376218136735339,
+          "fs": 0.1759369178776602,
+          "fb": -0.17594694360914243
+        },
+        "relative_bias": {
+          "rho": 0.0008338483683998366,
+          "t_e": -0.003837921483437645,
+          "u0": -0.002783979021403149,
+          "fs": 0.014089297032839898
+        },
+        "q": [
+          2.5149554098854926e-05,
+          -0.48660304240372415,
+          -2.6109552224369357,
+          -0.8468993487509404,
+          -0.209152585887686,
+          0.18872862722696238
+        ],
+        "jacobian_condition": 2211.043692862232
+      }
+    },
+    "opposite_10pct": {
+      "spots": [
+        {
+          "x": 0,
+          "y": -0.5,
+          "angular_radius_degrees": 19.86522854819622,
+          "projected_area": 0.1,
+          "area_quadrature_error": 6.938893903907228e-17,
+          "intensity_weighted_area": 0.10842456109466433,
+          "minimum_chord_clearance_source_radii": 0.8759641654282008
+        }
+      ],
+      "weighted_covering_fraction": 0.10842456109466433,
+      "unlensed_flux_deficit": 0.042591912105733695,
+      "template_chi2": 116.81588363691111,
+      "max_observed_anomaly_mmag": 19.975234854479904,
+      "quadrature_refinement_max_flux_error": 3.552713678800501e-16,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 24,
+        "chi2": 0.011809580947454197,
+        "physical": {
+          "t0": 0.20000387125709673,
+          "rho": 0.6149800423644497,
+          "t_e": 0.07319625095366768,
+          "u0": 0.42724493369661015,
+          "fs": 0.8220348423670563,
+          "fb": 0.1779652894577581
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011358950797783909,
+          "rho": 0.03172437829807656,
+          "t_e": 0.002594261489308502,
+          "u0": 0.03185158090741261,
+          "fs": 0.06413273511645529,
+          "fb": 0.06412871611043401
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.034081115110355914,
+          "rho": 0.02462435500595002,
+          "t_e": -0.21243854053598982,
+          "u0": -0.0845879932568487,
+          "fs": 0.3435818280172255,
+          "fb": -0.3436013049800744
+        },
+        "relative_bias": {
+          "rho": 0.0012718883363931344,
+          "t_e": -0.007473095095142379,
+          "u0": -0.006266610121387961,
+          "fs": 0.02754355295882016
+        },
+        "q": [
+          5.24934921425832e-05,
+          -0.4861654631420977,
+          -2.6146110758064296,
+          -0.85039781499329,
+          -0.19597249751641937,
+          0.1779652894577581
+        ],
+        "jacobian_condition": 2213.362236410013
+      }
+    },
+    "offcenter_2pct": {
+      "spots": [
+        {
+          "x": 0.5,
+          "y": -0.4,
+          "angular_radius_degrees": 9.28597608711964,
+          "projected_area": 0.02,
+          "area_quadrature_error": 7.979727989493313e-17,
+          "intensity_weighted_area": 0.020922441641476698,
+          "minimum_chord_clearance_source_radii": 0.9468671332578296
+        }
+      ],
+      "weighted_covering_fraction": 0.020922441641476698,
+      "unlensed_flux_deficit": 0.008218864678207781,
+      "template_chi2": 4.261006557253316,
+      "max_observed_anomaly_mmag": 4.027682534825099,
+      "quadrature_refinement_max_flux_error": 0.0,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 14,
+        "chi2": 0.052128429298281466,
+        "physical": {
+          "t0": 0.19995544789060102,
+          "rho": 0.6152084921808206,
+          "t_e": 0.07353764613960584,
+          "u0": 0.4304830982817594,
+          "fs": 0.8062491740207,
+          "fb": 0.19375098583015823
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011303569729716199,
+          "rho": 0.03167262408658831,
+          "t_e": 0.0025906120140795053,
+          "u0": 0.03179213247816891,
+          "fs": 0.0640224621356549,
+          "fb": 0.06401844292845715
+        },
+        "bias_in_fisher_sigma": {
+          "t0": -0.39414194333555636,
+          "rho": 0.0318774398725415,
+          "t_e": -0.080956136032504,
+          "u0": 0.017108109199864167,
+          "fs": 0.09760908612759626,
+          "fb": -0.0976127172731335
+        },
+        "relative_bias": {
+          "rho": 0.0016438359822847914,
+          "t_e": -0.002843842874791558,
+          "u0": 0.0012650702249266121,
+          "fs": 0.0078114675258749156
+        },
+        "q": [
+          -0.0006041179250662217,
+          -0.4857940569509623,
+          -2.6099578115134987,
+          -0.8428472165546202,
+          -0.21536243534312924,
+          0.19375098583015823
+        ],
+        "jacobian_condition": 2209.5740897527685
+      }
+    },
+    "near_chord_2pct": {
+      "spots": [
+        {
+          "x": 0,
+          "y": 0.5,
+          "angular_radius_degrees": 8.740942279017384,
+          "projected_area": 0.02,
+          "area_quadrature_error": 7.632783294297951e-17,
+          "intensity_weighted_area": 0.02180940605637508,
+          "minimum_chord_clearance_source_radii": 0.07419982527710967
+        }
+      ],
+      "weighted_covering_fraction": 0.02180940605637508,
+      "unlensed_flux_deficit": 0.008567286751756985,
+      "template_chi2": 16.111954562732237,
+      "max_observed_anomaly_mmag": 14.806628948600341,
+      "quadrature_refinement_max_flux_error": 0.0,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 29,
+        "chi2": 3.860066710047022,
+        "physical": {
+          "t0": 0.20003243792187,
+          "rho": 0.6259490573918309,
+          "t_e": 0.0732858341092291,
+          "u0": 0.44037868411212566,
+          "fs": 0.8126438310013797,
+          "fb": 0.1873566749625581
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011288078337928798,
+          "rho": 0.03165665804893896,
+          "t_e": 0.002589566187653419,
+          "u0": 0.03177381218640895,
+          "fs": 0.06398994406358327,
+          "fb": 0.06398592486431866
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.28736442908089505,
+          "rho": 0.3711764950921584,
+          "t_e": -0.1782298406569107,
+          "u0": 0.32855639239174295,
+          "fs": 0.1975909056713066,
+          "fb": -0.1975954096819242
+        },
+        "relative_bias": {
+          "rho": 0.0191309498230543,
+          "t_e": -0.006258364955790352,
+          "u0": 0.024281315185311625,
+          "fs": 0.01580478875172453
+        },
+        "q": [
+          0.0004398519019168979,
+          -0.46848628916172624,
+          -2.6133879478492967,
+          -0.8201202765036126,
+          -0.20746235767399737,
+          0.1873566749625581
+        ],
+        "jacobian_condition": 2208.4438551031476
+      }
+    },
+    "near_chord_offcenter_2pct": {
+      "spots": [
+        {
+          "x": 0.4,
+          "y": 0.5,
+          "angular_radius_degrees": 9.28597608711964,
+          "projected_area": 0.02,
+          "area_quadrature_error": 7.979727989493313e-17,
+          "intensity_weighted_area": 0.020922441641476698,
+          "minimum_chord_clearance_source_radii": 0.0668085541456156
+        }
+      ],
+      "weighted_covering_fraction": 0.020922441641476698,
+      "unlensed_flux_deficit": 0.008218864678207781,
+      "template_chi2": 20.052604384273884,
+      "max_observed_anomaly_mmag": 16.1308118805987,
+      "quadrature_refinement_max_flux_error": 0.0,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 31,
+        "chi2": 6.016635499225648,
+        "physical": {
+          "t0": 0.19968466741832683,
+          "rho": 0.6243321080864358,
+          "t_e": 0.07309193128273009,
+          "u0": 0.44360361357114864,
+          "fs": 0.8192294340566234,
+          "fb": 0.18077109695855545
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011271936246144065,
+          "rho": 0.03165646955572754,
+          "t_e": 0.002589586748852997,
+          "u0": 0.0317740965816045,
+          "fs": 0.06399087143755942,
+          "fb": 0.063986852109865
+        },
+        "bias_in_fisher_sigma": {
+          "t0": -2.797501465474072,
+          "rho": 0.3201007003545538,
+          "t_e": -0.2531063289481706,
+          "u0": 0.43004900323218825,
+          "fs": 0.30050276898302486,
+          "fb": -0.3005133462172605
+        },
+        "relative_bias": {
+          "rho": 0.016498334497632605,
+          "t_e": -0.008887649512443252,
+          "u0": 0.03178221181551022,
+          "fs": 0.024036792570779175
+        },
+        "q": [
+          -0.0042758483832983545,
+          -0.4710728276964408,
+          -2.616037297487852,
+          -0.8128238775265956,
+          -0.1993910950974679,
+          0.18077109695855545
+        ],
+        "jacobian_condition": 2208.4659515347867
+      }
+    },
+    "near_chord_5pct": {
+      "spots": [
+        {
+          "x": 0,
+          "y": 0.4,
+          "angular_radius_degrees": 13.507284572657046,
+          "projected_area": 0.05,
+          "area_quadrature_error": 3.469446951953614e-17,
+          "intensity_weighted_area": 0.0555305705017645,
+          "minimum_chord_clearance_source_radii": 0.09699439276831379
+        }
+      ],
+      "weighted_covering_fraction": 0.0555305705017645,
+      "unlensed_flux_deficit": 0.021813813716316653,
+      "template_chi2": 30.354578786032253,
+      "max_observed_anomaly_mmag": 18.847185017289213,
+      "quadrature_refinement_max_flux_error": 0.0,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 29,
+        "chi2": 6.152354537433344,
+        "physical": {
+          "t0": 0.20004378355575386,
+          "rho": 0.6298774024405172,
+          "t_e": 0.07317450581488635,
+          "u0": 0.4435782118454143,
+          "fs": 0.8157811152062577,
+          "fb": 0.18421953883895506
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011286769849379908,
+          "rho": 0.03165536035969854,
+          "t_e": 0.0025895099256974313,
+          "u0": 0.03177259978077431,
+          "fs": 0.0639881249350774,
+          "fb": 0.06398410576045842
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.387919274851314,
+          "rho": 0.4952890206103362,
+          "t_e": -0.22122574532494027,
+          "u0": 0.4292697774779186,
+          "fs": 0.24662568597328444,
+          "fb": -0.24663095582086064
+        },
+        "relative_bias": {
+          "rho": 0.025526834557479727,
+          "t_e": -0.00776795494124316,
+          "u0": 0.03172312968010749,
+          "fs": 0.019726394007822057
+        },
+        "q": [
+          0.0005936964873461555,
+          -0.46223007783422576,
+          -2.6149081998962598,
+          -0.8128811413816781,
+          -0.203609201169929,
+          0.18421953883895506
+        ],
+        "jacobian_condition": 2208.37615768255
+      }
+    },
+    "grazing_2pct": {
+      "spots": [
+        {
+          "x": 0,
+          "y": 0.57,
+          "angular_radius_degrees": 8.97580551228491,
+          "projected_area": 0.02,
+          "area_quadrature_error": 1.0408340855860843e-17,
+          "intensity_weighted_area": 0.021406618397187313,
+          "minimum_chord_clearance_source_radii": 0.008789193636389636
+        }
+      ],
+      "weighted_covering_fraction": 0.021406618397187313,
+      "unlensed_flux_deficit": 0.00840906156362437,
+      "template_chi2": 46.17898312042065,
+      "max_observed_anomaly_mmag": 28.07713981322715,
+      "quadrature_refinement_max_flux_error": 1.5356690923340467e-07,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 28,
+        "chi2": 15.212685058161018,
+        "physical": {
+          "t0": 0.2000514167258536,
+          "rho": 0.63080840572435,
+          "t_e": 0.07319522691970572,
+          "u0": 0.444112853136345,
+          "fs": 0.8154072527413865,
+          "fb": 0.1845932608761994
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.0001128658656880479,
+          "rho": 0.03165455181159645,
+          "t_e": 0.0025894707513498807,
+          "u0": 0.03177186418975988,
+          "fs": 0.06398717615510605,
+          "fb": 0.0639831570075851
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.45555603140199785,
+          "rho": 0.5247130274443004,
+          "t_e": -0.21322703036191895,
+          "u0": 0.4461072238023374,
+          "fs": 0.2407865711097952,
+          "fb": -0.24079366890217863
+        },
+        "relative_bias": {
+          "rho": 0.027042635643425017,
+          "t_e": -0.007486980796193143,
+          "u0": 0.03296665736294924,
+          "fs": 0.0192590659267331
+        },
+        "q": [
+          0.0006972007870201217,
+          -0.46075309848370183,
+          -2.614625066155825,
+          -0.8116765751160756,
+          -0.20406759393285454,
+          0.1845932608761994
+        ],
+        "jacobian_condition": 2208.3371034142665
+      }
+    },
+    "distributed_opposite_10pct": {
+      "spots": [
+        {
+          "x": -0.55,
+          "y": -0.45,
+          "angular_radius_degrees": 10.865444967364704,
+          "projected_area": 0.025,
+          "area_quadrature_error": 3.469446951953614e-18,
+          "intensity_weighted_area": 0.025427632848582064,
+          "minimum_chord_clearance_source_radii": 0.9735939282514525
+        },
+        {
+          "x": -0.2,
+          "y": -0.5,
+          "angular_radius_degrees": 9.918576678583054,
+          "projected_area": 0.025,
+          "area_quadrature_error": 5.898059818321144e-17,
+          "intensity_weighted_area": 0.026987448648840617,
+          "minimum_chord_clearance_source_radii": 1.0433551994403252
+        },
+        {
+          "x": 0.2,
+          "y": -0.5,
+          "angular_radius_degrees": 9.918576678583054,
+          "projected_area": 0.025,
+          "area_quadrature_error": 5.898059818321144e-17,
+          "intensity_weighted_area": 0.026987448648840617,
+          "minimum_chord_clearance_source_radii": 1.0433551994403252
+        },
+        {
+          "x": 0.55,
+          "y": -0.45,
+          "angular_radius_degrees": 10.865444967364704,
+          "projected_area": 0.025,
+          "area_quadrature_error": 3.469446951953614e-18,
+          "intensity_weighted_area": 0.025427632848582064,
+          "minimum_chord_clearance_source_radii": 0.9735939282514525
+        }
+      ],
+      "weighted_covering_fraction": 0.10483016299484536,
+      "unlensed_flux_deficit": 0.04117994154855669,
+      "template_chi2": 115.8115057763468,
+      "max_observed_anomaly_mmag": 20.282459161789163,
+      "quadrature_refinement_max_flux_error": 1.7763568394002506e-16,
+      "refit": {
+        "success": true,
+        "message": "`ftol` termination condition is satisfied.",
+        "nfev": 21,
+        "chi2": 0.008121386550620698,
+        "physical": {
+          "t0": 0.20000365524720054,
+          "rho": 0.6143021298375411,
+          "t_e": 0.07317419920442464,
+          "u0": 0.42617210745844686,
+          "fs": 0.8204239925527348,
+          "fb": 0.1795762310641073
+        },
+        "white_known_GP_fisher_sigma": {
+          "t0": 0.00011357301998712645,
+          "rho": 0.0317203892712345,
+          "t_e": 0.00259395182637055,
+          "u0": 0.03184733934062355,
+          "fs": 0.06412432219487756,
+          "fb": 0.06412030314747567
+        },
+        "bias_in_fisher_sigma": {
+          "t0": 0.03218411556673799,
+          "rho": 0.003255944489304297,
+          "t_e": -0.22096511892529677,
+          "u0": -0.11828578547452763,
+          "fs": 0.31850617446941654,
+          "fb": -0.31852265091321086
+        },
+        "relative_bias": {
+          "rho": 0.00016815372846168408,
+          "t_e": -0.007772112519378815,
+          "u0": -0.008761907713746964,
+          "fs": 0.025529990690918325
+        },
+        "q": [
+          4.956444002703795e-05,
+          -0.4872684037215035,
+          -2.6149123900318907,
+          -0.8529120061836523,
+          -0.1979340082667112,
+          0.1795762310641073
+        ],
+        "jacobian_condition": 2213.0752425067644
+      }
+    }
+  },
+  "references": [
+    "https://arxiv.org/abs/astro-ph/9906024",
+    "https://doi.org/10.1046/j.1365-8711.2002.05496.x",
+    "https://arxiv.org/abs/1608.05452"
+  ],
+  "script_sha256": "5af424effd66f5da1bdac01ef3c5a5a70933e35ebb63c10da81521275df334e7"
+}

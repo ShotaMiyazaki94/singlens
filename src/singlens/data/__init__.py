@@ -1,1 +1,1 @@
-"""Bundled JPL Horizons Earth ephemeris (ICRF, AU, JD TDB)."""
+"""Bundled finite-source bases and JPL Horizons Earth ephemeris."""

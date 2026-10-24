@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from singlens import image_positions, pspl
+from singlens.lensing import image_positions, pspl
 from singlens.lensing.point import lens_eq, lens_eq_det_jac
 
 

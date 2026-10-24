@@ -1,0 +1,77 @@
+{
+  "description": "Fixed seed-43 phenomenological nine-parameter inference benchmark, preserved before physical planet injection. Original reports, samples, figures and data unchanged.",
+  "files": {
+    "inference_data.json": {
+      "sha256": "9af2f7ca352bddcc9c4dcc0bc16460df8bbe4bb2bb7bc4080b6472b538021abd",
+      "bytes": 12573
+    },
+    "inference_event.csv": {
+      "sha256": "146deda59158364e9ffbd1ec65dbfd3b19f8102b316bb101e8fe115e8598061c",
+      "bytes": 868356
+    },
+    "inference_fft_nuts.json": {
+      "sha256": "2059baa24687db719a0d3951d80a28142b3d7fc275f71239ff13f021e5357477",
+      "bytes": 13102
+    },
+    "inference_nuts.json": {
+      "sha256": "91e6920a3ccf8a41e825a24b79a404517ce76728dbf5adfd7fdd9933346e19f0",
+      "bytes": 15042
+    },
+    "inference_recovery.pdf": {
+      "sha256": "136a39a4385998a9488b30c3e4215d65a68a1dd342c715388020aa9a5b1958a1",
+      "bytes": 2095161
+    },
+    "inference_recovery.png": {
+      "sha256": "2296738d59f6320450b7e859387debc0250a02e8c1451a22d2525f3fc5c1306f",
+      "bytes": 323137
+    },
+    "inference_speed.csv": {
+      "sha256": "60dba7084e51202285e0e12882fd419e68df57641a91def1d75ad35da040efdc",
+      "bytes": 732
+    },
+    "inference_speed.json": {
+      "sha256": "eb821b628136e155a8e7328c841dcf5ed9ed5ab5321d507939dc37ec3845e7e0",
+      "bytes": 117738
+    },
+    "inference_speed.pdf": {
+      "sha256": "6e1a569a01b88cb37b0abc24bb4453547fdf7fb056b43de4faa77d7ab7960be1",
+      "bytes": 36364
+    },
+    "inference_speed.png": {
+      "sha256": "1088e7bf3b3c5c5afd116a4c3fb6677921536677af364510ee5926199e816385",
+      "bytes": 143037
+    },
+    "posterior_comparison.pdf": {
+      "sha256": "f4586434ba1dd61b301556f58a437bd4adb69269a06c1ef1d52119c00194cfeb",
+      "bytes": 164933
+    },
+    "posterior_comparison.png": {
+      "sha256": "897b41cf5e07fc9b386240ec89d5e7bb3ce388b4a43f0e1c481f60c035500993",
+      "bytes": 1745046
+    },
+    "posterior_fftlog_nuts.npz": {
+      "sha256": "03d7c859924387cc2d899be6877d62c52e6ba5fc5a5fffd0e06aeaf691eade77",
+      "bytes": 220251
+    },
+    "posterior_singlens_emcee.npz": {
+      "sha256": "74a8fd762a8edf8395e27498f501193cb9cdd9722e5a31a73ad2ed7eeebe77a7",
+      "bytes": 3927741
+    },
+    "posterior_singlens_nuts.npz": {
+      "sha256": "2b04e0a3b727d8002b7bf8c57230119e31e03871054216830933a44ce3d05985",
+      "bytes": 232936
+    },
+    "posterior_vbm_emcee.npz": {
+      "sha256": "bd4d8c1c3e45eca2f3a52acfe3fab6590339709af88a30d05e3b8b76b0ab7541",
+      "bytes": 4158478
+    },
+    "trace_comparison.pdf": {
+      "sha256": "19dbf30ff0f17d4855ba8056ad34b508b72348043b21e5b1f9d2986b5f6f4315",
+      "bytes": 145037
+    },
+    "trace_comparison.png": {
+      "sha256": "7fa8ed2b5813ca1d399979da670fc29b0078340d8ee551cda7ae100455459a08",
+      "bytes": 358864
+    }
+  }
+}

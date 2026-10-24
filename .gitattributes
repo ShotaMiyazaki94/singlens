@@ -1,0 +1,8 @@
+# Provenance hashes cover exact bytes; preserve LF on every checkout platform.
+* text=auto eol=lf
+
+# Keep existing numerical archives and rendered artifacts byte-for-byte.
+*.gif binary
+*.npz binary
+*.pdf binary
+*.png binary

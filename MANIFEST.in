@@ -9,8 +9,22 @@ prune docs/_autoapi
 prune docs/reference
 prune docs/.jupyter_cache
 prune docs/.mplconfig
-recursive-include example *.py *.cpp *.md *.json *.csv *.png *.pdf *.npz
+prune docs/local
+recursive-include example *.py *.cpp *.md *.json *.csv *.png *.pdf *.gif *.npz
+include example/flux_marginalization/outputs/measured_compare.py.txt
 recursive-exclude example progress_*.json
+recursive-exclude example/parallax_inference/outputs *_chains.npz complete.json nuts_diagnostics.json
+exclude example/parallax_inference/outputs/seed-*/*.png
+exclude example/parallax_inference/outputs/seed-*/*.pdf
+exclude example/roman_astrometry/outputs/predictive.npz
+exclude example/astrometry/outputs/*.csv
+exclude example/inference/outputs/active_ffp/spatial_spot_check.npz
+exclude example/inference/outputs/*.csv
+exclude example/inference/outputs/*.npz
+exclude example/inference/outputs/*.png
+exclude example/inference/outputs/*.pdf
+exclude example/inference/data/ck04_5000_4000_logg4p5_solar.csv
+recursive-exclude example/compare-single-vbml/reference *.csv *.npz *.png *.pdf
 recursive-include tests *.py *.json
 include CONTRIBUTING.md
 recursive-include tools *.py *.md

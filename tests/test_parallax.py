@@ -47,7 +47,7 @@ def test_reference_epoch_zero_jit_and_shapes(eph, ephemeris):
     np.testing.assert_allclose(f(p) * 2, f(p * 2), atol=1e-13)
     np.testing.assert_allclose(f(jnp.zeros(2)), 0.0, atol=1e-15)
     if ephemeris:
-        model = Model(parallax=setup)
+        model = Model(source="point", parallax=setup)
         params = Parameters(t0=tref, u0=0.1, t_e=30.0, pi_e_n=0.2, pi_e_e=-0.1)
         assert model.trajectory(times.reshape(1, 3), params).shape == (1, 3)
         assert model.magnification(tref, params).shape == ()

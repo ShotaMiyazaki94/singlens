@@ -1,13 +1,10 @@
-"""Differentiable single-lens microlensing. Enable JAX x64 in your application."""
+"""Differentiable single-lens models. Enable JAX x64 before constructing a Model."""
 
 from importlib.metadata import PackageNotFoundError, version
 
-from .lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk
-from .lensing.point import image_positions, pspl
-from .lightcurve import magnification
 from .model import Model
 from .parameters import Parameters
-from .photometry import FluxFit, fit_flux
+from .photometry import FluxFit
 from .trajectory import AnnualParallax
 
 try:
@@ -17,16 +14,8 @@ except PackageNotFoundError:
 
 __all__ = [
     "__version__",
-    "magnification",
     "Model",
     "Parameters",
-    "FFTConfig",
     "AnnualParallax",
     "FluxFit",
-    "fit_flux",
-    "pspl",
-    "image_positions",
-    "UniformDisk",
-    "LinearLimbDarkened",
-    "QuadraticProfile",
 ]

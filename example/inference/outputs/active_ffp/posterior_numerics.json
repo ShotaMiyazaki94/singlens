@@ -1,0 +1,660 @@
+{
+  "posterior": "/tmp/singlens-active-fs/posterior.npz",
+  "posterior_sha256": "5fa5560beb150c5d106cebe7ec4bc7f739c9b45174d2f2405eba38bfaa7f7047",
+  "data": "/tmp/singlens-active-fs/photometry.csv",
+  "data_sha256": "6f71dbca4375a1f8c8c9e1bcc39965c2b9914ff0ef2a355313d2fb6977c4bd37",
+  "posterior_shape": [
+    2,
+    1600,
+    9
+  ],
+  "draw_count": 32,
+  "method": "Default FFT versus independent ConcentricDisk(n_disk=128,n_limb=96), using identical three-node exposure averaging and each draw's observed epochs within +/-4 tE. Lensing mean flux error is source_flux*(A_FFT-A_reference). Per-exposure errors are the stored known errors. Refined reference uses (192,128) at each draw's worst epoch.",
+  "max_abs_flux_error_in_sigma": 0.041607741575032234,
+  "max_summed_squared_flux_error_in_sigma": 0.002895154608328765,
+  "max_abs_reference_convergence_in_sigma": 5.564788340665341e-13,
+  "draws": [
+    {
+      "flat_draw_index": 0,
+      "chain": 0,
+      "draw": 0,
+      "n_observations": 68,
+      "parameters": {
+        "t0": 0.20022922733759546,
+        "u0": 0.44208521824282654,
+        "t_e": 0.07145595644555451,
+        "rho": 0.6344023290894871,
+        "baseline": 1.0003496580126052,
+        "source_fraction": 0.8329017509292324
+      },
+      "max_abs_magnification_error": 0.00011533150398435055,
+      "max_abs_flux_error": 9.609339968868465e-05,
+      "max_abs_flux_error_in_sigma": 0.008934362983001895,
+      "summed_squared_flux_error_in_sigma": 0.0010702140335025678,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.064130299474809e-13
+    },
+    {
+      "flat_draw_index": 103,
+      "chain": 0,
+      "draw": 103,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.2002046365441749,
+        "u0": 0.46773685492536193,
+        "t_e": 0.06985760643580058,
+        "rho": 0.6558654783360075,
+        "baseline": 0.9994682998374831,
+        "source_fraction": 0.880425488998324
+      },
+      "max_abs_magnification_error": 0.0005004723002168809,
+      "max_abs_flux_error": 0.00044039428736647164,
+      "max_abs_flux_error_in_sigma": 0.04094602159690081,
+      "summed_squared_flux_error_in_sigma": 0.002764920069495098,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 5.449957880663326e-13
+    },
+    {
+      "flat_draw_index": 206,
+      "chain": 0,
+      "draw": 206,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.2003194825599199,
+        "u0": 0.4295021108076618,
+        "t_e": 0.07300156981934168,
+        "rho": 0.6180166636063402,
+        "baseline": 0.9997674068890781,
+        "source_fraction": 0.8027218709687893
+      },
+      "max_abs_magnification_error": 0.0002326832985075633,
+      "max_abs_flux_error": 0.00018673652898626737,
+      "max_abs_flux_error_in_sigma": 0.01736198258729756,
+      "summed_squared_flux_error_in_sigma": 0.0012364596647294077,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 1.9881794296567183e-13
+    },
+    {
+      "flat_draw_index": 309,
+      "chain": 0,
+      "draw": 309,
+      "n_observations": 68,
+      "parameters": {
+        "t0": 0.2000999239875313,
+        "u0": 0.4525757293382709,
+        "t_e": 0.07152021405227058,
+        "rho": 0.6398222298693759,
+        "baseline": 1.0001440068240317,
+        "source_fraction": 0.8485258395961307
+      },
+      "max_abs_magnification_error": 0.00030768608762787863,
+      "max_abs_flux_error": 0.00026111719307991024,
+      "max_abs_flux_error_in_sigma": 0.024277586094742135,
+      "summed_squared_flux_error_in_sigma": 0.0016206150081460435,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.102418235871649e-13
+    },
+    {
+      "flat_draw_index": 412,
+      "chain": 0,
+      "draw": 412,
+      "n_observations": 65,
+      "parameters": {
+        "t0": 0.20012362459437397,
+        "u0": 0.49084375209585285,
+        "t_e": 0.06883119991793621,
+        "rho": 0.6782511743508568,
+        "baseline": 0.9999078586786132,
+        "source_fraction": 0.9313205083537258
+      },
+      "max_abs_magnification_error": 0.00022414272450577144,
+      "max_abs_flux_error": 0.00020872948174796213,
+      "max_abs_flux_error_in_sigma": 0.019406795484724196,
+      "summed_squared_flux_error_in_sigma": 0.0015548913618990072,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.69151896144535e-13
+    },
+    {
+      "flat_draw_index": 515,
+      "chain": 0,
+      "draw": 515,
+      "n_observations": 68,
+      "parameters": {
+        "t0": 0.20011783745375974,
+        "u0": 0.4628243994212406,
+        "t_e": 0.07126107142565767,
+        "rho": 0.6459643468173543,
+        "baseline": 0.9995518981777946,
+        "source_fraction": 0.8650350048673623
+      },
+      "max_abs_magnification_error": 0.00035279008188027206,
+      "max_abs_flux_error": 0.0003050390203777403,
+      "max_abs_flux_error_in_sigma": 0.02836125416379624,
+      "summed_squared_flux_error_in_sigma": 0.0018760199976823775,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.1420545982749254e-13
+    },
+    {
+      "flat_draw_index": 619,
+      "chain": 0,
+      "draw": 619,
+      "n_observations": 73,
+      "parameters": {
+        "t0": 0.20013516646106996,
+        "u0": 0.378683294434357,
+        "t_e": 0.07701990647989802,
+        "rho": 0.5706370790666301,
+        "baseline": 0.9996414762193581,
+        "source_fraction": 0.703284539498248
+      },
+      "max_abs_magnification_error": 0.00047799759768096806,
+      "max_abs_flux_error": 0.0003360477960291786,
+      "max_abs_flux_error_in_sigma": 0.031244320620243446,
+      "summed_squared_flux_error_in_sigma": 0.0017405884111817798,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -3.7736267799297154e-13
+    },
+    {
+      "flat_draw_index": 722,
+      "chain": 0,
+      "draw": 722,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.19995819457717012,
+        "u0": 0.44615915641671566,
+        "t_e": 0.07283412664890475,
+        "rho": 0.6282391300046981,
+        "baseline": 1.000021635885404,
+        "source_fraction": 0.8293932477604911
+      },
+      "max_abs_magnification_error": 0.00027728821042716234,
+      "max_abs_flux_error": 0.0002299859452537779,
+      "max_abs_flux_error_in_sigma": 0.021383132686979035,
+      "summed_squared_flux_error_in_sigma": 0.0014567447080529373,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.397221626954737e-13
+    },
+    {
+      "flat_draw_index": 825,
+      "chain": 0,
+      "draw": 825,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.199997686877047,
+        "u0": 0.4406093337713359,
+        "t_e": 0.0718390539988922,
+        "rho": 0.6296460823314393,
+        "baseline": 0.9995808120265519,
+        "source_fraction": 0.8253929659440291
+      },
+      "max_abs_magnification_error": 0.0002748417551448057,
+      "max_abs_flux_error": 0.00022675735762484116,
+      "max_abs_flux_error_in_sigma": 0.021082952092965283,
+      "summed_squared_flux_error_in_sigma": 0.0014352545327930752,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -2.0439495879377027e-13
+    },
+    {
+      "flat_draw_index": 928,
+      "chain": 0,
+      "draw": 928,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.20009775220623283,
+        "u0": 0.433642023131689,
+        "t_e": 0.07231837857808163,
+        "rho": 0.621631845886727,
+        "baseline": 0.9996193776298217,
+        "source_fraction": 0.8134979376792988
+      },
+      "max_abs_magnification_error": 0.00021948432755758418,
+      "max_abs_flux_error": 0.00017848208767862534,
+      "max_abs_flux_error_in_sigma": 0.016594519107981792,
+      "summed_squared_flux_error_in_sigma": 0.0012375837238800043,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 1.6788093620424772e-13
+    },
+    {
+      "flat_draw_index": 1031,
+      "chain": 0,
+      "draw": 1031,
+      "n_observations": 71,
+      "parameters": {
+        "t0": 0.20027353953314006,
+        "u0": 0.40834438201215695,
+        "t_e": 0.07510304327710812,
+        "rho": 0.5945479052607902,
+        "baseline": 0.9998074131094897,
+        "source_fraction": 0.7582979629622766
+      },
+      "max_abs_magnification_error": 0.0003371314670603809,
+      "max_abs_flux_error": 0.00025559687063399114,
+      "max_abs_flux_error_in_sigma": 0.023764329568541184,
+      "summed_squared_flux_error_in_sigma": 0.0014261877045254816,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.1912631600104683e-13
+    },
+    {
+      "flat_draw_index": 1135,
+      "chain": 0,
+      "draw": 1135,
+      "n_observations": 73,
+      "parameters": {
+        "t0": 0.20022338107853163,
+        "u0": 0.3927298022591459,
+        "t_e": 0.07680116898382337,
+        "rho": 0.5763359074788316,
+        "baseline": 0.999737132925967,
+        "source_fraction": 0.7282532682420928
+      },
+      "max_abs_magnification_error": 0.00034144842067274084,
+      "max_abs_flux_error": 0.00024859556352037826,
+      "max_abs_flux_error_in_sigma": 0.023113377273054268,
+      "summed_squared_flux_error_in_sigma": 0.001355508743225005,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 1.5030676419491947e-13
+    },
+    {
+      "flat_draw_index": 1238,
+      "chain": 0,
+      "draw": 1238,
+      "n_observations": 66,
+      "parameters": {
+        "t0": 0.20023958398998368,
+        "u0": 0.48115013407258544,
+        "t_e": 0.06938073819361555,
+        "rho": 0.6677961206602578,
+        "baseline": 0.9999072162953673,
+        "source_fraction": 0.9070471380069517
+      },
+      "max_abs_magnification_error": 0.0004811640336530587,
+      "max_abs_flux_error": 0.0004363979652597582,
+      "max_abs_flux_error_in_sigma": 0.04057446025747432,
+      "summed_squared_flux_error_in_sigma": 0.002778112895843324,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 5.242734333788041e-13
+    },
+    {
+      "flat_draw_index": 1341,
+      "chain": 0,
+      "draw": 1341,
+      "n_observations": 65,
+      "parameters": {
+        "t0": 0.2000929196343566,
+        "u0": 0.49033945015598324,
+        "t_e": 0.06806360735073583,
+        "rho": 0.6852831267932852,
+        "baseline": 0.9997212654888713,
+        "source_fraction": 0.9350265225934389
+      },
+      "max_abs_magnification_error": 0.0002676721099956758,
+      "max_abs_flux_error": 0.00025021076038550354,
+      "max_abs_flux_error_in_sigma": 0.023263551531939763,
+      "summed_squared_flux_error_in_sigma": 0.0017194278408379578,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -2.315764362217395e-13
+    },
+    {
+      "flat_draw_index": 1444,
+      "chain": 0,
+      "draw": 1444,
+      "n_observations": 65,
+      "parameters": {
+        "t0": 0.20016860358110963,
+        "u0": 0.4953874074212416,
+        "t_e": 0.06800279875780091,
+        "rho": 0.6882672159081251,
+        "baseline": 1.0000191067138269,
+        "source_fraction": 0.9403184713578459
+      },
+      "max_abs_magnification_error": 0.0002779881428112141,
+      "max_abs_flux_error": 0.0002614023799488873,
+      "max_abs_flux_error_in_sigma": 0.024304101578778308,
+      "summed_squared_flux_error_in_sigma": 0.0017800509999903401,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -2.32956466928846e-13
+    },
+    {
+      "flat_draw_index": 1547,
+      "chain": 0,
+      "draw": 1547,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.2001692041267773,
+        "u0": 0.4355536869503821,
+        "t_e": 0.07306224246860717,
+        "rho": 0.6184526875470553,
+        "baseline": 0.9994541072480257,
+        "source_fraction": 0.812397137248209
+      },
+      "max_abs_magnification_error": 0.0005098486437291605,
+      "max_abs_flux_error": 0.0004139734700476259,
+      "max_abs_flux_error_in_sigma": 0.03848952434528004,
+      "summed_squared_flux_error_in_sigma": 0.0024425007107095336,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 4.693529291471874e-13
+    },
+    {
+      "flat_draw_index": 1651,
+      "chain": 1,
+      "draw": 51,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.20033124735050156,
+        "u0": 0.4230461651594553,
+        "t_e": 0.07300003812043747,
+        "rho": 0.6132904055122935,
+        "baseline": 0.9994922945421515,
+        "source_fraction": 0.7906557388759632
+      },
+      "max_abs_magnification_error": 0.00016409882623014127,
+      "max_abs_flux_error": 0.00012967980611246153,
+      "max_abs_flux_error_in_sigma": 0.012057086783562612,
+      "summed_squared_flux_error_in_sigma": 0.0010477762051390165,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 1.957755189045636e-13
+    },
+    {
+      "flat_draw_index": 1754,
+      "chain": 1,
+      "draw": 154,
+      "n_observations": 72,
+      "parameters": {
+        "t0": 0.20026594884809037,
+        "u0": 0.40269267478531384,
+        "t_e": 0.07555245841944175,
+        "rho": 0.5918466487732388,
+        "baseline": 1.0000423249888912,
+        "source_fraction": 0.7443976133177234
+      },
+      "max_abs_magnification_error": 0.00021513476916590335,
+      "max_abs_flux_error": 0.00016015258687833238,
+      "max_abs_flux_error_in_sigma": 0.014890318674054126,
+      "summed_squared_flux_error_in_sigma": 0.0010656675365638144,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -1.5368575428356103e-13
+    },
+    {
+      "flat_draw_index": 1857,
+      "chain": 1,
+      "draw": 257,
+      "n_observations": 74,
+      "parameters": {
+        "t0": 0.1999528629428076,
+        "u0": 0.3923968671912378,
+        "t_e": 0.07756737612466663,
+        "rho": 0.5734038122601443,
+        "baseline": 0.9998647453308569,
+        "source_fraction": 0.7225484972860436
+      },
+      "max_abs_magnification_error": 0.0002687785249149144,
+      "max_abs_flux_error": 0.00019417925207677484,
+      "max_abs_flux_error_in_sigma": 0.01805397589680676,
+      "summed_squared_flux_error_in_sigma": 0.0011494523001017317,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -1.4914837212539704e-13
+    },
+    {
+      "flat_draw_index": 1960,
+      "chain": 1,
+      "draw": 360,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.20014063555585893,
+        "u0": 0.47608443369645814,
+        "t_e": 0.0699684492746263,
+        "rho": 0.6604142875103658,
+        "baseline": 1.000263738562745,
+        "source_fraction": 0.8982611376061945
+      },
+      "max_abs_magnification_error": 0.00048012072730729827,
+      "max_abs_flux_error": 0.00043138753422907594,
+      "max_abs_flux_error_in_sigma": 0.040108611305575054,
+      "summed_squared_flux_error_in_sigma": 0.002742811017905723,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 5.564788340665341e-13
+    },
+    {
+      "flat_draw_index": 2063,
+      "chain": 1,
+      "draw": 463,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.2003429821261846,
+        "u0": 0.46566823969918203,
+        "t_e": 0.07053485627210988,
+        "rho": 0.6499588328908741,
+        "baseline": 1.0003455565180044,
+        "source_fraction": 0.8776069873493305
+      },
+      "max_abs_magnification_error": 4.5188738864609945e-05,
+      "max_abs_flux_error": 3.967165704122788e-05,
+      "max_abs_flux_error_in_sigma": 0.004377024664464881,
+      "summed_squared_flux_error_in_sigma": 0.001098180113555724,
+      "worst_observation_time": 0.47861111109876,
+      "reference_convergence_in_sigma_at_worst_epoch": 3.36888258909135e-13
+    },
+    {
+      "flat_draw_index": 2167,
+      "chain": 1,
+      "draw": 567,
+      "n_observations": 65,
+      "parameters": {
+        "t0": 0.20038103424243003,
+        "u0": 0.48034108616974985,
+        "t_e": 0.06886859532557672,
+        "rho": 0.6691344215401669,
+        "baseline": 0.9998181907986382,
+        "source_fraction": 0.9121908279964223
+      },
+      "max_abs_magnification_error": 0.00014127884561077053,
+      "max_abs_flux_error": 0.00012884983681028895,
+      "max_abs_flux_error_in_sigma": 0.011979919704092202,
+      "summed_squared_flux_error_in_sigma": 0.0012665241253075675,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 4.895424341977698e-13
+    },
+    {
+      "flat_draw_index": 2270,
+      "chain": 1,
+      "draw": 670,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.20013522949101237,
+        "u0": 0.4648211561108989,
+        "t_e": 0.07108061650139907,
+        "rho": 0.6475093984783686,
+        "baseline": 0.9996126009791139,
+        "source_fraction": 0.873422741483614
+      },
+      "max_abs_magnification_error": 0.0005095837023390004,
+      "max_abs_flux_error": 0.000444909569983489,
+      "max_abs_flux_error_in_sigma": 0.04136583371721257,
+      "summed_squared_flux_error_in_sigma": 0.002779106989489941,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 5.046897782704873e-13
+    },
+    {
+      "flat_draw_index": 2373,
+      "chain": 1,
+      "draw": 773,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.2001725661257725,
+        "u0": 0.4652347297511988,
+        "t_e": 0.0708589480838016,
+        "rho": 0.6503961952108479,
+        "baseline": 0.9996251568993577,
+        "source_fraction": 0.8740431758426818
+      },
+      "max_abs_magnification_error": 0.00020188125070408347,
+      "max_abs_flux_error": 0.00017638678734527538,
+      "max_abs_flux_error_in_sigma": 0.016399706833702794,
+      "summed_squared_flux_error_in_sigma": 0.0013441888175103117,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.5252731379987944e-13
+    },
+    {
+      "flat_draw_index": 2476,
+      "chain": 1,
+      "draw": 876,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.19994574475395455,
+        "u0": 0.45238097673362765,
+        "t_e": 0.0703130237949329,
+        "rho": 0.6448015088887448,
+        "baseline": 0.9999459353910416,
+        "source_fraction": 0.8555218874816831
+      },
+      "max_abs_magnification_error": 0.000380014415550356,
+      "max_abs_flux_error": 0.0003250930730817254,
+      "max_abs_flux_error_in_sigma": 0.030225796231389997,
+      "summed_squared_flux_error_in_sigma": 0.001942322498724924,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -2.1193327541610013e-13
+    },
+    {
+      "flat_draw_index": 2579,
+      "chain": 1,
+      "draw": 979,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.2002096829608831,
+        "u0": 0.44001615696331947,
+        "t_e": 0.0722081899172563,
+        "rho": 0.627975781940795,
+        "baseline": 0.9993676325550599,
+        "source_fraction": 0.8232418510997827
+      },
+      "max_abs_magnification_error": 0.00027052231055035847,
+      "max_abs_flux_error": 0.00022256445612750907,
+      "max_abs_flux_error_in_sigma": 0.02069311362278419,
+      "summed_squared_flux_error_in_sigma": 0.0014133000663763746,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.7175839092559077e-13
+    },
+    {
+      "flat_draw_index": 2683,
+      "chain": 1,
+      "draw": 1083,
+      "n_observations": 69,
+      "parameters": {
+        "t0": 0.200196365733976,
+        "u0": 0.44693262311006177,
+        "t_e": 0.07229287885098,
+        "rho": 0.630428037728997,
+        "baseline": 0.9996915611406513,
+        "source_fraction": 0.8353618510419903
+      },
+      "max_abs_magnification_error": 0.0005171753244139765,
+      "max_abs_flux_error": 0.000431895281926754,
+      "max_abs_flux_error_in_sigma": 0.040155819565971036,
+      "summed_squared_flux_error_in_sigma": 0.002629257062694456,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 4.82735186234894e-13
+    },
+    {
+      "flat_draw_index": 2786,
+      "chain": 1,
+      "draw": 1186,
+      "n_observations": 73,
+      "parameters": {
+        "t0": 0.20035490172641002,
+        "u0": 0.37959960627149986,
+        "t_e": 0.07742158101348437,
+        "rho": 0.5705204580279156,
+        "baseline": 0.9999936986917807,
+        "source_fraction": 0.7054634117321366
+      },
+      "max_abs_magnification_error": 0.0005494993277435078,
+      "max_abs_flux_error": 0.00038764922778179305,
+      "max_abs_flux_error_in_sigma": 0.03604200623875679,
+      "summed_squared_flux_error_in_sigma": 0.002078335390467068,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -4.36921355419337e-13
+    },
+    {
+      "flat_draw_index": 2889,
+      "chain": 1,
+      "draw": 1289,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.20006479555704015,
+        "u0": 0.48284165230374715,
+        "t_e": 0.0698404788118222,
+        "rho": 0.6651857924604112,
+        "baseline": 0.9996611900295256,
+        "source_fraction": 0.9098421120751425
+      },
+      "max_abs_magnification_error": 0.0004920228168092677,
+      "max_abs_flux_error": 0.00044751140612038254,
+      "max_abs_flux_error_in_sigma": 0.041607741575032234,
+      "summed_squared_flux_error_in_sigma": 0.002895154608328765,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 5.257595344731799e-13
+    },
+    {
+      "flat_draw_index": 2992,
+      "chain": 1,
+      "draw": 1392,
+      "n_observations": 71,
+      "parameters": {
+        "t0": 0.2002454205635997,
+        "u0": 0.43281425731919876,
+        "t_e": 0.07388122679520445,
+        "rho": 0.6121962135744659,
+        "baseline": 1.000242368083949,
+        "source_fraction": 0.8055487329564378
+      },
+      "max_abs_magnification_error": 0.00021489554217968276,
+      "max_abs_flux_error": 0.00017315078777668902,
+      "max_abs_flux_error_in_sigma": 0.016098837108495304,
+      "summed_squared_flux_error_in_sigma": 0.0012358230418994516,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 4.990322120110836e-13
+    },
+    {
+      "flat_draw_index": 3095,
+      "chain": 1,
+      "draw": 1495,
+      "n_observations": 67,
+      "parameters": {
+        "t0": 0.2000763471576944,
+        "u0": 0.45222255911774345,
+        "t_e": 0.07101370274770245,
+        "rho": 0.6429588589626184,
+        "baseline": 0.9997216927175904,
+        "source_fraction": 0.8465693693835208
+      },
+      "max_abs_magnification_error": 0.000397646768362403,
+      "max_abs_flux_error": 0.00033654188579821157,
+      "max_abs_flux_error_in_sigma": 0.031290259023474355,
+      "summed_squared_flux_error_in_sigma": 0.0019806515907998786,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": -2.0966849241044662e-13
+    },
+    {
+      "flat_draw_index": 3199,
+      "chain": 1,
+      "draw": 1599,
+      "n_observations": 66,
+      "parameters": {
+        "t0": 0.19987906780769854,
+        "u0": 0.4868964585226399,
+        "t_e": 0.06921339504995776,
+        "rho": 0.67101371455822,
+        "baseline": 0.9996688228766735,
+        "source_fraction": 0.9160983856202726
+      },
+      "max_abs_magnification_error": 0.0002078112601782145,
+      "max_abs_flux_error": 0.00019031251193267652,
+      "max_abs_flux_error_in_sigma": 0.01769446254708408,
+      "summed_squared_flux_error_in_sigma": 0.0014648528489607407,
+      "worst_observation_time": 0.16770833332109,
+      "reference_convergence_in_sigma_at_worst_epoch": 2.2687663463040392e-13
+    }
+  ],
+  "elapsed_seconds": 3.0842849579639733,
+  "note": "A check at these posterior draws and actual epochs, not a global accuracy bound. The summed squared numerical error is not a detection statistic or a likelihood ratio. This comparison isolates the finite-source solver and does not independently test the three-node exposure approximation."
+}

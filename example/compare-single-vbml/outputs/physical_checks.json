@@ -1,0 +1,496 @@
+{
+  "physical_configuration": {
+    "description": "Quiet K dwarf transited by an isolated sub-Earth-mass planet",
+    "event": {
+      "t0": 0.2,
+      "u0": 0.42993919500762634,
+      "t_e": 0.12291228679704182,
+      "rho": 0.6141988500108948,
+      "a1": 0.4,
+      "f_s": 0.8,
+      "f_b": 0.19999999999999996
+    },
+    "source_radius_solar": 0.8,
+    "source_mass_solar": 0.8,
+    "source_temperature_K": 5000.0,
+    "source_distance_kpc": 6.0,
+    "source_logg_cgs": 4.5349774634615505,
+    "atmosphere_logg_cgs": 4.5,
+    "atmosphere_metallicity": 0.0,
+    "lens_mass_earth": 0.5,
+    "lens_mass_solar": 1.5017448074578e-06,
+    "lens_distance_kpc": 4.0,
+    "mu_geo_masyr": 3.0,
+    "theta_star_mas": 0.0006200623014616212,
+    "theta_e_mas": 0.0010095465034664626,
+    "pi_rel_mas": 0.08333333333333334,
+    "pi_e": 82.54531420513379,
+    "source_crossing_hours": 1.811822044870857,
+    "transit_hours": 2.5877994917402756,
+    "band": "F146 AB",
+    "source_magnitude_ab": 20.74961708717848,
+    "baseline_magnitude_ab": 20.507342054658338,
+    "source_fraction": 0.8,
+    "extinction_at_1p65_micron_mag": 1.0,
+    "extinction_law": "A(lambda)=A(1.65 micron)*(lambda/1.65 micron)^-2; illustrative sightline",
+    "limb_darkening": "Fixed linear a1=.4, an illustrative band-averaged profile; not derived from the flux-only CK04 spectrum",
+    "cadence_minutes": 12.1,
+    "season_days": 70.5,
+    "exposure_seconds": 66.0,
+    "exposure_scope": "Top-hat average over the nominal 66-second exposure; detector ramp weighting is not modeled",
+    "observer": "Rectilinear short-event approximation; no sampled annual parallax or mass inference",
+    "source_electrons_per_exposure": 34288.127515911685,
+    "baseline_electrons_per_exposure": 42860.159394889604,
+    "ab_zero_electrons_per_second": 103620734919.35362,
+    "anchor_magnitude_ab": 21.2,
+    "anchor_snr": 100.0,
+    "anchor_scope": "Photon+effective-background S/N before adding the assumed independent 1 mmag floor",
+    "anchor_electrons_per_exposure": 22645.953107379242,
+    "background_read_variance_electrons2": 28637.966106782715,
+    "independent_floor_magnitude": 0.001,
+    "fractional_floor": 0.0009210340371976184,
+    "noise_scope": "Known independent Gaussian errors from source+blend Poisson counts, constant effective background/read variance calibrated to S/N=100 at F146_AB=21.2, and an assumed independent 1 mmag floor. Not a pixel-level or crowded-field instrument forecast.",
+    "blend_scope": "Unrelated unresolved background light with fixed injected source fraction; no luminous planet contribution",
+    "representative_peak_pixel_fraction": 0.34546,
+    "fullwell_electrons": 100000.0,
+    "conservative_brightness_guard_ab": 19.2,
+    "saturation_scope": "Representative centered SCA01/K0V PSF pixel and total-brightness guard; not a full SED/subpixel/MA-ramp ETC calculation",
+    "inputs": {
+      "roman_f146_sca01_effective_area.csv": {
+        "url": "https://raw.githubusercontent.com/RomanSpaceTelescope/roman-technical-information/main/roman_technical_information/data/WideFieldInstrument/Imaging/EffectiveAreas/Roman_effarea_v8_SCA01_20240301.ecsv",
+        "raw_sha256": "d116839810b69fa7e641ef70ed8d43789deb3e41c8c266914460ed0fc6b2d4cb",
+        "description": "NASA Roman effective area, SCA01, 2024-03-01 model. Extracted wavelength/F146 columns over 0.85\u20132.10 micron; no throughput rescaling.",
+        "license": "CC0-1.0",
+        "license_url": "https://github.com/RomanSpaceTelescope/roman-technical-information/blob/main/LICENSE.md",
+        "extracted_sha256": "a7e6f58eb6b1a014982aa292062c102d83a360dd6dd997e58daaa71257f2bfa0"
+      },
+      "ck04_5000_4000_logg4p5_solar.csv": {
+        "urls": [
+          "https://ssb.stsci.edu/trds/grid/ck04models/ckp00/ckp00_5000.fits",
+          "https://ssb.stsci.edu/trds/grid/ck04models/ckp00/ckp00_4000.fits"
+        ],
+        "raw_sha256": {
+          "ckp00_5000.fits": "c89b206bb254360ff10cabfd0f6bab333e630129feafae6ad34f7300a93c5da5",
+          "ckp00_4000.fits": "9015ecd2129b7467db5e46ed4909b8b990f650328635855fd4bc4a2bbff1f948"
+        },
+        "description": "STScI Castelli & Kurucz 2004 ATLAS9 surface-flux grids at 5000 K (photosphere) and 4000 K (spot), [M/H] = 0, log g = 4.5. Native wavelength/g45 samples over 7500\u201323000 Angstrom, merged without resampling. Flux units erg s^-1 cm^-2 Angstrom^-1; multiply by (R/D)^2.",
+        "attribution": "Castelli & Kurucz 2004; STScI atmosphere reference archive.",
+        "license": "Publicly distributed numerical atmosphere grid; no explicit redistribution license was present in the FITS headers. No claim of a new license for these values.",
+        "documentation": "https://etc.stsci.edu/etcstatic/users_guide/1_ref_4_ck.html",
+        "extracted_sha256": "4f8aa86a9431a60254cd562a22c67461a8e012e2e8cbbfc949452024972b4be4"
+      }
+    },
+    "references": {
+      "survey": "https://roman-docs.stsci.edu/roman-community-defined-surveys/galactic-bulge-time-domain-survey",
+      "detector": "https://roman-docs.stsci.edu/simulation-tools/roman-wfi-exposure-time-calculator/etc-appendix-inputs-and-calculations",
+      "extinction": "https://arxiv.org/abs/0902.3095"
+    },
+    "configuration_source_sha256": "63ffdf19aa8b7140badb7f77bc06e9da9a39fe802c35765a013d4bcbdec71610",
+    "spectral_helper_sha256": "97610ca9d139da9da16472cafa3a6adadde42fbab7e2f28c6720822a06e1b67d"
+  },
+  "input": {
+    "origin": "Saved independent-injection event",
+    "file": "inference_event.csv",
+    "file_sha256": "30e9f0e0261c356db62930968f077fe8556d0b7f82a785a5fda137f473b271af",
+    "time_mean_error_sha256": "637c437e66e8b4062ed75eb3596982e9c010a6df1d94ffdb9fa15f3b428c95d5"
+  },
+  "earth_ephemeris_sha256": "4db030f4a46bfbf51eccad311b444af6cd41840eb15c40b16902d96748bfa61c",
+  "parallax_omission": {
+    "scope": "Earth-geocentric annual-parallax perturbations at fixed injected parameters, four quarterly origins and eight orientations. Differences use identical exposure averaging and common known errors. No refitting, posterior bias, or branch evidence is inferred; this discrete grid is not a global bound. No Roman L2 orbit or survey visibility is modeled.",
+    "convention": "Parallax mean minus rectilinear mean; pi_E,N=pi_E*cos(angle), pi_E,E=pi_E*sin(angle). Both curves use the bundled table so numerical lens errors largely cancel.",
+    "ra_deg": 268.07,
+    "dec_deg": -29.23,
+    "time_convention": "HJD TDB = relative time + time_origin; AnnualParallax(use_hjd=True)",
+    "t_ref": 0.2,
+    "pi_e": 82.54531420513379,
+    "time_origins": [
+      2462030.0,
+      2462121.3125,
+      2462212.625,
+      2462303.9375
+    ],
+    "directions_radian": [
+      0.0,
+      0.7853981633974483,
+      1.5707963267948966,
+      2.356194490192345,
+      3.141592653589793,
+      3.9269908169872414,
+      4.71238898038469,
+      5.497787143782138
+    ],
+    "exposure_order": 3,
+    "exposure_seconds": 66.0,
+    "observations": 8390,
+    "fit_solver": {
+      "source": "linear",
+      "configuration": {
+        "rho": [
+          1e-06,
+          10.0
+        ],
+        "u_over_rho": [
+          0.0,
+          100000000.0
+        ],
+        "rho_count": 192,
+        "u_over_rho_count": 947,
+        "coefficient_shape": [
+          192,
+          947,
+          4
+        ],
+        "dtype": "float64",
+        "coordinate": "log1p_ratio2",
+        "representation": "point_residual",
+        "has_astrometry": true,
+        "outside_domain": "NaN; rho=0 uses the analytic point-source limit"
+      },
+      "solver": "table",
+      "origin": "bundled",
+      "artifact": {
+        "file": "finite_source_table.npz",
+        "zip_sha256": "760401c275eb00231f24d12a9271d7b0b6f297e1fe6f3fef0620af1a3d740d39",
+        "numeric_payload_sha256": "202e91f3a2c33dadff7357ae3068d54b157c2f95cc4413cb9654e52513da4809",
+        "format_version": 3,
+        "manifest_sha256": "fa2a1c035f54422d7203607013c232b1cc71d88e287c1584f69f8de191ff9760"
+      },
+      "generation": {
+        "builder": "BasisTable.build(astrometry=True, batch_size=64)",
+        "environment": {
+          "backend": "cpu",
+          "device_kind": "cpu",
+          "python": "3.12.10",
+          "versions": {
+            "jax": "0.11.2",
+            "jaxlib": "0.11.2",
+            "numpy": "2.5.4",
+            "scipy": "1.18.1"
+          }
+        },
+        "generator": "singlens.lensing.concentric.ConcentricDisk",
+        "provenance": "Copied unchanged from the independently validated astrometry_methods_table_192.npz; no regeneration during packaging",
+        "settings": {
+          "n_disk": 96,
+          "n_limb": 64,
+          "split": true
+        },
+        "source_sha256": {
+          "lensing/basis_table.py": "b38fb57281fe880914bb8ef63b49028681bbc6aebad4eb56d97c0bb30a3befac",
+          "lensing/concentric.py": "a95ceec44ff8cc2dfc29e66ee87eb37f4440d31055411d683376fe43eec71665",
+          "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557"
+        }
+      },
+      "validation_report": "docs/_static/astrometry-methods-summary.json"
+    },
+    "rectilinear_table_vs_independent_injection": {
+      "max_abs_flux_difference_sigma": 4.226578789327298e-06,
+      "sum_squared_flux_difference_sigma": 5.8170307344538504e-11
+    },
+    "maximum_over_cases": {
+      "max_abs_flux_difference_sigma": 0.16007613433223444,
+      "sum_squared_flux_difference_sigma": 0.12769812246521398
+    },
+    "likelihood_interpretation": "At fixed parameters and equal known Gaussian variances, half the sum of squared standardized mean differences is the expected log-likelihood loss. It is not the realized loss of a particular noise draw or a fitted detection significance.",
+    "cases": [
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 0.0,
+        "pi_e_n": 82.54531420513379,
+        "pi_e_e": 0.0,
+        "max_abs_flux_difference_sigma": 0.11276509383683443,
+        "rms_flux_difference_sigma": 0.003050817434425526,
+        "sum_squared_flux_difference_sigma": 0.07808981608265395
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 0.7853981633974483,
+        "pi_e_n": 58.368351429624354,
+        "pi_e_e": 58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.1593629645749553,
+        "rms_flux_difference_sigma": 0.0035337727017368888,
+        "sum_squared_flux_difference_sigma": 0.10477054036826756
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 1.5707963267948966,
+        "pi_e_n": 5.054442741296482e-15,
+        "pi_e_e": 82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.11272056740664985,
+        "rms_flux_difference_sigma": 0.003901317317713841,
+        "sum_squared_flux_difference_sigma": 0.12769812246521398
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 2.356194490192345,
+        "pi_e_n": -58.36835142962435,
+        "pi_e_e": 58.368351429624354,
+        "max_abs_flux_difference_sigma": 0.14498369099964886,
+        "rms_flux_difference_sigma": 0.003471203971150655,
+        "sum_squared_flux_difference_sigma": 0.10109326630829613
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 3.141592653589793,
+        "pi_e_n": -82.54531420513379,
+        "pi_e_e": 1.0108885482592965e-14,
+        "max_abs_flux_difference_sigma": 0.11315492849963002,
+        "rms_flux_difference_sigma": 0.003052844725034176,
+        "sum_squared_flux_difference_sigma": 0.07819363307826785
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 3.9269908169872414,
+        "pi_e_n": -58.36835142962437,
+        "pi_e_e": -58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.16007613433223444,
+        "rms_flux_difference_sigma": 0.0035342575684159812,
+        "sum_squared_flux_difference_sigma": 0.10479929333760836
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 4.71238898038469,
+        "pi_e_n": -1.5163328223889446e-14,
+        "pi_e_e": -82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.1131104602225707,
+        "rms_flux_difference_sigma": 0.003898326073439241,
+        "sum_squared_flux_difference_sigma": 0.1275023784070436
+      },
+      {
+        "time_origin": 2462030.0,
+        "direction_radian": 5.497787143782138,
+        "pi_e_n": 58.36835142962434,
+        "pi_e_e": -58.36835142962437,
+        "max_abs_flux_difference_sigma": 0.1443992932132746,
+        "rms_flux_difference_sigma": 0.0034665576626715143,
+        "sum_squared_flux_difference_sigma": 0.1008228148201771
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 0.0,
+        "pi_e_n": 82.54531420513379,
+        "pi_e_e": 0.0,
+        "max_abs_flux_difference_sigma": 0.0200711812835203,
+        "rms_flux_difference_sigma": 0.0007383882335903215,
+        "sum_squared_flux_difference_sigma": 0.00457437216960389
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 0.7853981633974483,
+        "pi_e_n": 58.368351429624354,
+        "pi_e_e": 58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.026839513060331558,
+        "rms_flux_difference_sigma": 0.0006285622214711485,
+        "sum_squared_flux_difference_sigma": 0.003314809011927652
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 1.5707963267948966,
+        "pi_e_n": 5.054442741296482e-15,
+        "pi_e_e": 82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.047905876971644605,
+        "rms_flux_difference_sigma": 0.0010164107691827055,
+        "sum_squared_flux_difference_sigma": 0.008667632245851757
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 2.356194490192345,
+        "pi_e_n": -58.36835142962435,
+        "pi_e_e": 58.368351429624354,
+        "max_abs_flux_difference_sigma": 0.040900634700167054,
+        "rms_flux_difference_sigma": 0.001087816961296267,
+        "sum_squared_flux_difference_sigma": 0.00992827076937145
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 3.141592653589793,
+        "pi_e_n": -82.54531420513379,
+        "pi_e_e": 1.0108885482592965e-14,
+        "max_abs_flux_difference_sigma": 0.02008242523776107,
+        "rms_flux_difference_sigma": 0.0007385896718407974,
+        "sum_squared_flux_difference_sigma": 0.0045768683611056345
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 3.9269908169872414,
+        "pi_e_n": -58.36835142962437,
+        "pi_e_e": -58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.026815046183463365,
+        "rms_flux_difference_sigma": 0.0006284316822296988,
+        "sum_squared_flux_difference_sigma": 0.003313432321740112
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 4.71238898038469,
+        "pi_e_n": -1.5163328223889446e-14,
+        "pi_e_e": -82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.04784156480649022,
+        "rms_flux_difference_sigma": 0.0010163184253110505,
+        "sum_squared_flux_difference_sigma": 0.008666057358248293
+      },
+      {
+        "time_origin": 2462121.3125,
+        "direction_radian": 5.497787143782138,
+        "pi_e_n": 58.36835142962434,
+        "pi_e_e": -58.36835142962437,
+        "max_abs_flux_difference_sigma": 0.0408520393781617,
+        "rms_flux_difference_sigma": 0.001087824656661868,
+        "sum_squared_flux_difference_sigma": 0.009928411237752274
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 0.0,
+        "pi_e_n": 82.54531420513379,
+        "pi_e_e": 0.0,
+        "max_abs_flux_difference_sigma": 0.1005711549332863,
+        "rms_flux_difference_sigma": 0.002737398750132813,
+        "sum_squared_flux_difference_sigma": 0.06286922258554868
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 0.7853981633974483,
+        "pi_e_n": 58.368351429624354,
+        "pi_e_e": 58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.14303591195074875,
+        "rms_flux_difference_sigma": 0.003168084990295664,
+        "sum_squared_flux_difference_sigma": 0.08420843742313071
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 1.5707963267948966,
+        "pi_e_n": 5.054442741296482e-15,
+        "pi_e_e": 82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.10180282131596168,
+        "rms_flux_difference_sigma": 0.003502528996602386,
+        "sum_squared_flux_difference_sigma": 0.10292608163141993
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 2.356194490192345,
+        "pi_e_n": -58.36835142962435,
+        "pi_e_e": 58.368351429624354,
+        "max_abs_flux_difference_sigma": 0.13009939805829393,
+        "rms_flux_difference_sigma": 0.003119446724863569,
+        "sum_squared_flux_difference_sigma": 0.08164265262310857
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 3.141592653589793,
+        "pi_e_n": -82.54531420513379,
+        "pi_e_e": 1.0108885482592965e-14,
+        "max_abs_flux_difference_sigma": 0.10088179070953976,
+        "rms_flux_difference_sigma": 0.002739047697339348,
+        "sum_squared_flux_difference_sigma": 0.06294498739883686
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 3.9269908169872414,
+        "pi_e_n": -58.36835142962437,
+        "pi_e_e": -58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.1436101548777214,
+        "rms_flux_difference_sigma": 0.0031684790608230537,
+        "sum_squared_flux_difference_sigma": 0.08422938769895405
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 4.71238898038469,
+        "pi_e_n": -1.5163328223889446e-14,
+        "pi_e_e": -82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.1021200528936198,
+        "rms_flux_difference_sigma": 0.0035001404373917453,
+        "sum_squared_flux_difference_sigma": 0.10278574805349033
+      },
+      {
+        "time_origin": 2462212.625,
+        "direction_radian": 5.497787143782138,
+        "pi_e_n": 58.36835142962434,
+        "pi_e_e": -58.36835142962437,
+        "max_abs_flux_difference_sigma": 0.1296286187307497,
+        "rms_flux_difference_sigma": 0.003115703547062419,
+        "sum_squared_flux_difference_sigma": 0.08144683609675786
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 0.0,
+        "pi_e_n": 82.54531420513379,
+        "pi_e_e": 0.0,
+        "max_abs_flux_difference_sigma": 0.009505498888218378,
+        "rms_flux_difference_sigma": 0.00026724634787439906,
+        "sum_squared_flux_difference_sigma": 0.0005992189216939942
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 0.7853981633974483,
+        "pi_e_n": 58.368351429624354,
+        "pi_e_e": 58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.009404194765433088,
+        "rms_flux_difference_sigma": 0.00022459026353386464,
+        "sum_squared_flux_difference_sigma": 0.00042319819851862836
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 1.5707963267948966,
+        "pi_e_n": 5.054442741296482e-15,
+        "pi_e_e": 82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.010348271617499096,
+        "rms_flux_difference_sigma": 0.00022642918816961893,
+        "sum_squared_flux_difference_sigma": 0.00043015678717073116
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 2.356194490192345,
+        "pi_e_n": -58.36835142962435,
+        "pi_e_e": 58.368351429624354,
+        "max_abs_flux_difference_sigma": 0.010512680027735461,
+        "rms_flux_difference_sigma": 0.00026878496415883105,
+        "sum_squared_flux_difference_sigma": 0.0006061385448764799
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 3.141592653589793,
+        "pi_e_n": -82.54531420513379,
+        "pi_e_e": 1.0108885482592965e-14,
+        "max_abs_flux_difference_sigma": 0.009503020600456965,
+        "rms_flux_difference_sigma": 0.0002672240871408926,
+        "sum_squared_flux_difference_sigma": 0.0005991190999580974
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 3.9269908169872414,
+        "pi_e_n": -58.36835142962437,
+        "pi_e_e": -58.36835142962435,
+        "max_abs_flux_difference_sigma": 0.009401775366151012,
+        "rms_flux_difference_sigma": 0.00022457260270330166,
+        "sum_squared_flux_difference_sigma": 0.00042313164409460435
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 4.71238898038469,
+        "pi_e_n": -1.5163328223889446e-14,
+        "pi_e_e": -82.54531420513379,
+        "max_abs_flux_difference_sigma": 0.010345226641831838,
+        "rms_flux_difference_sigma": 0.00022642290464329804,
+        "sum_squared_flux_difference_sigma": 0.0004301329133582365
+      },
+      {
+        "time_origin": 2462303.9375,
+        "direction_radian": 5.497787143782138,
+        "pi_e_n": 58.36835142962434,
+        "pi_e_e": -58.36835142962437,
+        "max_abs_flux_difference_sigma": 0.010509547077596753,
+        "rms_flux_difference_sigma": 0.0002687895743591629,
+        "sum_squared_flux_difference_sigma": 0.0006061593380342698
+      }
+    ]
+  },
+  "source_sha256": {
+    "physical_checks.py": "fdeca7dad2381bf577f9d6047abbcebe0d1af75537232a99e1aa4a7b6b2bce02",
+    "experiment.py": "950e68ef0507014065538142cabb5a36c48d8878052a2495757dd0a89d25b681",
+    "_physical.py": "63ffdf19aa8b7140badb7f77bc06e9da9a39fe802c35765a013d4bcbdec71610"
+  },
+  "environment": {
+    "jax": "0.11.2",
+    "numpy": "2.5.4",
+    "x64_enabled": true
+  }
+}

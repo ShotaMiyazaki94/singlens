@@ -13,6 +13,7 @@ Install the development dependencies and run the checks from the repository root
 
 ```bash
 python -m pip install -e '.[dev,docs,validation]'
+python tools/fetch_example_data.py --bootstrap
 ruff check src tests example tools docs/conf.py
 ruff format --check src tests example tools docs/conf.py
 python -m pytest
@@ -21,26 +22,83 @@ python -m build
 python -m twine check --strict dist/*
 ```
 
-CI runs lint, the test suite, and distribution checks once on Python 3.12
-with the minimum supported JAX version. Optional example and reference-library
-dependencies are installed so those tests also run.
+On pull requests and pushes to main, CI runs five jobs: three test shards,
+one quality job, and documentation. Every test runs in one of the Python 3.12
+shards with the minimum supported JAX version and all optional example and
+reference-library dependencies installed. File boundaries preserve shared
+reference caches; new and nested test files enter the general shard.
+Inspect the complete partition with `python tools/run_ci_tests.py --list`.
 
-Build documentation locally before submitting changes to docs or examples.
-Show the scientific calculation in tutorials: define the probability model,
-likelihood, sampler, and predictions directly. Keep file loading and global
-plot styling out of the rendered code. Saved long-run samples may supply figures;
-state which run they represent. The inference tutorial includes the actual
-example model and sampler source with `literalinclude`, so the displayed
-definitions and executed implementation cannot drift apart.
-Its explicit `RUN_SAMPLING` switch selects a new run or saved draws; never
-infer that choice from which variables happen to exist in the kernel.
-Sphinx executes three notebooks and treats warnings/errors as failures.
-`-E` also reruns notebooks whose imported helpers changed. Open
-`docs/_build/html/index.html`. Numerical diagnostics live in `tools/validation`;
-regenerate example results when changing the solver. Benchmark separately
-from tests or other CPU-intensive work.
+The quality job combines lint, build, strict distribution checks, and installed
+wheel checks with the minimum dependency versions. It also collects the entire
+suite without example or reference-library extras and runs focused API,
+analytic, serialization, and numerical edge tests. Documentation executes
+its notebooks and treats warnings as errors.
 
-The wheel contains the Earth ephemeris and license notices. Source archives
+Extended checks run only on the weekly schedule or a manual
+`workflow_dispatch`: Python 3.14 with the latest JAX runs general tests, and
+macOS and Windows check installed wheels, full-suite collection without
+optional extras, and focused core tests.
+Manual runs execute only these three extended jobs; scheduled runs also execute
+the usual five jobs. The weekly schedule is Monday at 00:00 UTC (09:00 JST).
+GitHub schedules use the default branch, so the weekly
+checks start only after this workflow reaches that branch.
+
+Tests show individual progress and the 20 slowest cases. Jobs have a
+30-minute limit; JUnit reports stay under ignored `local/ci-results/`.
+
+The fetch step prepares the CK04 atmosphere table needed by physical-example
+tests and documentation. It downloads the original public STScI inputs and
+verifies their recorded hashes and the derived CSV hash. Acquisition-only
+dependencies run in an isolated bootstrap environment. The derived CK04 data
+are kept local and are excluded from Git and source distributions because
+their upstream redistribution permission is unconfirmed.
+
+## Documentation
+
+Use a few broad sections and short explanations around code and figures,
+following the granularity of the [jaxoplanet tutorials](https://jax.exoplanet.codes/en/latest/tutorials/quickstart/).
+Describe the public behavior directly; put change history in `CHANGELOG.md`.
+Give each definition, convention, and limitation one primary home, linking
+to it elsewhere. Keep units, defaults, validation conditions, and scope next
+to the results they qualify. Avoid repeating caveats or narrating development choices.
+
+Show the scientific model, likelihood, and predictions in tutorials. Use
+`literalinclude` when sharing executable definitions with examples. Saved
+posterior samples may supply figures; identify the run and its reproduction
+command. Keep file loading and global styling out of the main explanation.
+Inference examples should show the NumPyro model, priors, likelihood, and a
+short sampler setup. Explain any marginalized variables or parameter transforms
+needed to interpret that code.
+
+Compare numerical methods with one representative setting per method in the
+main figures, identifying the settings in the caption. Keep resolution sweeps
+in detailed validation reports. Do not repeat plotted results in tables; state
+the main finding in the text and link the numerical report. Use tables for
+priors, observing conditions, or results not shown in a figure.
+Ordinary usage examples select a method without
+exposing numerical tuning; advanced controls belong in numerical maintenance.
+
+Build with notebook execution enabled before submitting documentation changes;
+check figures and links as well as the exit status. Sphinx treats warnings
+and errors as failures; `-E` reruns notebooks after helper changes. Open
+`docs/_build/html/index.html`. Numerical checks live in `tools/validation`;
+regenerate affected results after solver changes, and time benchmarks without
+competing workloads.
+
+Tutorial and example figures should be landscape or square overall,
+including legends and labels. Preserve natural layouts for corner plots
+and other structural diagnostics when rearranging them would make the
+relationships harder to read. Use shorter derivative or residual panels
+where appropriate, keeping labels and curves readable.
+
+Static time-series comparisons use vertically stacked panels with a shared
+time axis. Astrometry examples use synchronized movies with the light curve
+on the left and the two-dimensional centroid track on the right. Show the
+current epoch in both panels, use a uniform physical-time playback rate,
+and state any unequal angular-axis scales in the caption.
+
+The wheel contains the Earth ephemeris, finite-source table, and license notices. Source archives
 include examples and tests, but exclude historical `archive/`, generated docs,
 and development outputs. Test a built wheel in a fresh environment before release.
 Version metadata lives in `pyproject.toml`.
@@ -48,9 +106,17 @@ Version metadata lives in `pyproject.toml`.
 ## Repository contents
 
 Keep source, tests, documentation, examples, validation scripts, and license
-notices under version control. The figures, data, reports, and posterior
-samples used by the public examples are also versioned so the documentation
-can build without rerunning long inference jobs.
+notices under version control. Version the figures, input data, concise reports,
+and selected joint posterior draws needed by the public examples so the
+documentation can build without rerunning long inference jobs. Keep full
+parallax sampling chains, completion manifests, duplicate per-seed figures,
+unused prediction caches, and historical raw data and figures local.
+Deterministic astrometry CSV grids and spatial-spot arrays also stay local;
+their public movies, reports, and figures are retained. The earlier GP example
+keeps only its two JSON summaries; the current tutorial uses `active_ffp/`.
+Inference runners regenerate those products; their public summaries record
+the settings and diagnostics. Historical reference directories publish JSON
+summaries and original file hashes rather than entire old artifact sets.
 
 `.gitignore` excludes local archives and experiments, virtual environments,
 caches, builds, private settings, numerical diagnostic outputs, and temporary
@@ -60,17 +126,19 @@ directory and original snapshots in the ignored `archive/` directory.
 
 ## Implementation layout
 
-The package root holds the event API (`lightcurve.py`), prepared `Model`, and
+The event API is `Model` with an explicit source profile and fitted
 `Parameters`. Physical and numerical work is grouped by responsibility:
 
-- `lensing/`: point/finite-source magnification and `FFTConfig`.
+- `lensing/`: point/finite-source magnification, astrometric shifts, and `FFTConfig`.
 - `trajectory/`: `AnnualParallax`, ephemeris loading/projection, and Kepler geometry.
 - `photometry/`: weighted flux fitting and Gaussian marginal likelihoods.
 - `numerics/`: internal FFTLog, interpolation, and Bessel kernels.
-- `data/`: bundled Earth ephemeris.
+- `data/`: bundled Earth ephemeris and finite-source table with provenance.
 
-Keep numerical kernels independent of lensing and event APIs. Public entry
-points are exported from `singlens`.
+Keep numerical kernels independent of lensing and event APIs. The package
+root exports `__version__`, `Model`, `Parameters`, `AnnualParallax`, and
+`FluxFit`; numerical settings, specialized kernels, and fitting utilities live
+in their submodules.
 
 ## Numerical maintenance
 
@@ -78,7 +146,41 @@ Public docs describe behavior, usage, measured performance, and accuracy limits.
 Document current algorithms and validation procedures here or in
 `tools/validation`; keep dated working notes and superseded results locally.
 
-Finite-source interpolation uses a natural C2 cubic spline at interior grid
+Uniform/linear `Model` instances load the bundled joint basis table. Point
+sources use analytic kernels; `mu2` uses FFTLog. `solver` accepts the method
+names `"table"` or `"fft"`, with fixed settings. Selection is static for the model.
+The `lensing/concentric.py` implementation is internal to table generation and
+numerical reference checks, and is not a public model solver.
+
+Regenerate tables with the offline builder, which requires SciPy:
+
+```bash
+PYTHONPATH=src python tools/build_finite_source_table.py --output /tmp/custom-bases.npz
+```
+
+The builder writes compressed coefficients and a JSON provenance manifest.
+Optional `--rho-grid radii.txt --z-grid ratios.txt` accept one-column numeric
+grids; `--force` allows replacing output files. Validate held-out values,
+Cartesian/source-parameter derivatives, and inference sensitivity before
+distributing a generated table. A successful build does not establish accuracy.
+Package tests should verify resource loading from an installed wheel without
+invoking table construction.
+
+Numerical development can pass advanced solver objects from `singlens.lensing`:
+
+```python
+from singlens import Model
+from singlens.lensing import BasisTable, FFTConfig
+
+resolution_check = Model(source="linear", solver=FFTConfig(n_fft=8192))
+table = BasisTable.load("/tmp/custom-bases.npz")
+custom_model = Model(source="linear", solver=table)
+```
+
+Custom grids and settings need independent value, derivative, and inference
+checks; the packaged measurements describe the fixed supported settings.
+
+FFT interpolation uses a natural C2 cubic spline at interior grid
 knots. The far-field expansion is joined over `u/rho=10..20` with matching
 first and second derivatives. Test that all-far batches skip the FFT under
 both evaluation and autodiff, and give the same distant values as mixed
@@ -93,16 +195,29 @@ transformation has a constant Jacobian. Diagnostics and IO are excluded from
 both benchmark samplers' timings. The speed comparison generates independent
 noise directly; GP injection–recovery remains a separate example.
 
-The [VBM inference adapter](docs/benchmark-methods.md#vbm-inference-interface)
-must keep calls serial and the installed numerical core unchanged, with no
-silent interface fallback. Include its build/load cost once in VBM's total
-and check agreement with the stock API outside sampling timers. Record the
-interface and source provenance in the report. Regenerate all three inference
-runs together when publishing new speed ratios, without concurrent intensive work.
+The inference benchmark uses a stellar-lens event with annual parallax in
+`example/parallax_inference/`. Regenerate NUTS and emcee results together
+using `python -m example.parallax_inference.code.run_suite`, without concurrent
+intensive work. Compare singlens Table/NumPyro NUTS with VBM/emcee using independently
+integrated observations, known errors, exposure averaging, priors, and
+MAP/Hessian initialization. Preserve per-seed diagnostics and unthinned
+chains. Distinguish the three-seed range from population coverage and
+sampling within one signed solution from mixing between parallax modes.
+Astrometry remains a separate example and validation task.
+Allow each method the same CPU host, choose execution layouts on separate
+calibration data, and record chain/worker counts, thread settings, CPU time,
+and wall time. The published inference comparison uses parallel execution;
+do not describe it as a single-core measurement.
+
+The benchmark samples seven lens parameters and two flux coefficients jointly.
+Keep the Gaussian flux prior identical between methods, including its
+covariance, and include both fluxes in ESS/stopping. Validate the joint
+likelihood and JAX gradients, check VBM against its stock API, and report
+numerical approximation differences separately from sampler convergence.
 
 The independent accuracy reference cancels the point-lens singularity with
 the lens-centered area element. Its convergence and center checks are in
-`example/compare-single-vbml/code/accuracy.py`. The default-domain check is
+`example/compare-single-vbml/code/accuracy.py`. The FFT-domain check is
 `python -m tools.validation.accuracy_domain`; it caches independent references
 and checks 31 radii, fine source-contact sampling, approximation boundaries,
 and source-centered wing integrals.
@@ -120,7 +235,7 @@ demonstrates `u_i=10**(-6+9*i/N)` with `N=1024` and a Gaussian high-frequency
 filter with cutoff `50*k_rho`, where `k_rho=2*pi/rho`. It does not establish
 an optimal transform domain.
 
-The default grid is inclusive `logspace(-8,4,4096)`. The full calculation and
+The default FFT grid is inclusive `logspace(-8,4,4096)`. The full calculation and
 small-source limit share the compensated Gaussian `2*G-G**2`, with
 `G=exp[-(k*rho/(100*pi))**2]`. Its low-frequency expansion starts at fourth
 order, reducing smoothing bias while suppressing undersampled high-frequency
@@ -132,7 +247,7 @@ adding transforms to each evaluation.
 Above 8192 bins, the inverse transform uses padding proportional to resolution
 to prevent wrap-around near the central expansion.
 
-The 4096-bin default accepts a 0.11% uniform-source validation threshold near
+The 4096-bin FFT setting accepts a 0.11% uniform-source validation threshold near
 limb contact; pure linear and quadratic basis checks retain 0.1% thresholds.
 Public accuracy figures report the measured errors rather than these check limits.
 
@@ -145,13 +260,58 @@ magnification uniform-disk limit.
 Near alignment, the quadratic central expansion avoids FFT endpoint errors.
 A radial profile can be written as a weighted mixture of uniform disks;
 their exact central curvature, `A_p'(rho)/rho`, gives the second-order term.
-The existing `r=sin(theta)` quadrature removes the limb endpoint singularity
+The `r=sin(theta)` quadrature removes the limb endpoint singularity
 for the nonuniform basis profiles. Tests check both near-center values and
 slopes against independent integration, and uniform-source derivatives against
 the elliptic small-source limit.
 
 FFTLog uses JAX complex `loggamma`; the Bessel approximations have broad-argument
 tests because `bessel_jn` is not a drop-in replacement across that range.
+
+### Astrometric first moments
+
+`lensing/astrometry.py` prepares astrometric kernels for FFT source profiles.
+An FFT `Model` constructs it lazily under `jax.ensure_compile_time_eval`
+so a cold first call under JIT does not cache tracers. Photometry-only use
+does not prepare these kernels or change the magnification algorithm.
+
+For the point-lens flux-weighted position kernel
+`K(r) = (r**2+3)/sqrt(r**2+4) * r_hat`, subtract the unlensed position:
+`q(r) = K(r) - r_vector`. Its radial magnitude decays as `1/r`, so transforming
+it directly gives difficult far endpoints. The implementation instead
+transforms its divergence,
+`T(r) = 2*(A_point(r)-1) - 4/(r*(r**2+4)**(3/2))`, which decays as `8/r**6`.
+Rationalized expressions and the missing-origin integral corrections retain
+accuracy at both ends of the logarithmic grid.
+
+The source Fourier transform multiplies the transforms of both `A_point-1`
+and `T`. An order-zero inverse Hankel transform gives the flux excess, while
+an order-one inverse with the appropriate factor of `1/k` recovers the radial
+excess moment. The FFTLog convention returns different reciprocal
+grids for `J0` and `J1`; interpolate each result on its own output grid.
+Astrometry uses its own jointly validated flux/moment calculation. Do not
+replace either quantity with a separately tuned approximation without
+checking the resulting centroid and derivatives: correlated errors may
+cancel or reinforce after taking the ratio and subtracting the source position.
+The shared high-frequency damping smooths a uniform disk's sharp contact
+feature. Dense samples on both sides of `u/rho=1` are required; a coarse grid
+can miss the largest displacement errors, and increasing FFT resolution
+alone does not remove the fixed damping bias.
+
+The small-source limit uses `K(r)=3/2*r_hat+O(r**2)` and the normalized
+source basis transforms. A central even series gives the displacement as a
+coefficient times the Cartesian input position, retaining finite derivatives
+at zero separation. The far-field expansion retains the source profile's
+second radial moment and the astrometric `1/u` tail. Do not apply a
+photometric far-wing truncation to astrometric displacement.
+
+Validate absolute shifts in Einstein-radius units against independent
+lens-centered integration, including brightness basis profiles, source
+contact, approximation boundaries, and far wings. Validate flux and moment
+separately as well. Analytic checks include the point-source limit, rotational
+covariance, exact central slope, the uniform-source contact zero, and forward/
+reverse Cartesian derivatives. A resolution comparison measures numerical
+convergence but cannot establish correctness on its own.
 
 ## Publication
 

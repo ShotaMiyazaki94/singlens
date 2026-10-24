@@ -1,4 +1,4 @@
-"""Check default magnification accuracy across source sizes and limb contact.
+"""Check FFT magnification accuracy across source sizes and limb contact.
 
 Run with ``python -m tools.validation.accuracy_domain``. Independent integral
 references are cached in the development output directory, outside the package.
@@ -16,8 +16,8 @@ import jax.numpy as jnp
 import numpy as np
 from scipy.integrate import quad
 
-import singlens as sl
 from example._common import metadata, save_json
+from singlens.lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk
 
 accuracy = import_module("example.compare-single-vbml.code.accuracy")
 OUTPUT = Path(__file__).parent / "outputs"
@@ -86,9 +86,9 @@ def main():
     rows, max_wing_change = [], 0.0
     targets = {"uniform": 1.1e-3, "linear_a1_1": 1e-3, "quadratic": 1e-3}
     for source, power, model in (
-        ("uniform", 0, sl.UniformDisk()),
-        ("linear_a1_1", 1, sl.LinearLimbDarkened(1.0)),
-        ("quadratic", 2, sl.QuadraticProfile()),
+        ("uniform", 0, UniformDisk()),
+        ("linear_a1_1", 1, LinearLimbDarkened(1.0)),
+        ("quadratic", 2, QuadraticProfile()),
     ):
         evaluate = jax.jit(model.A)
         for rho in RADII:
@@ -128,7 +128,7 @@ def main():
             print(f"{source}, rho={rho:g}: {100 * rows[-1]['max_relative_error']:.6f}%", flush=True)
     report = dict(
         **metadata(),
-        fft=asdict(sl.FFTConfig()),
+        fft=asdict(FFTConfig()),
         radii=RADII.tolist(),
         u_over_rho=RATIOS.tolist(),
         target_relative_error_by_profile=targets,
@@ -144,7 +144,7 @@ def main():
     if max_wing_change > 1e-10 or any(
         row["max_relative_error"] >= targets[row["source"]] for row in rows
     ):
-        raise RuntimeError("Default accuracy target or reference convergence failed; see report.")
+        raise RuntimeError("FFT accuracy target or reference convergence failed; see report.")
     print(
         f"{report['samples']} values pass; max relative error {report['max_relative_error']:.6g}."
     )

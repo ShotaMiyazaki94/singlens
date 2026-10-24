@@ -1,0 +1,195 @@
+{
+  "source_example": {
+    "event": {
+      "t0": 0.0,
+      "u0": 0.1,
+      "t_e": 0.8
+    },
+    "rho": 0.5,
+    "a1": 0.6,
+    "theta_e_mas": 0.012,
+    "samples": 4801,
+    "time_range_day": [
+      -3.2,
+      3.2
+    ],
+    "track_samples": 6802,
+    "track_time_range_day": [
+      -800.0,
+      800.0
+    ],
+    "track_max_abs_tau": 1000.0,
+    "track_interpretation": "ideal rectilinear continuation, not an annual-parallax forecast",
+    "track_vertical_expansion": 5.0,
+    "animation_time_range_day": [
+      -3.2,
+      3.2
+    ],
+    "shift_reference": "same-epoch unlensed source center; origin is zero lensing displacement",
+    "physical_interpretation": {
+      "assumptions": {
+        "source_distance_kpc": 8.0,
+        "relative_parallax_mas": 0.1
+      },
+      "relative_parallax_source": "assumed; annual parallax is omitted in this short-event example",
+      "derived": {
+        "relative_parallax_mas": 0.1,
+        "lens_distance_kpc": 4.444444444444445,
+        "lens_mass_solar": 0.0001768172888015717,
+        "lens_mass_jupiter": 0.18518934766208248,
+        "relative_proper_motion_mas_per_year": 5.47875,
+        "source_angular_radius_mas": 0.006,
+        "source_radius_solar": 10.321543472186287
+      },
+      "proper_motion_frame": "rectilinear short-event approximation",
+      "constants": {
+        "kappa_mas_per_solar_mass": 8.144,
+        "solar_to_jupiter_mass": 1047.348644,
+        "au_per_solar_radius": 215.03215567054764,
+        "days_per_year": 365.25
+      }
+    }
+  },
+  "long_event": {
+    "name": "OGLE-2011-BLG-0462 / MOA-2011-BLG-191",
+    "event": {
+      "t0": 5763.3286,
+      "u0": 0.00263,
+      "t_e": 239.7
+    },
+    "rho": null,
+    "source": "point",
+    "theta_e_mas": 5.68,
+    "parallax_geometry": {
+      "ra_deg": 267.9175341666667,
+      "dec_deg": -29.890695,
+      "t_ref": 5763.3286
+    },
+    "pi_e_n": 0.073,
+    "pi_e_e": -0.05,
+    "time_convention": "HJD - 2450000; plotted time is t - t0",
+    "samples": 24001,
+    "time_range_day": [
+      -719.0999999999999,
+      719.0999999999999
+    ],
+    "minimum_u_over_rho": null,
+    "track_vertical_expansion": 1.0,
+    "shift_reference": "same-epoch unlensed source center; origin is zero lensing displacement",
+    "physical_interpretation": {
+      "assumptions": {
+        "source_distance_kpc": 5.9
+      },
+      "relative_parallax_source": "theta_E * hypot(pi_E_N, pi_E_E) from the annual-parallax model inputs",
+      "derived": {
+        "relative_parallax_mas": 0.5025756953932412,
+        "lens_distance_kpc": 1.487946397362443,
+        "lens_mass_solar": 7.882381022568998,
+        "lens_mass_jupiter": 8255.601075478973,
+        "relative_proper_motion_mas_per_year": 8.655068836045055
+      },
+      "proper_motion_frame": "geocentric at t_ref",
+      "constants": {
+        "kappa_mas_per_solar_mass": 8.144,
+        "solar_to_jupiter_mass": 1047.348644,
+        "au_per_solar_radius": 215.03215567054764,
+        "days_per_year": 365.25
+      }
+    },
+    "reference": {
+      "url": "https://arxiv.org/html/2207.10729v2#S5.T2",
+      "solution": "Mr\u00f3z et al. (2022), Table 2, joint fit using Sahu et al. astrometry",
+      "reported_lens_mass_solar": 7.88,
+      "reported_lens_mass_uncertainty_solar": 0.82,
+      "reported_lens_distance_kpc": 1.49,
+      "reported_lens_distance_uncertainty_kpc": 0.12,
+      "source_distance_kpc": 5.9,
+      "source_distance_uncertainty_kpc": 1.3
+    },
+    "observer_model": "Earth annual parallax; intrinsic unblended point-source magnification",
+    "photometry_note": "The movie excludes the large unrelated blend in the observed OGLE photometry",
+    "flux_yscale": "log"
+  },
+  "blending": {
+    "name": "Illustrative Roman-scale G-dwarf lens and G-dwarf source",
+    "event": {
+      "t0": 12030.0,
+      "u0": 0.3,
+      "t_e": 42.553323195727025
+    },
+    "rho": 0.0009979145220067034,
+    "source": "uniform",
+    "theta_e_mas": 0.5825232470325397,
+    "parallax_geometry": {
+      "ra_deg": 268.07,
+      "dec_deg": -29.23,
+      "t_ref": 12030.0
+    },
+    "pi_e_n": 0.061944981609181916,
+    "pi_e_e": 0.03576395180700759,
+    "time_convention": "HJD - 2450000; plotted time is t - t0",
+    "samples": 4801,
+    "time_range_day": [
+      -170.2132927829081,
+      170.2132927829081
+    ],
+    "minimum_u_over_rho": {
+      "no_parallax": 300.6269508902735,
+      "annual_parallax": 300.6269508902735
+    },
+    "track_vertical_expansion": 1.0,
+    "shift_reference": "same-time unlensed source-plus-lens centroid",
+    "physical_interpretation": {
+      "assumptions": {
+        "lens_mass_solar": 1.0,
+        "lens_distance_kpc": 6.0,
+        "source_distance_kpc": 8.0,
+        "relative_proper_motion_mas_per_year": 5.0,
+        "source_radius_solar": 1.0,
+        "stellar_types": "G-dwarf lens and G-dwarf source",
+        "flux_band": "Roman F146",
+        "lens_to_source_intrinsic_band_luminosity": 1.0,
+        "lens_minus_source_extinction_mag": 0.0,
+        "parallax_direction_deg_north_through_east": 30.0
+      },
+      "relative_parallax_source": "theta_E * hypot(pi_E_N, pi_E_E) from the annual-parallax model inputs",
+      "derived": {
+        "relative_parallax_mas": 0.04166666666666666,
+        "lens_distance_kpc": 6.0,
+        "lens_mass_solar": 0.9999999999999999,
+        "lens_mass_jupiter": 1047.3486439999997,
+        "relative_proper_motion_mas_per_year": 5.0,
+        "source_angular_radius_mas": 0.0005813084076202697,
+        "source_radius_solar": 0.9999999999999999
+      },
+      "proper_motion_frame": "geocentric at t_ref",
+      "constants": {
+        "kappa_mas_per_solar_mass": 8.144,
+        "solar_to_jupiter_mass": 1047.348644,
+        "au_per_solar_radius": 215.03215567054764,
+        "days_per_year": 365.25
+      }
+    },
+    "references": [
+      "https://arxiv.org/abs/1808.02490",
+      "https://roman-docs.stsci.edu/roman-community-defined-surveys/galactic-bulge-time-domain-survey"
+    ],
+    "observer_model": "Earth annual-parallax approximation; no Roman L2 orbit, cadence, or noise",
+    "source_flux": 1.0,
+    "blend_flux": 1.7777777777777777,
+    "lens_position_mas": [
+      0.0,
+      0.0
+    ],
+    "coordinate_frame": "tau + 1j*beta; positions relative to the lens",
+    "comparison_reference": "each curve uses its own same-epoch unlensed centroid",
+    "flux_ratio_interpretation": "F146: equal intrinsic band luminosity and foreground extinction; g=(D_S/D_L)^2=16/9"
+  },
+  "animation": {
+    "frames": 241,
+    "frames_per_second": 20,
+    "duration_ms": 50
+  },
+  "plot_angular_unit": "microarcsecond; CSV data use milliarcseconds",
+  "jax_x64": true
+}

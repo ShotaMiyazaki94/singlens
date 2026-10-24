@@ -18,10 +18,20 @@ To install the latest source from GitHub:
 python -m pip install 'singlens @ git+https://github.com/ShotaMiyazaki94/singlens.git'
 ```
 
-Editable installation (`-e`) is only needed when modifying the source; see
+For an editable source installation, see
 [development](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md).
+Before running the source checkout's physical-source examples, tests, or
+documentation build, prepare their checked local atmosphere inputs:
 
-Enable float64 before creating JAX arrays or evaluating magnifications:
+```bash
+python tools/fetch_example_data.py --bootstrap
+```
+
+This downloads the CK04 inputs from STScI and verifies their recorded hashes.
+The derived data are excluded from the repository and source distributions;
+the lensing library itself does not require these example inputs.
+
+Enable float64 before constructing models or JAX arrays:
 
 ```python
 import jax
@@ -31,24 +41,16 @@ jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 import singlens as sl
 
-times = 8000.0 + jnp.linspace(-20.0, 20.0, 101)
-geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0)
-A = sl.magnification(
-    times,
-    t0=8000.0,
-    u0=0.005,
-    t_e=20.0,
-    rho=0.01,
-    a1=0.5,
-    parallax=geometry,
-    pi_e_n=0.2,
-    pi_e_e=-0.1,
-)
+times = jnp.linspace(-20.0, 20.0, 101)
+model = sl.Model(source="linear")
+params = sl.Parameters(t0=0., u0=.005, t_e=20., rho=.01, a1=.5)
+A = model.magnification(times, params)
 print(A.shape)  # (101,)
 ```
 
 Continue with [light curves](tutorials/quickstart.ipynb),
-[derivatives](tutorials/autodiff.ipynb), or [NumPyro inference](tutorials/inference.ipynb).
+[derivatives](tutorials/autodiff.ipynb), or
+[photometry with a Gaussian process](tutorials/inference.ipynb).
 
 singlens does not change precision or device globally. For accelerators, use
 [JAX's installation guide](https://docs.jax.dev/en/latest/installation.html).
