@@ -21,9 +21,28 @@ python -m build
 python -m twine check --strict dist/*
 ```
 
-CI runs lint, the test suite, and distribution checks once on Python 3.12
-with the minimum supported JAX version. Optional example and reference-library
-dependencies are installed so those tests also run.
+On pull requests and pushes to main, CI runs five jobs: three test shards,
+one quality job, and documentation. Every test runs in one of the Python 3.12
+shards with the minimum supported JAX version and all optional example and
+reference-library dependencies installed. File boundaries preserve shared
+reference caches; new and nested test files enter the general shard.
+Inspect the complete partition with `python tools/run_ci_tests.py --list`.
+
+The quality job combines lint, build, strict distribution checks, and installed
+wheel checks with the minimum dependency versions. It also collects the entire
+suite without example or reference-library extras and runs focused API,
+analytic, serialization, and numerical edge tests. Documentation executes
+its notebooks and treats warnings as errors.
+
+Extended checks run only on the weekly schedule or a manual
+`workflow_dispatch`: Python 3.14 with the latest JAX runs general tests, and
+macOS and Windows check installed wheels, full-suite collection without
+optional extras, and focused core tests. The weekly schedule is Monday at
+00:00 UTC (09:00 JST). GitHub schedules use the default branch, so the weekly
+checks start only after this workflow reaches that branch.
+
+Tests show individual progress and the 20 slowest cases. Jobs have a
+30-minute limit; JUnit reports stay under ignored `local/ci-results/`.
 
 Build documentation locally before submitting changes to docs or examples.
 Show the scientific calculation in tutorials: define the probability model,

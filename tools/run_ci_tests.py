@@ -32,6 +32,7 @@ NUMERICAL_SHARDS = {
         "tests/test_table_interpolation.py",
         "tests/test_bundled_basis_table.py",
         "tests/test_joint_model.py",
+        "tests/test_reference_libraries.py",
     },
 }
 COMPATIBILITY_FILES = {

@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'
 
 permissions:
   contents: read
@@ -37,6 +39,7 @@ jobs:
       - run: python tools/run_ci_tests.py ${{ matrix.shard }} --junitxml local/ci-results/${{ matrix.shard }}.xml
 
   latest-general:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: General / Python 3.14 / latest JAX
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -55,15 +58,13 @@ jobs:
       - run: python tools/run_ci_tests.py general --junitxml local/ci-results/latest-general.xml
 
   compatibility:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: Core / ${{ matrix.os }} / Python ${{ matrix.python }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            python: "3.12"
-            dependencies: "jax==0.11.2 numpy==2.1.0 scipy==1.15.0 ml_dtypes==0.5.0 pytest==8.0.0"
           - os: macos-latest
             python: "3.13"
             dependencies: "jax pytest"
@@ -92,19 +93,20 @@ jobs:
       - run: python tools/run_ci_tests.py compatibility --junitxml local/ci-results/compatibility.xml
 
   quality:
-    name: Lint and distribution
+    name: Quality / minimum dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       JAX_PLATFORMS: cpu
       MPLBACKEND: Agg
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
-      - run: python -m pip install '.[dev]' 'jax==0.11.2'
+      - run: python -m pip install '.[dev]' 'jax==0.11.2' 'numpy==2.1.0' 'scipy==1.15.0' 'ml_dtypes==0.5.0' 'pytest==8.0.0'
       - run: python tools/run_ci_tests.py --list
       - run: ruff check src tests example tools docs/conf.py
       - run: ruff format --check src tests example tools docs/conf.py
@@ -112,6 +114,9 @@ jobs:
       - run: python -m twine check --strict dist/*
       - run: python -m pip install --force-reinstall --no-deps dist/*.whl
       - run: python tools/check_installed_wheel.py
+      - name: Collect every test without optional extras
+        run: python -m pytest --collect-only -q
+      - run: python tools/run_ci_tests.py compatibility --junitxml local/ci-results/minimum-dependencies.xml
 
   docs:
     runs-on: ubuntu-latest
