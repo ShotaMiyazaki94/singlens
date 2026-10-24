@@ -256,6 +256,23 @@ def test_small_source_fixed_separation_gradients(small_radius_wing_table, u, rho
     np.testing.assert_allclose(du, point_du, rtol=2e-5, atol=1e-13)
 
 
+def test_unresolved_flux_retains_the_source_second_moment():
+    # In the independent A(u) ~ 1/u limit, the uniform and pure-mu flux
+    # radius derivatives are rho/(4*u**3) and rho/(5*u**3). Absolute flux
+    # rounding before residual encoding destroys that signal at these ratios.
+    table = BasisTable.build(
+        ConcentricDisk(n_disk=16, n_limb=16),
+        np.geomspace(1e-18, 1e-16, 4),
+        np.geomspace(1e5, 1e8, 4),
+        astrometry=True,
+    )
+    u = 1e-10
+    derivative = jax.jit(jax.jacfwd(lambda rho: jnp.stack(table.joint_basis(u, rho)[:2])))
+    for rho in (1e-18, 1e-17, 1e-16):
+        expected = rho / u**3 * np.array([[0.25], [0.2]])
+        np.testing.assert_allclose(derivative(rho), expected, rtol=3e-9, atol=0)
+
+
 def test_point_limit_at_huge_position_has_finite_derivatives(polynomial_joint_table):
     def observable(theta):
         return jnp.stack(polynomial_joint_table.joint(theta[0], theta[1], a1=theta[2]))

@@ -62,6 +62,32 @@ def _axis_weights(value, knots):
     return span[..., None] + jnp.arange(-3, 1), jnp.stack(weights, axis=-1)
 
 
+def _unresolved_flux_residual(rho, z, baseline_flux):
+    """Stable uniform/mu flux residuals for rho/u <= 1e-5.
+
+    A source average is A(u) + rho**2 * <r**2> * laplacian(A)/4.
+    The leading omitted relative term is at most 3/(64*z**4), below
+    4.7e-22 here. Form the scaled difference before any absolute flux is
+    rounded; subtracting two order-one fluxes would lose this correction.
+    """
+    u = rho * z
+    u2, rho2 = u**2, rho**2
+    scale2 = u2 + rho2
+    h = np.hypot(u, 2.0)
+    point_flux = u / h + (2 / h) / u
+    # A(u)**2 = 1 + 4/(u**2*(u**2+4)). Rationalizing its difference
+    # from A(sqrt(u**2+rho**2)), then cancelling q*rho**2=scale2,
+    # retains the baseline correction without subtracting nearby values.
+    point_difference = (4 * (2 * u2 + rho2 + 4) / (u2 * (u2 + 4) * (scale2 + 4))) / (
+        point_flux + baseline_flux
+    )
+    moment2 = np.array([0.5, 0.4])
+    finite_source = (8 * scale2 * (u2 + 1) / (u**3 * h**5))[..., None] * moment2
+    scaled_relative = (point_difference[..., None] + finite_source) / baseline_flux[..., None]
+    q = (1 + z**2)[..., None]
+    return q * np.log1p(scaled_relative / q)
+
+
 class BasisTable:
     """Interpolated uniform/mu flux bases, optionally with astrometric moments.
 
@@ -162,8 +188,14 @@ class BasisTable:
         ``(F_uniform, F_mu, C_uniform, C_mu)`` with ``C=shift/u``.
         Validate values and derivatives independently when changing these grids.
         Enable JAX float64 first. SciPy is imported only during this offline operation.
+        For an unmodified ``ConcentricDisk`` with both quadrature orders
+        at least 16, flux residuals at u/rho >= 1e5 use analytic second
+        moments, whose omitted terms are below float64 precision, rather
+        than subtracting nearly equal absolute fluxes.
         """
         from scipy.interpolate import RectBivariateSpline
+
+        from .concentric import ConcentricDisk
 
         lower = 1e-6 if astrometry else 1e-5
         n_rho = 192 if astrometry else 96
@@ -212,6 +244,16 @@ class BasisTable:
             transformed[..., :2] = q * np.log1p(
                 (values[..., :2] - baseline_flux[..., None]) / baseline_flux[..., None]
             )
+            # Do not impose the physical moment expansion on custom solvers
+            # or subclasses with a different source profile/radial primitive.
+            converged_disk = (
+                type(solver) is ConcentricDisk and solver.n_disk >= 16 and solver.n_limb >= 16
+            )
+            unresolved = (zz >= 1e5) if converged_disk else np.zeros_like(zz, bool)
+            if np.any(unresolved):
+                transformed[..., :2][unresolved] = _unresolved_flux_residual(
+                    rr[unresolved], zz[unresolved], baseline_flux[unresolved]
+                )
             transformed[..., 2:] = q * (values[..., 2:] - baseline_coefficient[..., None])
         else:
             transformed[..., :2] = np.log(values[..., :2])
@@ -226,6 +268,8 @@ class BasisTable:
             [s.get_coeffs().reshape(len(rho_grid), len(z_grid)) for s in splines], axis=-1
         )
         metadata = dict(generator=type(solver).__name__, dtype=str(values.dtype))
+        if astrometry and np.any(unresolved):
+            metadata["unresolved_flux_residual"] = "second_moment_at_u_over_rho_ge_1e5"
         for attr in ("n_disk", "n_limb", "split"):
             if hasattr(solver, attr):
                 metadata[attr] = getattr(solver, attr)
