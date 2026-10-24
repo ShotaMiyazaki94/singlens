@@ -1,20 +1,21 @@
 {
   "artifact": {
-    "bytes": 5025337,
+    "bytes": 5102965,
     "coordinate": "log1p_ratio2",
     "embedded_metadata": {
       "dtype": "float64",
       "generator": "ConcentricDisk",
       "n_disk": 96,
       "n_limb": 64,
-      "split": true
+      "split": true,
+      "unresolved_flux_residual": "second_moment_at_u_over_rho_ge_1e5"
     },
     "file": "finite_source_table.npz",
     "format_version": 3,
     "numeric_payload_hash_format": "Numeric members only, sorted by name. Each member hashes its UTF-8 JSON [name,little-endian dtype,shape] descriptor preceded by its uint64 little-endian byte length, then contiguous C-order little-endian array bytes.",
-    "numeric_payload_sha256": "202e91f3a2c33dadff7357ae3068d54b157c2f95cc4413cb9654e52513da4809",
+    "numeric_payload_sha256": "49392912f080db45d96f651c0d0c86784de093412ab630b9ec83449807622e9e",
     "representation": "point_residual",
-    "zip_sha256": "760401c275eb00231f24d12a9271d7b0b6f297e1fe6f3fef0620af1a3d740d39"
+    "zip_sha256": "bb236fffb666c230be62ed3296376a902d80f2cd22facf62d7024472eb0d0c4f"
   },
   "domain": {
     "a1": [
@@ -38,6 +39,7 @@
   },
   "generation": {
     "builder": "BasisTable.build(astrometry=True, batch_size=64)",
+    "custom_grid_sha256": {},
     "environment": {
       "backend": "cpu",
       "device_kind": "cpu",
@@ -50,15 +52,15 @@
       }
     },
     "generator": "singlens.lensing.concentric.ConcentricDisk",
-    "provenance": "Copied unchanged from the independently validated astrometry_methods_table_192.npz; no regeneration during packaging",
+    "provenance": "Regenerated on the same 192-by-947 grid after stabilizing unresolved-source flux residual encoding. The complete predecessor manifest, including its original generation and validation claims, is preserved in historical_artifacts.",
     "settings": {
       "n_disk": 96,
       "n_limb": 64,
       "split": true
     },
     "source_sha256": {
-      "lensing/basis_table.py": "b38fb57281fe880914bb8ef63b49028681bbc6aebad4eb56d97c0bb30a3befac",
-      "lensing/concentric.py": "a95ceec44ff8cc2dfc29e66ee87eb37f4440d31055411d683376fe43eec71665",
+      "lensing/basis_table.py": "eabc1e6d9a011e075ea430d69d7f6f25575fadef72cebb4fe4844a6cc36d094d",
+      "lensing/concentric.py": "798065b6241da0d532d1802aa4cf869329452a49b53e30bff12958fb8343f373",
       "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557"
     }
   },
@@ -78,6 +80,209 @@
     "rho_count": 192,
     "u_over_rho_count": 947
   },
+  "historical_artifacts": [
+    {
+      "manifest": {
+        "artifact": {
+          "bytes": 5025337,
+          "coordinate": "log1p_ratio2",
+          "embedded_metadata": {
+            "dtype": "float64",
+            "generator": "ConcentricDisk",
+            "n_disk": 96,
+            "n_limb": 64,
+            "split": true
+          },
+          "file": "finite_source_table.npz",
+          "format_version": 3,
+          "numeric_payload_hash_format": "Numeric members only, sorted by name. Each member hashes its UTF-8 JSON [name,little-endian dtype,shape] descriptor preceded by its uint64 little-endian byte length, then contiguous C-order little-endian array bytes.",
+          "numeric_payload_sha256": "202e91f3a2c33dadff7357ae3068d54b157c2f95cc4413cb9654e52513da4809",
+          "representation": "point_residual",
+          "zip_sha256": "760401c275eb00231f24d12a9271d7b0b6f297e1fe6f3fef0620af1a3d740d39"
+        },
+        "domain": {
+          "a1": [
+            0.0,
+            1.0
+          ],
+          "endpoints_inclusive": true,
+          "outside_domain": "NaN; rho=0 uses the exact point-source limit",
+          "profiles": [
+            "uniform",
+            "linear"
+          ],
+          "rho": [
+            1e-06,
+            10.0
+          ],
+          "u_over_rho": [
+            0.0,
+            100000000.0
+          ]
+        },
+        "generation": {
+          "builder": "BasisTable.build(astrometry=True, batch_size=64)",
+          "environment": {
+            "backend": "cpu",
+            "device_kind": "cpu",
+            "python": "3.12.10",
+            "versions": {
+              "jax": "0.11.2",
+              "jaxlib": "0.11.2",
+              "numpy": "2.5.4",
+              "scipy": "1.18.1"
+            }
+          },
+          "generator": "singlens.lensing.concentric.ConcentricDisk",
+          "provenance": "Copied unchanged from the independently validated astrometry_methods_table_192.npz; no regeneration during packaging",
+          "settings": {
+            "n_disk": 96,
+            "n_limb": 64,
+            "split": true
+          },
+          "source_sha256": {
+            "lensing/basis_table.py": "b38fb57281fe880914bb8ef63b49028681bbc6aebad4eb56d97c0bb30a3befac",
+            "lensing/concentric.py": "a95ceec44ff8cc2dfc29e66ee87eb37f4440d31055411d683376fe43eec71665",
+            "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557"
+          }
+        },
+        "grid": {
+          "coefficient_bytes": 5818368,
+          "coefficient_shape": [
+            192,
+            947,
+            4
+          ],
+          "default_recipe": "geomspace(1e-6,10,192); joint_grid(refinement=2)",
+          "dtype": "float64",
+          "interpolation_coordinates": [
+            "log(rho)",
+            "log1p((u/rho)**2)"
+          ],
+          "rho_count": 192,
+          "u_over_rho_count": 947
+        },
+        "layout": {
+          "channels": [
+            "L_uniform",
+            "L_mu",
+            "D_uniform",
+            "D_mu"
+          ],
+          "encoding": "Spline coefficients for L_j=q*log(F_j/F_star), D_j=q*(C_j-C_star), q=1+(u/rho)**2, F_star=A_point(hypot(u,rho)), C_star=1/(u**2+2), C_j=shift_j/u. Mix unnormalized moments with flux weights when combining brightness bases.",
+          "npz_members": {
+            "a1": {
+              "dtype": "float64",
+              "shape": []
+            },
+            "coefficients": {
+              "dtype": "float64",
+              "shape": [
+                192,
+                947,
+                4
+              ]
+            },
+            "coordinate": {
+              "dtype": "<U12",
+              "shape": []
+            },
+            "format_version": {
+              "dtype": "int64",
+              "shape": []
+            },
+            "knots_rho": {
+              "dtype": "float64",
+              "shape": [
+                196
+              ]
+            },
+            "knots_z": {
+              "dtype": "float64",
+              "shape": [
+                951
+              ]
+            },
+            "metadata": {
+              "dtype": "<U94",
+              "shape": []
+            },
+            "representation": {
+              "dtype": "<U14",
+              "shape": []
+            },
+            "rho_grid": {
+              "dtype": "float64",
+              "shape": [
+                192
+              ]
+            },
+            "z_grid": {
+              "dtype": "float64",
+              "shape": [
+                947
+              ]
+            }
+          }
+        },
+        "manifest_version": 1,
+        "reproduction": {
+          "command": "PYTHONPATH=src python tools/build_finite_source_table.py --output /tmp/bases.npz",
+          "notes": "Optional --rho-grid/--z-grid files specify custom numeric grids. JSON has no generated timestamp. Bitwise numerical reproduction also depends on the recorded numerical-library versions and execution backend.",
+          "tool": "tools/build_finite_source_table.py",
+          "tool_sha256": "3bf74336242cfbda57ff1026b781800e44b6fa110ed3b314dee33e2571896738"
+        },
+        "units": {
+          "astrometric_shift": "angular Einstein radius; relative to unlensed source center",
+          "magnification": "dimensionless",
+          "u_and_rho": "angular Einstein radius"
+        },
+        "validation": {
+          "contact_limit": "Exact-contact uniform-source slopes are logarithmically singular and are not represented by finite cubic-spline derivatives; exact-contact derivative comparisons omitted.",
+          "derivative_scaling": "Multiply x/y/rho derivative error by rho and a1 derivative error by 1; photometric derivative errors additionally divided by magnification. Shift errors use theta_E units.",
+          "full_report": "tools/validation/outputs/astrometry_methods.json",
+          "full_report_sha256": "e96bf26982671a3a4d7f516e108c6d3d882e2319e8d7b617635828fd3d5dea42",
+          "reference_signature": "f5433c3976ec759550153ec0c63937b45e0792d104a0f5e0b4b9da3709558a41",
+          "reference_uncertainty": {
+            "max_gradient_scaled_uncertainty": 3.04881892602508e-08,
+            "max_refinement_shift_change": 1.3038459201197838e-11,
+            "note": "Independent-reference numerical refinement estimates, not rigorous error bounds; exact contact derivatives excluded"
+          },
+          "report": "docs/_static/astrometry-methods-summary.json",
+          "report_created_utc": "2026-10-23T10:27:06.229387+00:00",
+          "report_sha256": "351c04bbd60d133d27a9b94b2e5468097b2349820bf282826f9c41a7f4845256",
+          "sampled_maxima": {
+            "gradient_entries": 1236,
+            "max_photometry_derivative_scaled_error": 2.276854629839295e-05,
+            "max_photometry_relative_error": 1.283364938764464e-07,
+            "max_shift_absolute_error": 9.399617747346545e-08,
+            "max_shift_derivative_scaled_error": 0.00010421288378165139,
+            "method": "table_192",
+            "valid_gradient_entries": 1236,
+            "valid_value_samples": 1074,
+            "value_samples": 1074,
+            "worst_shift_case": {
+              "a1": 0.0,
+              "ratio": 0.9683772233983162,
+              "rho": 1.0,
+              "u": 0.9683772233983162
+            },
+            "worst_shift_derivative_case": {
+              "output": "shift_x",
+              "parameter": "rho",
+              "ratio": 0.9999,
+              "reference_scaled_uncertainty": 3.818811483487715e-09,
+              "rho": 10.0,
+              "u": 9.999
+            }
+          },
+          "scope": "Eight source radii from 1e-6 to 10; center, contact, and wings including fixed u=0.1, 1, 10, 100; values at a1=0, 0.5, 1; gradients at a1=0.5. Sampled accuracy, not uniform error bounds.",
+          "status": "Independently sampled photometric/astrometric values and gradients; two joint NUTS experiments"
+        }
+      },
+      "reason": "Superseded after an unresolved-source flux-radius derivative cancellation was found. The following original manifest is preserved unchanged; its runtime and NUTS claims describe that predecessor artifact."
+    }
+  ],
   "layout": {
     "channels": [
       "L_uniform",
@@ -120,7 +325,7 @@
         ]
       },
       "metadata": {
-        "dtype": "<U94",
+        "dtype": "<U160",
         "shape": []
       },
       "representation": {
@@ -143,7 +348,7 @@
   },
   "manifest_version": 1,
   "reproduction": {
-    "command": "PYTHONPATH=src python tools/build_finite_source_table.py --output /tmp/bases.npz",
+    "command": "PYTHONPATH=src python tools/build_finite_source_table.py --output finite_source_table.npz",
     "notes": "Optional --rho-grid/--z-grid files specify custom numeric grids. JSON has no generated timestamp. Bitwise numerical reproduction also depends on the recorded numerical-library versions and execution backend.",
     "tool": "tools/build_finite_source_table.py",
     "tool_sha256": "3bf74336242cfbda57ff1026b781800e44b6fa110ed3b314dee33e2571896738"
@@ -154,45 +359,24 @@
     "u_and_rho": "angular Einstein radius"
   },
   "validation": {
-    "contact_limit": "Exact-contact uniform-source slopes are logarithmically singular and are not represented by finite cubic-spline derivatives; exact-contact derivative comparisons omitted.",
-    "derivative_scaling": "Multiply x/y/rho derivative error by rho and a1 derivative error by 1; photometric derivative errors additionally divided by magnification. Shift errors use theta_E units.",
-    "full_report": "tools/validation/outputs/astrometry_methods.json",
-    "full_report_sha256": "e96bf26982671a3a4d7f516e108c6d3d882e2319e8d7b617635828fd3d5dea42",
-    "reference_signature": "f5433c3976ec759550153ec0c63937b45e0792d104a0f5e0b4b9da3709558a41",
-    "reference_uncertainty": {
-      "max_gradient_scaled_uncertainty": 3.04881892602508e-08,
-      "max_refinement_shift_change": 1.3038459201197838e-11,
-      "note": "Independent-reference numerical refinement estimates, not rigorous error bounds; exact contact derivatives excluded"
-    },
-    "report": "docs/_static/astrometry-methods-summary.json",
-    "report_created_utc": "2026-10-23T10:27:06.229387+00:00",
-    "report_sha256": "351c04bbd60d133d27a9b94b2e5468097b2349820bf282826f9c41a7f4845256",
+    "artifact_numeric_payload_sha256": "49392912f080db45d96f651c0d0c86784de093412ab630b9ec83449807622e9e",
+    "limits": [
+      "These are sampled errors, not uniform error bounds.",
+      "Historical runtime and NUTS results were not rerun for the regenerated artifact.",
+      "No GPU/TPU validation."
+    ],
+    "report": "src/singlens/data/finite_source_table_validation.json",
+    "report_sha256": "eb7f9cda535725dff7d78f01c6db103396e9795b0823a293aab5328d35c01544",
     "sampled_maxima": {
       "gradient_entries": 1236,
-      "max_photometry_derivative_scaled_error": 2.276854629839295e-05,
+      "max_photometry_derivative_scaled_error": 2.2768546298409897e-05,
       "max_photometry_relative_error": 1.283364938764464e-07,
-      "max_shift_absolute_error": 9.399617747346545e-08,
-      "max_shift_derivative_scaled_error": 0.00010421288378165139,
-      "method": "table_192",
-      "valid_gradient_entries": 1236,
-      "valid_value_samples": 1074,
-      "value_samples": 1074,
-      "worst_shift_case": {
-        "a1": 0.0,
-        "ratio": 0.9683772233983162,
-        "rho": 1.0,
-        "u": 0.9683772233983162
-      },
-      "worst_shift_derivative_case": {
-        "output": "shift_x",
-        "parameter": "rho",
-        "ratio": 0.9999,
-        "reference_scaled_uncertainty": 3.818811483487715e-09,
-        "rho": 10.0,
-        "u": 9.999
-      }
+      "max_shift_absolute_error": 9.39961774179543e-08,
+      "max_shift_derivative_scaled_error": 0.0001042128862871472,
+      "unique_parameter_vectors": 103,
+      "value_samples": 1074
     },
-    "scope": "Eight source radii from 1e-6 to 10; center, contact, and wings including fixed u=0.1, 1, 10, 100; values at a1=0, 0.5, 1; gradients at a1=0.5. Sampled accuracy, not uniform error bounds.",
-    "status": "Independently sampled photometric/astrometric values and gradients; two joint NUTS experiments"
+    "scope": "1074 independent value samples; 1236 independent Jacobian entries; all 181824 grid nodes and 180686 both-coordinate midpoints at a1=0,0.5,1; domain/contact/residual-threshold probes; uniform/linear radius-response checks at u=1/100 and rho=1e-6/1e-5/1e-3.",
+    "status": "Reevaluated against archived independent photometric/astrometric value and Jacobian references, and compared with the predecessor on all grid nodes, coordinate midpoints, and boundary probes."
   }
 }
