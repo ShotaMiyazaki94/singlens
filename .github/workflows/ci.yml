@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   test:
+    if: github.event_name != 'workflow_dispatch'
     name: Tests / ${{ matrix.shard }} / Python 3.12
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -36,6 +37,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install '.[test,examples,validation]' 'jax==0.11.2'
+      - if: matrix.shard == 'general'
+        run: python tools/fetch_example_data.py --bootstrap
       - run: python tools/run_ci_tests.py ${{ matrix.shard }} --junitxml local/ci-results/${{ matrix.shard }}.xml
 
   latest-general:
@@ -55,6 +58,7 @@ jobs:
           python-version: "3.14"
           cache: pip
       - run: python -m pip install '.[test,examples,validation]'
+      - run: python tools/fetch_example_data.py --bootstrap
       - run: python tools/run_ci_tests.py general --junitxml local/ci-results/latest-general.xml
 
   compatibility:
@@ -90,9 +94,11 @@ jobs:
       - run: python tools/check_installed_wheel.py
       - name: Collect every test without optional extras
         run: python -m pytest --collect-only -q
+      - run: python tools/fetch_example_data.py --bootstrap
       - run: python tools/run_ci_tests.py compatibility --junitxml local/ci-results/compatibility.xml
 
   quality:
+    if: github.event_name != 'workflow_dispatch'
     name: Quality / minimum dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -116,9 +122,11 @@ jobs:
       - run: python tools/check_installed_wheel.py
       - name: Collect every test without optional extras
         run: python -m pytest --collect-only -q
+      - run: python tools/fetch_example_data.py --bootstrap
       - run: python tools/run_ci_tests.py compatibility --junitxml local/ci-results/minimum-dependencies.xml
 
   docs:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -131,4 +139,5 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install '.[docs]' 'jax==0.11.2'
+      - run: python tools/fetch_example_data.py --bootstrap
       - run: python -m sphinx -E -b html -W --keep-going docs docs/_build/html

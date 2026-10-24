@@ -24,21 +24,22 @@ def comparison_data(fft=None):
     base_theta = jnp.array([8000.0, 0.05, 80.0, 0.1, 0.2, -0.1])
     results = {}
     for source in ("uniform", "linear"):
+        model = sl.Model(source=source, parallax=geometry, solver="fft" if fft is None else fft)
         theta = (
             jnp.concatenate((base_theta, jnp.array([0.5]))) if source == "linear" else base_theta
         )
 
         def evaluate(theta):
-            return sl.magnification(
-                times,
-                *theta[:3],
+            params = sl.Parameters(
+                t0=theta[0],
+                u0=theta[1],
+                t_e=theta[2],
                 rho=theta[3],
                 a1=theta[-1] if source == "linear" else None,
-                parallax=geometry,
                 pi_e_n=theta[4],
                 pi_e_e=theta[5],
-                fft=fft,
             )
+            return model.magnification(times, params)
 
         curve = jax.jit(evaluate)(theta)
         derivatives = jax.jit(jax.jacfwd(evaluate))(theta)
@@ -57,7 +58,6 @@ def comparison_data(fft=None):
 
 def sensitivity_figure(fft=None):
     """Magnification and raw partial derivatives with identical time limits."""
-    fft = sl.FFTConfig() if fft is None else fft
     times, results = comparison_data(fft)
     plot_times = times - 8000.0
     fields = ("t0", "t_e", "u0", "rho", "a1")

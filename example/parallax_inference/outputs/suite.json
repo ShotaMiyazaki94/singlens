@@ -1,0 +1,267 @@
+{
+  "data_seeds": [
+    43,
+    44,
+    45
+  ],
+  "representative_seed": 43,
+  "target_ess": 5000,
+  "source_sha256": {
+    "__init__.py": "dfda54d9cdaaf52bd3c5f7e5bbb4ac09a4944cb61afd3043771afc714365ae5c",
+    "data/__init__.py": "eb4ee9198fa0bd58395f35997a40d21913c6e1569cc247358e956c9d2c3bcf32",
+    "lensing/__init__.py": "f4eb436570c1d29e07d73bd1f507651d7c1bf4cac7f3193090095e8fea28760d",
+    "lensing/astrometry.py": "0944a257064ff5839a457435257eb7139b23300dec9198cc05b8069c83b4ed24",
+    "lensing/basis_table.py": "51105d979c0e5b81dba4b91cd89e6ea486a5b61619c69ef22d3382f7ce59bfb2",
+    "lensing/concentric.py": "798065b6241da0d532d1802aa4cf869329452a49b53e30bff12958fb8343f373",
+    "lensing/config.py": "09c4916962429cdf27a04e8a412fec348d01cffb90a8ca21dfafaa87a2c5b1cb",
+    "lensing/finite.py": "ff7f1b93682965c4ba64e464abe61708fef080936d3150c8b135b91e18cf4288",
+    "lensing/gould.py": "a7bee7e0dd02bd21aa74c287f5e2a0d7c86f55fc22cb4cfc3ec777e2b3eef663",
+    "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557",
+    "model.py": "09e3265c5578973d0b58a23edba7ae88c341f6f2a0969ff59dcb8ee19b8454ff",
+    "numerics/__init__.py": "8ff1c38fca896fab741a1b171ee779ff7148aa286680b5c2e83a98cac621197e",
+    "numerics/fftlog.py": "4ae03cc4722dcd04bc929344c20df0e0c1b84293ecc92a2a0d76dc15c7a0226b",
+    "numerics/interpolate.py": "a71f4b975d62da427f25b42c307d205d1aac785aa3f5a7a58807be9a7532f3dd",
+    "numerics/special.py": "82687c650342c2f91c2af498464549bcc7e5e8461a71e9c9d7e65feac040f3c5",
+    "parameters.py": "d059ac946d0f886842c1e513cdcb8901a0f0d457c173484c7cddda8d4d9ca0fe",
+    "photometry/__init__.py": "378dfe6bed3d90ff4b4b6ee05b3952145a6e685924fec43fe6a0051a080bd955",
+    "photometry/fit.py": "f1d3a106c5fe40d7afc7ca501765f36f9674e7205f641636dcd4c1c3b73638cd",
+    "photometry/likelihood.py": "94f50a16debaff98fef44e609eb085b1c30a921dea1ac6b1d54ef732314e741d",
+    "trajectory/__init__.py": "25dbd3c6fc24dad2d83a178977857bdec2813bb2052d5c93c6f363898993eaab",
+    "trajectory/_geometry.py": "d7f85b30765e6a5be07cf3655bc9182c75c34cef008a879187e56476a3c3d627",
+    "trajectory/ephemeris.py": "38ad85b663f68810ac628ca9035b78d2735a39c8e1c5a8ff12879e339e5f2c83",
+    "trajectory/kepler.py": "055f8c6feb3ac98c3202f5117a939f4c7b15f054b85eab216b4872da35d1cda9",
+    "trajectory/parallax.py": "293229b92cc8226168969ca35c6ef7afe0a03232a6340a9dd5f2c98bd6568b99"
+  },
+  "benchmark_source_sha256": {
+    "example/parallax_inference/code/execution.py": "43b604d7b5213acaa924fe87aea506e9a93f263013abaab66346d23ff02b463d",
+    "example/parallax_inference/code/fit.py": "ddddabcfdf30537a31364022775b315e198d5aa8a33e964710af24645b861343",
+    "example/parallax_inference/code/vbm.py": "02ebd412d785d631561d72190f66f60ff58ca523c469c3419098b19e0eb22bab",
+    "example/parallax_inference/code/vbm_pool.py": "0cc04f54b73779a554f4fa2d49c9d2f3dd863872852a89de6cc524eea79e8630",
+    "example/parallax_inference/code/experiment.py": "ccf95eb1123f22e04937ca2547aa93e66a20729a9cdb368f7e62a467a44da148",
+    "example/parallax_inference/code/plots.py": "70ef65716fa58b57526e011eeb243f7637606ef6cdef48e3d7a8eb8c29032416",
+    "example/parallax_inference/code/reference.py": "213f2f45e23e04e66ae09207c3b9295794e75287671fcdaec9600aa2bf620c95",
+    "example/parallax_inference/code/posterior.py": "9b43c07e0cf3b325661634f107284891409ee7c7b181b3cbe2ca5904481843ce",
+    "example/parallax_inference/code/run_suite.py": "fe019237a38a6d21318e21c9936d69338481dc9bf064e77e79011402d6b251a0",
+    "example/parallax_inference/code/compare.py": "bcff51fae34d918271d1ae278f0fac37d5622a23a2bdabbb267e416a1c1c3ca0",
+    "example/compare-single-vbml/code/sampling.py": "c6634212b7027cf51c67f1cf24086935c5cad5f1968263f5d5b318df40a0b99f",
+    "example/compare-single-vbml/code/vbm_array.py": "eaccd33118823e6b930f1e661f857d1db1881e756ddae3aa0d7fdc40357f72d3",
+    "example/compare-single-vbml/code/vbm_array.cpp": "60ea8e8c18540cf9f29a6d5997ceee2ea51c96d73223082a9d9296b333f33b3f",
+    "example/_cpu.py": "91a5e33a5d515e0461d68d098e9b09da198ce0b8f1667c0ab6cdb0623588512a"
+  },
+  "physical_configuration": {
+    "description": "Synthetic finite-source stellar event inspired by OGLE-2007-BLG-050",
+    "event": {
+      "t0": 0.0,
+      "u0": 0.0021083333333333336,
+      "t_e": 67.0,
+      "rho": 0.004583333333333333,
+      "pi_e_n": 0.096,
+      "pi_e_e": -0.072,
+      "a1": 0.5,
+      "f_s": 0.8,
+      "f_b": 0.19999999999999996
+    },
+    "theta_e_mas": 0.48,
+    "theta_star_mas": 0.0022,
+    "pi_e": 0.12,
+    "pi_rel_mas": 0.0576,
+    "lens_mass_solar": 0.4911591355599214,
+    "source_distance_kpc": 8.0,
+    "lens_distance_kpc": 5.47645125958379,
+    "source_radius_solar": 3.784565939801639,
+    "mu_geo_masyr": 2.616716417910448,
+    "source_crossing_hours": 7.369999999999999,
+    "transit_hours": 13.087924810297466,
+    "parallax": {
+      "ra_deg": 266.0,
+      "dec_deg": -29.0,
+      "t_ref": 0.0,
+      "time_origin": 2454222.0,
+      "use_hjd": false
+    },
+    "observer": "Earth geocenter; the bundled heliocentric Earth ephemeris, without terrestrial parallax",
+    "time_convention": "JD TDB minus 2454222.0",
+    "observing_scope": "Idealized longitude-distributed ground network over one bulge season, with continuous peak follow-up; weather and site visibility are not simulated",
+    "cadence": {
+      "first_day": -60,
+      "last_day": 150,
+      "wing_days": 1,
+      "shoulder_hours": 1,
+      "shoulder_half_width_days": 10,
+      "peak_minutes": 5,
+      "peak_half_width_days": 1
+    },
+    "exposure_scope": "Fixed pre-injection point-source forecast: clip(60/A_forecast, 1, 60) seconds; top-hat averages",
+    "source_magnitude": 18.5,
+    "baseline_magnitude": 18.25772496747986,
+    "band": "Illustrative ground I band",
+    "source_fraction": 0.8,
+    "instrument_zero_point_mag_per_electron_second": 25.0,
+    "source_electrons_per_second": 398.1071705534973,
+    "baseline_electrons_per_second": 497.63396319187166,
+    "aperture_sky_electrons_per_second": 500.0,
+    "aperture_read_variance_electrons2": 400.0,
+    "fractional_floor": 0.003,
+    "representative_peak_pixel_fraction": 0.1,
+    "fullwell_electrons": 100000.0,
+    "detector_scope": "Illustrative detector and seeing-spread PSF; not an instrument ETC or survey forecast. Apparent source brightness is specified independently of its angular radius",
+    "noise_scope": "Known independent Gaussian errors from injected source+blend photons, sky, aperture read variance, and an independent 0.3% fractional floor; recomputed for each scheduled exposure",
+    "blend_scope": "Unresolved constant light; source and blend coefficients share a normalized Gaussian prior and are sampled jointly",
+    "limb_darkening": "Inferred linear a1 with logit(a1)~Normal(0,1); injected a1=0.5 is an illustrative I-band profile. The actual inspiration event also fitted limb darkening (Batista et al. 2009, Section 3.1); its Gamma coefficient uses a different convention",
+    "references": {
+      "event": "https://doi.org/10.1051/0004-6361/200912923",
+      "event_preprint": "https://arxiv.org/abs/0907.3471"
+    }
+  },
+  "reference_data_sha256": "ea9335515ab4828f7ed2ec2c0a8bbf6027dacc9e82dab77d581adcd54cad3a71",
+  "data_sha256": {
+    "43": "280a33410fd637e98200c53987492f0b92f01ac39448833c2dbed5bfa800d57f",
+    "44": "4ea086691c8d87f81832c974eb3e8df84e4ee292eade4548161048509a5d8cd1",
+    "45": "0838cc1f3a6b49af5e034c674765af92ace7fc19d848617ab19051052ff6bc1e"
+  },
+  "method_configuration": {
+    "nuts": {
+      "solver": "table",
+      "backend": "singlens",
+      "sampler": "NUTS",
+      "sampler_library": "numpyro",
+      "label": "singlens Table + NumPyro NUTS"
+    },
+    "emcee": {
+      "solver": "vbm",
+      "backend": "VBMicrolensing",
+      "sampler": "emcee",
+      "sampler_library": "emcee",
+      "label": "VBMicrolensing + emcee"
+    }
+  },
+  "vbm_settings": {
+    "tolerance": 0.001,
+    "relative_tolerance": 0.001,
+    "minannuli": 2
+  },
+  "sampled_parameters": [
+    "t0",
+    "u0",
+    "t_e",
+    "rho",
+    "pi_e_n",
+    "pi_e_e",
+    "a1",
+    "f_s",
+    "f_b"
+  ],
+  "flux_treatment": "joint; source and blend fluxes sampled, no marginalization",
+  "cpu_configuration": {
+    "logical_cpus": 18,
+    "affinity": null,
+    "environment": {
+      "JAX_NUM_CPU_DEVICES": "16",
+      "JAX_CPU_ENABLE_ASYNC_DISPATCH": null,
+      "XLA_FLAGS": null,
+      "NPROC": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "scope": "One method at a time on the same CPU host. No CPU affinity is imposed. CPU seconds sum user and system time over threads and completed worker/compiler processes; CPU seconds / wall seconds is average CPU utilization, not a core-count limit."
+  },
+  "execution": {
+    "nuts": {
+      "chains": 16,
+      "chain_method": "parallel"
+    },
+    "emcee": {
+      "ensembles": 2,
+      "walkers_per_ensemble": 32,
+      "workers": 16
+    }
+  },
+  "methods": {
+    "nuts": {
+      "total_seconds": {
+        "min": 28.332615999970585,
+        "median": 28.35784762399271,
+        "max": 46.502150166314095
+      },
+      "min_ess": {
+        "min": 5170.264370428528,
+        "median": 6188.140285682739,
+        "max": 8581.069797859414
+      },
+      "min_ess_per_second": {
+        "min": 111.18333995174785,
+        "median": 218.41048089908688,
+        "max": 302.5994748134281
+      },
+      "min_ess_per_production_second": {
+        "min": 155.33312123313192,
+        "median": 330.8217351391334,
+        "max": 453.01702400759166
+      },
+      "total_cpu_seconds": {
+        "min": 306.201543,
+        "median": 337.67629100000005,
+        "max": 567.6373229999999
+      },
+      "average_cpu_utilization": {
+        "min": 10.797770940165861,
+        "median": 11.918288484210233,
+        "max": 12.206689819069771
+      },
+      "min_ess_per_cpu_second": {
+        "min": 9.108393970825151,
+        "median": 18.3256581839284,
+        "max": 28.02425394002477
+      }
+    },
+    "emcee": {
+      "total_seconds": {
+        "min": 147.1720783743076,
+        "median": 185.19683754211292,
+        "max": 282.7683533751406
+      },
+      "min_ess": {
+        "min": 5040.433442232288,
+        "median": 5088.762529193043,
+        "max": 5178.818575163296
+      },
+      "min_ess_per_second": {
+        "min": 17.825309593769468,
+        "median": 27.963860743494912,
+        "max": 34.57695634528327
+      },
+      "min_ess_per_production_second": {
+        "min": 19.17453618335699,
+        "median": 31.252278968297837,
+        "max": 40.00080156682907
+      },
+      "total_cpu_seconds": {
+        "min": 1277.10069,
+        "median": 1693.0840189999994,
+        "max": 2541.800641999998
+      },
+      "average_cpu_utilization": {
+        "min": 8.677601784979265,
+        "median": 8.988985548279743,
+        "max": 9.14207845808922
+      },
+      "min_ess_per_cpu_second": {
+        "min": 1.9830168263181565,
+        "median": 3.058807783338541,
+        "max": 3.984621235458766
+      }
+    }
+  },
+  "paired_nuts_over_emcee_ess_rate": {
+    "min": 6.237386193315267,
+    "median": 7.810455176504717,
+    "max": 8.751478059308898
+  },
+  "maximum_posterior_difference_pooled_sd": 0.33175908067004095,
+  "maximum_posterior_difference_combined_mcse": 22.330872959463083,
+  "diagnostics_pass": true,
+  "scope": "Three sequential independent processes with identical physical mean, priors, method configurations, and ESS criteria; independent fixed Gaussian noise seeds. Sampler order alternates. Ranges are sensitivity checks, not population confidence intervals. The two methods are singlens Table/NumPyro NUTS and VBMicrolensing/emcee. Both sample the u0>0 branch; each report includes signed-mode searches. All unthinned nine-parameter chains are retained."
+}

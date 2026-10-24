@@ -1,0 +1,586 @@
+{
+  "description": "Synthetic G-dwarf joint photometric and full-centroid recovery",
+  "truth": {
+    "t0": 12030.0,
+    "u0": 0.3,
+    "t_e_day": 42.553323195727025,
+    "pi_e_n": 0.061944981609181916,
+    "pi_e_e": 0.03576395180700759,
+    "theta_e_mas": 0.5825232470325397,
+    "source_flux": 0.36,
+    "lens_flux": 0.64,
+    "mass_msun": 1.0,
+    "lens_distance_kpc": 6.0,
+    "source_distance_kpc": 8.0,
+    "theta_star_mas": 0.0005813084076202697,
+    "rho": 0.0009979145220067034,
+    "pi_e": 0.07152790361401519,
+    "pi_rel_mas": 0.04166666666666666,
+    "mu_geo_masyr": 5.0
+  },
+  "beta_truth": {
+    "east0_mas": 0.8,
+    "north0_mas": -0.4,
+    "mu_east_masyr": -3.0,
+    "mu_north_masyr": -5.0,
+    "pi_baseline_mas": 0.15166666666666667
+  },
+  "selected_branch": "positive",
+  "branches": {
+    "positive": {
+      "settings": {
+        "seed": 20261023,
+        "u0_sign": 1
+      },
+      "map_q": [
+        -0.0008312731987305032,
+        0.009032431391562998,
+        0.08239465331136697,
+        0.3621029891026737,
+        0.16877326496545406,
+        0.06932466296725556,
+        -0.31926088961254107,
+        0.24165837670817208
+      ],
+      "map_beta": [
+        0.819593862068042,
+        -0.4054712499198796,
+        -3.0039985214432607,
+        -4.998504896474948,
+        0.1451736162702068
+      ],
+      "map_physical": {
+        "t0": 12029.991687268013,
+        "u0": 0.30217563457539753,
+        "t_e_day": 42.374879050535554,
+        "pi_e_n": 0.07242059782053474,
+        "pi_e_e": 0.033754652993090814,
+        "pi_e": 0.07990068577532747,
+        "theta_e_mas": 0.6298343947115942,
+        "source_flux": 0.3633429698802851,
+        "lens_flux": 0.6366795546862422,
+        "lens_to_source_flux": 1.7522825744943311,
+        "mass_msun": 0.9679169641995012,
+        "pi_rel_mas": 0.05032420006234466,
+        "rho": 0.0009229543710239182,
+        "mu_geo_masyr": 5.42885355245639
+      },
+      "optimization": [
+        {
+          "objective": -36493.54184558847,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 95
+        },
+        {
+          "objective": -36493.56973921359,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 116
+        },
+        {
+          "objective": -36493.56973961079,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 153
+        },
+        {
+          "objective": -36493.23113989469,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 82
+        }
+      ],
+      "map_log_likelihood": 36493.73554278078,
+      "map_log_posterior_unnormalized": 36493.56973961079,
+      "delta_map_log_posterior": 0.0,
+      "competitive": true,
+      "posterior": {
+        "t0": {
+          "q16": 12029.988374797756,
+          "median": 12029.99172700334,
+          "q84": 12029.995075250088
+        },
+        "u0": {
+          "q16": 0.30135879624559475,
+          "median": 0.3022212579498752,
+          "q84": 0.3031171069939892
+        },
+        "t_e_day": {
+          "q16": 42.30030122311974,
+          "median": 42.405174542932095,
+          "q84": 42.515919323285054
+        },
+        "pi_e_n": {
+          "q16": 0.06304405433727618,
+          "median": 0.08029427359049998,
+          "q84": 0.10519058388690583
+        },
+        "pi_e_e": {
+          "q16": 0.03204414801655719,
+          "median": 0.03373566495458754,
+          "q84": 0.03558134498979126
+        },
+        "pi_e": {
+          "q16": 0.07137388477033378,
+          "median": 0.08729420884895522,
+          "q84": 0.11036745631639715
+        },
+        "theta_e_mas": {
+          "q16": 0.5644550995533961,
+          "median": 0.6236085644620146,
+          "q84": 0.6804055443680646
+        },
+        "source_flux": {
+          "q16": 0.36210096130308006,
+          "median": 0.36341016584237085,
+          "q84": 0.3648116811058571
+        },
+        "lens_flux": {
+          "q16": 0.6352093833205568,
+          "median": 0.6366171071590956,
+          "q84": 0.6379160108029102
+        },
+        "lens_to_source_flux": {
+          "q16": 1.7411992801648237,
+          "median": 1.7518522045284661,
+          "q84": 1.7617090958104262
+        },
+        "mass_msun": {
+          "q16": 0.6770701964842754,
+          "median": 0.8756070850818849,
+          "q84": 1.092827938199516
+        },
+        "pi_rel_mas": {
+          "q16": 0.04365430592204919,
+          "median": 0.05418824764290267,
+          "q84": 0.06983953754064968
+        },
+        "rho": {
+          "q16": 0.0008543557771551756,
+          "median": 0.0009321687376167957,
+          "q84": 0.0010298576604575106
+        },
+        "mu_geo_masyr": {
+          "q16": 4.859360720508816,
+          "median": 5.368298477996831,
+          "q84": 5.858253208543927
+        }
+      },
+      "baseline_posterior": {
+        "east0_mas": {
+          "q16": 0.8100508297343737,
+          "median": 0.8185697150691986,
+          "q84": 0.8279486597616696
+        },
+        "north0_mas": {
+          "q16": -0.4125648773861253,
+          "median": -0.4040774516851778,
+          "q84": -0.39544746126603936
+        },
+        "mu_east_masyr": {
+          "q16": -3.0068867300997195,
+          "median": -3.003820559189738,
+          "q84": -3.000879901375724
+        },
+        "mu_north_masyr": {
+          "q16": -5.001671000013566,
+          "median": -4.99884191978828,
+          "q84": -4.996228430832706
+        },
+        "pi_baseline_mas": {
+          "q16": 0.13959689218731214,
+          "median": 0.14495610331899106,
+          "q84": 0.15032948840300217
+        }
+      },
+      "sampling": {
+        "chains": 2,
+        "warmup": 800,
+        "samples": 1200,
+        "max_r_hat": 1.0032063626657108,
+        "min_n_eff": 1087.849060796129,
+        "divergences": 0,
+        "tree_depth_saturated": 0,
+        "converged": true,
+        "seed": 20261023,
+        "target_accept": 0.9,
+        "max_tree_depth": 10,
+        "posterior_sha256": "3ee56d7fd0d30d00c9b085dc6e5865f0a4a66fffdcec341964f8ed8bb9e3e6da"
+      },
+      "hessian_eigenvalues": [
+        57.81992708546074,
+        134.3374651466379,
+        14332.113931185468,
+        23084.436855156408,
+        13008087.82011783,
+        16774853.777016578,
+        103092651.32798257,
+        1284669546.8946354
+      ],
+      "map_residuals": {
+        "photometry_chi2": 9062.734271158024,
+        "astrometry_chi2": 818.786524517068,
+        "photometry_n": 9000,
+        "astrometry_coordinates": 864
+      },
+      "delta_chi2_at_map": 0.0
+    },
+    "negative": {
+      "settings": {
+        "seed": 20261023,
+        "u0_sign": -1
+      },
+      "map_q": [
+        -0.00084503948988729,
+        0.005944941108717936,
+        0.0620494592018581,
+        0.6787574941544087,
+        0.17898335510175004,
+        -0.7431075503386743,
+        -0.32250989787749534,
+        0.2435193251982847
+      ],
+      "map_beta": [
+        0.7635074821385122,
+        -0.3938227013107507,
+        -2.990348941524145,
+        -5.002605342755036,
+        0.15583795707637058
+      ],
+      "map_physical": {
+        "t0": 12029.991549605102,
+        "u0": -0.3014301841144389,
+        "t_e_day": 41.77566845020508,
+        "pi_e_n": 0.13575149883088175,
+        "pi_e_e": 0.03579667102035001,
+        "pi_e": 0.14039184837792418,
+        "theta_e_mas": 0.35664980785665723,
+        "source_flux": 0.36216438122703903,
+        "lens_flux": 0.6378654856782128,
+        "lens_to_source_flux": 1.7612595791918535,
+        "mass_msun": 0.3119337293233341,
+        "pi_rel_mas": 0.050070725748627615,
+        "rho": 0.001629913699137351,
+        "mu_geo_masyr": 3.118234780011152
+      },
+      "optimization": [
+        {
+          "objective": -36452.681169019736,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 82
+        },
+        {
+          "objective": -36452.6910251611,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 146
+        },
+        {
+          "objective": -36452.69102471471,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 145
+        },
+        {
+          "objective": -36452.67421955049,
+          "success": true,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "iterations": 87
+        }
+      ],
+      "map_log_likelihood": 36453.2971032093,
+      "map_log_posterior_unnormalized": 36452.6910251611,
+      "delta_map_log_posterior": 40.87871444969642,
+      "competitive": false,
+      "posterior": {
+        "t0": {
+          "q16": 12029.988394593232,
+          "median": 12029.991523557834,
+          "q84": 12029.994689040237
+        },
+        "u0": {
+          "q16": -0.3020005147366318,
+          "median": -0.30092068594208277,
+          "q84": -0.2995168412380335
+        },
+        "t_e_day": {
+          "q16": 41.455131374984724,
+          "median": 41.671354785986246,
+          "q84": 41.867389219061245
+        },
+        "pi_e_n": {
+          "q16": 0.11004551470545997,
+          "median": 0.17885474696136222,
+          "q84": 0.28475469832154454
+        },
+        "pi_e_e": {
+          "q16": 0.034440229580221846,
+          "median": 0.036343743340575746,
+          "q84": 0.03807421677432185
+        },
+        "pi_e": {
+          "q16": 0.11587148530131762,
+          "median": 0.18244220645836554,
+          "q84": 0.28725639993722846
+        },
+        "theta_e_mas": {
+          "q16": 0.28842996630911594,
+          "median": 0.3436840930747954,
+          "q84": 0.40480217247819494
+        },
+        "source_flux": {
+          "q16": 0.35916570092110056,
+          "median": 0.3613662789773074,
+          "q84": 0.3630493027108329
+        },
+        "lens_flux": {
+          "q16": 0.6369807125202802,
+          "median": 0.6386644548600139,
+          "q84": 0.640862751038134
+        },
+        "lens_to_source_flux": {
+          "q16": 1.7545481701109653,
+          "median": 1.7673856920011048,
+          "q84": 1.7843471556718675
+        },
+        "mass_msun": {
+          "q16": 0.1418905144510247,
+          "median": 0.22891188394812334,
+          "q84": 0.3734328162586669
+        },
+        "pi_rel_mas": {
+          "q16": 0.038131267378332896,
+          "median": 0.06266676654458445,
+          "q84": 0.10020288453724036
+        },
+        "rho": {
+          "q16": 0.0014360308521336998,
+          "median": 0.0016914033009169547,
+          "q84": 0.0020154230772499544
+        },
+        "mu_geo_masyr": {
+          "q16": 2.5288232860257094,
+          "median": 3.0152918563282025,
+          "q84": 3.5520498242969474
+        }
+      },
+      "baseline_posterior": {
+        "east0_mas": {
+          "q16": 0.7553438070399959,
+          "median": 0.7637585525146229,
+          "q84": 0.7721746155079365
+        },
+        "north0_mas": {
+          "q16": -0.4038313880289113,
+          "median": -0.3950725827369669,
+          "q84": -0.3863035760245329
+        },
+        "mu_east_masyr": {
+          "q16": -2.9934093413301666,
+          "median": -2.9904728924456383,
+          "q84": -2.9876982323183063
+        },
+        "mu_north_masyr": {
+          "q16": -5.005008040732265,
+          "median": -5.002266300356219,
+          "q84": -4.99956078510541
+        },
+        "pi_baseline_mas": {
+          "q16": 0.14995836818313088,
+          "median": 0.15558141689733546,
+          "q84": 0.1609041388889214
+        }
+      },
+      "sampling": {
+        "chains": 2,
+        "warmup": 1200,
+        "samples": 1200,
+        "seed": 20261023,
+        "target_accept": 0.98,
+        "max_tree_depth": 10,
+        "max_r_hat": 1.0005945015787447,
+        "min_n_eff": 678.2832736543238,
+        "divergences": 0,
+        "tree_depth_saturated": 0,
+        "converged": true,
+        "posterior_sha256": "53198af2013b04ebbc0f53e3f3635d7cd893a5d15d9246ec5096f0628e7433d6"
+      },
+      "hessian_eigenvalues": [
+        6.397888276171929,
+        19.606376730406847,
+        13886.341751407039,
+        23105.74524051957,
+        13835508.510114534,
+        17885668.378903493,
+        102960349.51533993,
+        1285437106.338505
+      ],
+      "previous_sampling_attempts": [
+        {
+          "chains": 2,
+          "warmup": 800,
+          "samples": 1200,
+          "max_r_hat": 1.0004101308435578,
+          "min_n_eff": 517.6686006444559,
+          "divergences": 10,
+          "tree_depth_saturated": 0,
+          "converged": false
+        }
+      ],
+      "map_residuals": {
+        "photometry_chi2": 9061.806988513927,
+        "astrometry_chi2": 900.5888653375932,
+        "photometry_n": 9000,
+        "astrometry_coordinates": 864
+      },
+      "delta_chi2_at_map": 80.87505817642705
+    }
+  },
+  "priors": {
+    "t0": [
+      12030.0,
+      10.0
+    ],
+    "log_abs_u0": [
+      -1.2039728043259361,
+      0.8
+    ],
+    "log_t_e": [
+      3.6888794541139363,
+      0.7
+    ],
+    "pi_e_n": [
+      0.0,
+      0.2
+    ],
+    "pi_e_e": [
+      0.0,
+      0.2
+    ],
+    "log_theta_e": [
+      -0.5108256237659907,
+      0.7
+    ],
+    "log_source_flux": [
+      -0.6931471805599453,
+      1.0
+    ],
+    "log_lens_flux": [
+      -0.6931471805599453,
+      1.0
+    ]
+  },
+  "baseline_prior_sd": {
+    "east0_mas": 10.0,
+    "north0_mas": 10.0,
+    "mu_east_masyr": 10.0,
+    "mu_north_masyr": 10.0,
+    "pi_baseline_mas": 1.0
+  },
+  "configuration": {
+    "seed": 20261023,
+    "source": "uniform",
+    "fixed_theta_star_mas": 0.0005813084076202697,
+    "time": "HJD TDB - 2450000; inverse light-time correction for full Earth parallax factors",
+    "ra_deg": 268.07,
+    "dec_deg": -29.23,
+    "t_ref": 12030.0,
+    "season_edges": [
+      [
+        11994.0,
+        12066.0
+      ],
+      [
+        12176.625,
+        12248.625
+      ],
+      [
+        12359.25,
+        12431.25
+      ],
+      [
+        13272.375,
+        13344.375
+      ],
+      [
+        13455.0,
+        13527.0
+      ],
+      [
+        13637.625,
+        13709.625
+      ]
+    ],
+    "photometry_n": 9000,
+    "astrometry_epochs": 432,
+    "event_cadence_min": 12,
+    "other_season_cadence_day": 1,
+    "event_flux_sigma": 0.005,
+    "other_flux_sigma": 0.0004564354645876384,
+    "astrometry_sigma_mas": 0.1,
+    "noise": "Known independent Gaussian errors; daily flux samples are assigned the precision of 120 independent 12-minute measurements; no jitter/GP",
+    "geometry": "Earth observer approximation, no Roman L2 orbit or visibility forecast",
+    "luminosity": "Injection only sets FS=.36 FL=.64; both inferred independently with no mass-luminosity relation",
+    "competitive_delta_log_posterior": 15.0,
+    "sampled_both_signs": true
+  },
+  "software": {
+    "jax": "0.11.2",
+    "numpyro": "0.22.0",
+    "numpy": "2.5.4"
+  },
+  "provenance": {
+    "script_sha256": "64a6165b9f80281bef5905904c18d1df8adda32fe04188c6a01fe419b723cd1c",
+    "synthetic_sha256": {
+      "photometry.csv": "32ee534a6cb2411d55ae5ed7a35a68ccc7101464d96b37b939ccce868b1c0384",
+      "astrometry.csv": "cc5ca0323ed32736ef5d704f061b4dc31033a875e12339d90b5dda83276a8de4"
+    },
+    "initial_execution_script_sha256": "fe943ba272bb34fb67c854cbf02f47a503b8cee78f4207150f7a6247e04514a4",
+    "source_sha256": {
+      "__init__.py": "b19f718fb07e5f0b332e5d96d7a11b0d7caca2af9e3aea37c83b6530dc826920",
+      "data/__init__.py": "d70619eabe4596e50812c14996eda1caf558d008f6ab25488a15d7dc6eede19d",
+      "lensing/__init__.py": "98bf85123d5db624fa702f10a9e1f94a8270ca2edce59ca9e0e14dc6c9eeb7b1",
+      "lensing/astrometry.py": "0944a257064ff5839a457435257eb7139b23300dec9198cc05b8069c83b4ed24",
+      "lensing/basis_table.py": "7d4b1702a07729c9ff21d5f7a9abfda575dcf5d948efc4b81b43573d27378bae",
+      "lensing/concentric.py": "9d1cc015020be8195afc4fdd92b1fd64a98d8ea27d8e094459550005468ca76a",
+      "lensing/config.py": "09c4916962429cdf27a04e8a412fec348d01cffb90a8ca21dfafaa87a2c5b1cb",
+      "lensing/finite.py": "ff7f1b93682965c4ba64e464abe61708fef080936d3150c8b135b91e18cf4288",
+      "lensing/gould.py": "7542457720b69631129b1d5173945d24ae169f2ae6f1f489160ba6d0603c5005",
+      "lensing/point.py": "7f6e7bf734338648309e09947f2626bffe87fdb8d0291b8d6dc3f236183d6557",
+      "lightcurve.py": "6db839e157e8f15d76626815f2258276c88e3e1b9e1bd4cd2451243c1b2fce5a",
+      "model.py": "0fe8e3c1da9b3913edb6e294c51b3865d1019dc22a3cbc6b8b1a5452b6e8cb87",
+      "numerics/__init__.py": "8ff1c38fca896fab741a1b171ee779ff7148aa286680b5c2e83a98cac621197e",
+      "numerics/fftlog.py": "4ae03cc4722dcd04bc929344c20df0e0c1b84293ecc92a2a0d76dc15c7a0226b",
+      "numerics/interpolate.py": "a71f4b975d62da427f25b42c307d205d1aac785aa3f5a7a58807be9a7532f3dd",
+      "numerics/special.py": "82687c650342c2f91c2af498464549bcc7e5e8461a71e9c9d7e65feac040f3c5",
+      "parameters.py": "d059ac946d0f886842c1e513cdcb8901a0f0d457c173484c7cddda8d4d9ca0fe",
+      "photometry/__init__.py": "ae2a4fd28945dd30d8245da8d538c2ee84d9e8acd4ad1cfa0db970e85a861f85",
+      "photometry/fit.py": "f1d3a106c5fe40d7afc7ca501765f36f9674e7205f641636dcd4c1c3b73638cd",
+      "photometry/likelihood.py": "84fd9a38c9394e7ba7d860bf7eb77a463050de6eee18db3cd1cfbbd2728f79a9",
+      "trajectory/__init__.py": "25dbd3c6fc24dad2d83a178977857bdec2813bb2052d5c93c6f363898993eaab",
+      "trajectory/_geometry.py": "d7f85b30765e6a5be07cf3655bc9182c75c34cef008a879187e56476a3c3d627",
+      "trajectory/ephemeris.py": "38ad85b663f68810ac628ca9035b78d2735a39c8e1c5a8ff12879e339e5f2c83",
+      "trajectory/kepler.py": "055f8c6feb3ac98c3202f5117a939f4c7b15f054b85eab216b4872da35d1cda9",
+      "trajectory/parallax.py": "293229b92cc8226168969ca35c6ef7afe0a03232a6340a9dd5f2c98bd6568b99"
+    }
+  },
+  "elapsed_seconds": 100.22883266676217,
+  "execution": {
+    "seed": 20261023,
+    "map_starts_per_sign": 4,
+    "initial_command": "PYTHONPATH=src:. python example/roman_astrometry/code/fit.py --starts 4 --samples 1200 --warmup 800 --branch-threshold 100000",
+    "negative_refinement": "The negative branch alone was rerun with warmup=1200, samples=1200, chains=2, target_accept=.98 after 10 divergences in its first attempt. Positive samples were retained unchanged.",
+    "reproduce_final_settings": "PYTHONPATH=src:. python example/roman_astrometry/code/fit.py --starts 4 --samples 1200 --warmup 800 --target-accept .9 --negative-warmup 1200 --negative-target-accept .98",
+    "metadata_note": "Source hashes and deterministic checks were refreshed after sampling; numerical likelihood and priors were unchanged."
+  },
+  "finite_source_check": {
+    "minimum_u_over_rho": 300.6269508902735,
+    "max_abs_flux_difference": 1.711211306876237e-06,
+    "max_centroid_difference_microas": 0.0003739961151069259,
+    "max_blended_shift_microas": 130.81999922428324,
+    "note": "Uniform finite source retained; comparison at injected parameters on \u00b14tE dense grid."
+  },
+  "parameterization": "Each listed prior pair is (mean, standard deviation) for an independent Normal in the named coordinate; logarithms are natural. log parameters imply lognormal physical priors and Gaussian parallax components imply a Rayleigh norm prior. q=(p-mean)/sd has independent standard Normal priors. Sampling uses q=q_MAP+L z with a fixed MAP-Hessian transform; its constant Jacobian does not change the normalized posterior. Baseline coefficients are marginalized with independent zero-mean Normal priors and the listed baseline_prior_sd, then conditionally drawn for each nonlinear sample."
+}

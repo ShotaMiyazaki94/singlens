@@ -8,10 +8,12 @@ from scipy.optimize import brentq
 from scipy.stats import norm
 
 import singlens as sl
+from singlens.lensing import FFTConfig
 
 pytest.importorskip("tinygp")
 pytest.importorskip("numpyro")
 pytest.importorskip("corner")
+pytest.importorskip("matplotlib")
 
 from numpyro.infer.util import potential_energy
 from tinygp.solvers import QuasisepSolver
@@ -84,7 +86,7 @@ def test_gp_likelihood_and_gradient_against_dense_covariance():
 def test_magnified_source_gp_likelihood_and_gradient():
     """Compare the scaled-source likelihood with the full observed-flux covariance."""
     model = sl.Model(
-        source="linear", fft=sl.FFTConfig(n_fft=128), parallax=sl.AnnualParallax(**PARALLAX)
+        source="linear", solver=FFTConfig(n_fft=128), parallax=sl.AnnualParallax(**PARALLAX)
     )
     times = jnp.array([-3.0, -0.1, 0.0, 0.1, 0.2, 4.0])
     theta = jnp.asarray(PRIOR_LOC).at[0].set(0.2)
@@ -159,7 +161,7 @@ def test_posterior_band_against_dense_gaussian_mixture():
     """Marginalize two event/GP states and compare with analytic mixture quantiles."""
     model = sl.Model(
         source="linear",
-        fft=sl.FFTConfig(n_fft=128),
+        solver=FFTConfig(n_fft=128),
         parallax=sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=0.0, time_origin=2458000.0),
     )
     times = jnp.array([-1.0, -0.2, 0.3, 1.2])

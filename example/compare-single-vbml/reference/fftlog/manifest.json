@@ -1,0 +1,105 @@
+{
+  "description": "FFTLog-centered benchmark reports and figures preserved before the three-method comparison; original files unchanged.",
+  "files": {
+    "accuracy.csv": {
+      "bytes": 1072725,
+      "sha256": "865c9cc635e7a1a46cb48e81782d1905538b350b49d04ee308c719c217aaf813"
+    },
+    "accuracy.json": {
+      "bytes": 34257,
+      "sha256": "6d0666250e14cda7e38ca8c65dafa3476468e2f859968cbfc2dd43231b089a9a"
+    },
+    "accuracy.pdf": {
+      "bytes": 31645,
+      "sha256": "6b7fc85abb25a41d5f737a1af97b2197e9d0961dd3e3f646e3ddad39a748470b"
+    },
+    "accuracy.png": {
+      "bytes": 197456,
+      "sha256": "72217717ab04dcb821a7975edee126675dd4ef10d73f1fba2c54b4fa71fd309d"
+    },
+    "benchmark.csv": {
+      "bytes": 156873,
+      "sha256": "8fc136573c7320a2e059ef06ddd212e657b2ed8bbf47c2d2c9e878fc372b15ee"
+    },
+    "benchmark.json": {
+      "bytes": 114738,
+      "sha256": "f84237be27cde05cb7c8737121e34543c5ce28076d1b7653176afbec04597b92"
+    },
+    "benchmark.pdf": {
+      "bytes": 30584,
+      "sha256": "e7855b801e9d901766d48736fd3139ccbf3e22cdf407aa56916763a928c552b0"
+    },
+    "benchmark.png": {
+      "bytes": 124234,
+      "sha256": "4fd4ebb928c6d9665e844b232fb1358d51b3b9a85343dfd26187628759ddf24d"
+    },
+    "inference_data.json": {
+      "bytes": 7286,
+      "sha256": "a2663fb29960f268212ef9c5789c215e661bbc5613f2423c1b5be704f15c9616"
+    },
+    "inference_event.csv": {
+      "bytes": 868356,
+      "sha256": "146deda59158364e9ffbd1ec65dbfd3b19f8102b316bb101e8fe115e8598061c"
+    },
+    "inference_nuts.json": {
+      "bytes": 9610,
+      "sha256": "8440d13fdf8edf1cb3c92cdfe595c57c9a31cb3812e0f4cf9304a31160d036a4"
+    },
+    "inference_recovery.pdf": {
+      "bytes": 2092981,
+      "sha256": "6c0c782942281043b485104f197916908ae3f93ddd3e3019c07ceaddf1994288"
+    },
+    "inference_recovery.png": {
+      "bytes": 320577,
+      "sha256": "e0884bdd1bda57729538212612a4ab82d124827c3e410d91005582a40cbce446"
+    },
+    "inference_speed.csv": {
+      "bytes": 446,
+      "sha256": "f79f7197282cf04f63c04fca6a2558aab6e1c9b5087c2219c74a426c8e095d68"
+    },
+    "inference_speed.json": {
+      "bytes": 63039,
+      "sha256": "cd1277e2801b9a5f56d05f4e85ead3bda763dcdf3656c8f3a0751c972ee2871b"
+    },
+    "inference_speed.pdf": {
+      "bytes": 35478,
+      "sha256": "273b5756929c68acee70aa73e8b022ddf81097da030cb14c69ae5ee4a03fbcf4"
+    },
+    "inference_speed.png": {
+      "bytes": 148130,
+      "sha256": "bfe5800531955fa030694bf6f851fda81578b05ff10a3c8e48baa5282b73b835"
+    },
+    "posterior_comparison.pdf": {
+      "bytes": 159079,
+      "sha256": "4f506871653287e24fc71865628077c3f2dd7b5755807215fc3a6b8c099003b1"
+    },
+    "posterior_comparison.png": {
+      "bytes": 1676999,
+      "sha256": "7babc3ef9ff44ec3880b9691c252fefae6acc57ff5a4d651c490fd50b7eec3f0"
+    },
+    "runtime_vs_bins.csv": {
+      "bytes": 67113,
+      "sha256": "73da17d2f84586a51860094c6e78ec8bcce588d081aafa20ed544655d38bb823"
+    },
+    "runtime_vs_bins.json": {
+      "bytes": 47773,
+      "sha256": "fa46ba4ee5273b544f2352486e73fdb9f60a7aa3eab70d908247e18ef95a2f49"
+    },
+    "runtime_vs_bins.pdf": {
+      "bytes": 26089,
+      "sha256": "8fd9b499c98234a9cfbf4316816dda1a4e2a600493958c3ea2a0f485542a2b21"
+    },
+    "runtime_vs_bins.png": {
+      "bytes": 110607,
+      "sha256": "b3ee96ef6a92a69eadae63e0620dca242eca7078a4cf18378103f3289a080b87"
+    },
+    "trace_comparison.pdf": {
+      "bytes": 140053,
+      "sha256": "ee4e97542ee169e455d2c6e366bb3749108913e08d3b63d14594254265f293a5"
+    },
+    "trace_comparison.png": {
+      "bytes": 745113,
+      "sha256": "a6a414a4b33c235567aa256436fd6401f5ebf5ef8028bb4ef7c63c990c7f51b5"
+    }
+  }
+}

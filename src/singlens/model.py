@@ -6,7 +6,14 @@ from functools import cached_property
 import jax
 import jax.numpy as jnp
 
-from .lensing import FFTConfig, LinearLimbDarkened, QuadraticProfile, UniformDisk
+from .lensing import (
+    BasisTable,
+    FFTConfig,
+    LinearLimbDarkened,
+    QuadraticProfile,
+    UniformDisk,
+)
+from .lensing.basis_table import _bundled_basis_table
 from .lensing.point import point_source_shift, pspl
 from .parameters import Parameters
 from .photometry import fit_flux, marginalize_flux
@@ -17,20 +24,28 @@ from .trajectory import AnnualParallax
 class Model:
     """A single-lens model with a chosen source profile and sky geometry.
 
-    ``source`` is ``'point'`` (default), ``'uniform'``, ``'linear'``, or ``'mu2'``.
+    Choose ``source='point'``, ``'uniform'``, ``'linear'``, or ``'mu2'`` explicitly.
     The latter is the pure ``I(mu)=mu**2`` radial profile. Finite-source models
     require ``Parameters.rho``; linear models also require ``Parameters.a1``.
     Physical coefficients and timescales belong in ``Parameters``.
 
+    Uniform and linear sources use a bundled photometric/astrometric table
+    for ``1e-6 <= rho <= 10`` and ``abs(position)/rho <= 1e8``. Outside this
+    domain results are NaN; ``rho=0`` gives the analytic point-source limit.
+    Pass ``solver='fft'`` for FFTLog with fixed settings. ``solver='table'``
+    explicitly selects the bundled table. The ``mu2`` profile uses FFTLog.
+    Selection is fixed at construction, with no parameter-dependent switching.
+
+    Enable JAX float64 before constructing models or JAX arrays.
     Compile a bound method directly: ``jax.jit(model.magnification)``. All
     evaluation methods preserve the time/position shape. ``jax.grad`` and
     ``jax.jacfwd`` accept a whole ``Parameters`` object; vectorize independent
     events with ``jax.vmap(..., in_axes=(None, 0))``.
     """
 
-    source: str = "point"
+    source: str
     parallax: AnnualParallax | None = None
-    fft: FFTConfig | None = None
+    solver: str | FFTConfig | BasisTable | None = None
     _solver: object = field(init=False, repr=False, default=None)
 
     def __post_init__(self):
@@ -38,24 +53,48 @@ class Model:
             raise ValueError("source must be 'point', 'uniform', 'linear', or 'mu2'.")
         if self.parallax is not None and not isinstance(self.parallax, AnnualParallax):
             raise TypeError("parallax must be an AnnualParallax instance.")
-        if self.fft is not None and not isinstance(self.fft, FFTConfig):
-            raise TypeError("fft must be an FFTConfig instance.")
+        if isinstance(self.solver, str):
+            if self.solver not in ("fft", "table"):
+                raise ValueError("solver must be 'fft' or 'table'.")
+        elif self.solver is not None and not isinstance(self.solver, (FFTConfig, BasisTable)):
+            raise TypeError("solver must be 'fft', 'table', or an expert solver configuration.")
         if self.source == "point":
-            if self.fft is not None:
-                raise ValueError("FFT settings apply only to finite-source models.")
+            if self.solver is not None:
+                raise ValueError("Solver settings apply only to finite-source models.")
             return
-        config = self.fft if self.fft is not None else FFTConfig()
-        object.__setattr__(self, "fft", config)
+        solver = self.solver
+        if isinstance(solver, str):
+            if solver == "fft":
+                solver = FFTConfig()
+            elif self.source in ("uniform", "linear"):
+                solver = _bundled_basis_table(jax.config.x64_enabled)
+            else:
+                raise ValueError("The table solver supports source='uniform' or 'linear'.")
+        if solver is None:
+            solver = (
+                FFTConfig()
+                if self.source == "mu2"
+                else _bundled_basis_table(jax.config.x64_enabled)
+            )
+        if isinstance(solver, BasisTable):
+            if self.source not in ("uniform", "linear"):
+                raise ValueError("A BasisTable supports source='uniform' or 'linear'.")
+            object.__setattr__(self, "solver", solver)
+            object.__setattr__(self, "_solver", solver)
+            return
+        object.__setattr__(self, "solver", solver)
         factory = {"uniform": UniformDisk, "linear": LinearLimbDarkened, "mu2": QuadraticProfile}[
             self.source
         ]
-        object.__setattr__(self, "_solver", factory(fft=config))
+        object.__setattr__(self, "_solver", factory(fft=solver))
 
     @cached_property
     def _astrometric_solver(self):
         # Photometry-only models do not prepare the extra moment kernels.
         # The first astrometric call may occur inside jit/grad: cached arrays
         # must be concrete rather than tracers belonging to that first call.
+        if isinstance(self._solver, BasisTable):
+            return self._solver
         from .lensing.astrometry import FiniteSourceAstrometry
 
         with jax.ensure_compile_time_eval():
@@ -73,7 +112,7 @@ class Model:
         self._validate_source(params.rho, params.a1)
         if self.parallax is None:
             if params.pi_e_n is not None or params.pi_e_e is not None:
-                raise ValueError("Parallax amplitudes require Model(parallax=AnnualParallax(...)).")
+                raise ValueError("Parallax amplitudes require an AnnualParallax geometry on Model.")
         elif params.pi_e_n is None or params.pi_e_e is None:
             raise ValueError("A parallax model requires both pi_e_n and pi_e_e (zero is allowed).")
 
@@ -124,6 +163,8 @@ class Model:
             valid = jnp.isfinite(a1) & (a1 >= 0) & (a1 <= 1)
             safe_a1 = jnp.where(valid, a1, 0.0)
             result = jnp.where(valid, self._solver.A(u, rho, a1=safe_a1), jnp.nan)
+        elif isinstance(self._solver, BasisTable):
+            result = self._solver.A(u, rho, a1=0.0)
         else:
             result = self._solver.A(u, rho)
         return result.reshape(position.shape)
@@ -156,9 +197,30 @@ class Model:
             result = jnp.where(
                 valid, self._astrometric_solver.shift(position, rho, a1=safe_a1), jnp.nan
             )
+        elif isinstance(self._solver, BasisTable):
+            result = self._astrometric_solver.shift(position, rho, a1=0.0)
         else:
             result = self._astrometric_solver.shift(position, rho)
         return result.reshape(position.shape)
+
+    def joint_at(self, position, *, rho=None, a1=None):
+        """Return ``(magnification, astrometric_shift)`` at the same positions.
+
+        Table solvers share their flux/moment calculation; FFTLog
+        evaluates the two quantities separately. Results match the separate
+        methods and have the shape of ``position``.
+        """
+        self._validate_source(rho, a1)
+        if not isinstance(self._solver, BasisTable):
+            return (
+                self.magnification_at(position, rho=rho, a1=a1),
+                self.astrometric_shift_at(position, rho=rho, a1=a1),
+            )
+        return self._solver.joint(position, rho, a1=a1 if self.source == "linear" else 0.0)
+
+    def joint(self, times, params):
+        """Return magnification and source-relative shift for one trajectory."""
+        return self.joint_at(self.trajectory(times, params), rho=params.rho, a1=params.a1)
 
     def astrometric_shift(self, times, params):
         """Complex source-relative shift in the ``tau + 1j*beta`` trajectory frame.

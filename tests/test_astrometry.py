@@ -6,13 +6,14 @@ import numpy as np
 import pytest
 
 import singlens as sl
+from singlens.lensing import FFTConfig
 from tools.validation.astrometry_accuracy import lens_centered_shift, reference_shift, wing_shift
 
 
 @pytest.fixture(scope="module", params=[("uniform", None), ("linear", 0.6), ("mu2", None)])
 def astrometric_model(request):
     source, a1 = request.param
-    return sl.Model(source=source), source, a1
+    return sl.Model(source=source, solver=FFTConfig()), source, a1
 
 
 @pytest.mark.parametrize("rho", [1e-6, 0.01, 0.1, 1.0])
@@ -37,7 +38,7 @@ def test_independent_reference_overlap(source, a1):
 
 @pytest.mark.parametrize("rho", [1e-6, 0.01, 1.0, 10.0])
 def test_uniform_center_slope_and_limb_zero(rho):
-    model = sl.Model(source="uniform")
+    model = sl.Model(source="uniform", solver=FFTConfig())
 
     def shift(x):
         return model.astrometric_shift_at(x, rho=rho).real
@@ -106,7 +107,7 @@ def test_position_and_radius_gradients_against_independent_integral(astrometric_
     _, source, a1 = astrometric_model
     # Resolving derivatives needs a finer grid than the default value-accuracy
     # target. The independent comparison still includes the far-field expansion.
-    model = sl.Model(source=source, fft=sl.FFTConfig(n_fft=8192))
+    model = sl.Model(source=source, solver=FFTConfig(n_fft=8192))
     rho, step = 0.1, 1e-5
     derivative = jax.jit(
         jax.grad(lambda u, r: model.astrometric_shift_at(u, rho=r, a1=a1).real, argnums=(0, 1))
@@ -122,7 +123,7 @@ def test_position_and_radius_gradients_against_independent_integral(astrometric_
         np.testing.assert_allclose(derivative(u, rho), [du, dr], rtol=1e-2, atol=1e-5)
 
 
-def test_default_autodiff_matches_its_finite_difference(astrometric_model):
+def test_fft_autodiff_matches_its_finite_difference(astrometric_model):
     model, _, a1 = astrometric_model
 
     def value(parameters):
@@ -145,7 +146,7 @@ def test_default_autodiff_matches_its_finite_difference(astrometric_model):
 
 
 def test_dynamic_limb_coefficient_gradient():
-    model = sl.Model(source="linear")
+    model = sl.Model(source="linear", solver=FFTConfig())
     rho, a1, u, step = 0.1, 0.4, 0.05, 1e-4
     evaluate = jax.jit(lambda a: model.astrometric_shift_at(u, rho=rho, a1=a).real)
     fd = (

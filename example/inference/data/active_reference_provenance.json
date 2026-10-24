@@ -1,0 +1,28 @@
+{
+  "retrieved_utc_date": "2026-10-23",
+  "inputs": {
+    "roman_f146_sca01_effective_area.csv": {
+      "url": "https://raw.githubusercontent.com/RomanSpaceTelescope/roman-technical-information/main/roman_technical_information/data/WideFieldInstrument/Imaging/EffectiveAreas/Roman_effarea_v8_SCA01_20240301.ecsv",
+      "raw_sha256": "d116839810b69fa7e641ef70ed8d43789deb3e41c8c266914460ed0fc6b2d4cb",
+      "description": "NASA Roman effective area, SCA01, 2024-03-01 model. Extracted wavelength/F146 columns over 0.85\u20132.10 micron; no throughput rescaling.",
+      "license": "CC0-1.0",
+      "license_url": "https://github.com/RomanSpaceTelescope/roman-technical-information/blob/main/LICENSE.md",
+      "extracted_sha256": "a7e6f58eb6b1a014982aa292062c102d83a360dd6dd997e58daaa71257f2bfa0"
+    },
+    "ck04_5000_4000_logg4p5_solar.csv": {
+      "urls": [
+        "https://ssb.stsci.edu/trds/grid/ck04models/ckp00/ckp00_5000.fits",
+        "https://ssb.stsci.edu/trds/grid/ck04models/ckp00/ckp00_4000.fits"
+      ],
+      "raw_sha256": {
+        "ckp00_5000.fits": "c89b206bb254360ff10cabfd0f6bab333e630129feafae6ad34f7300a93c5da5",
+        "ckp00_4000.fits": "9015ecd2129b7467db5e46ed4909b8b990f650328635855fd4bc4a2bbff1f948"
+      },
+      "description": "STScI Castelli & Kurucz 2004 ATLAS9 surface-flux grids at 5000 K (photosphere) and 4000 K (spot), [M/H] = 0, log g = 4.5. Native wavelength/g45 samples over 7500\u201323000 Angstrom, merged without resampling. Flux units erg s^-1 cm^-2 Angstrom^-1; multiply by (R/D)^2.",
+      "attribution": "Castelli & Kurucz 2004; STScI atmosphere reference archive.",
+      "license": "Publicly distributed numerical atmosphere grid; no explicit redistribution license was present in the FITS headers. No claim of a new license for these values.",
+      "documentation": "https://etc.stsci.edu/etcstatic/users_guide/1_ref_4_ck.html",
+      "extracted_sha256": "4f8aa86a9431a60254cd562a22c67461a8e012e2e8cbbfc949452024972b4be4"
+    }
+  }
+}

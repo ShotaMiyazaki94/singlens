@@ -1,0 +1,865 @@
+"""Controlled NUTS comparison of joint and analytically marginalized fluxes.
+
+Both formulations use the same seed-44 observations, Table magnification,
+exposure operator, and proper Gaussian priors. No benchmark source is modified.
+"""
+
+import argparse
+import hashlib
+import inspect
+import json
+import subprocess
+import sys
+from importlib import import_module
+from pathlib import Path
+from time import perf_counter
+from types import SimpleNamespace
+
+import jax
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
+import numpyro
+import numpyro.distributions as dist
+from jax.scipy.linalg import solve_triangular
+from matplotlib.lines import Line2D
+from numpyro.diagnostics import summary
+from numpyro.infer import MCMC, NUTS
+from numpyro.infer.util import log_density
+from scipy.optimize import least_squares
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from example._common import save_figure, save_json, style
+
+experiment = import_module("example.compare-single-vbml.code.experiment")
+shared = import_module("example.compare-single-vbml.code.inference_speed")
+ROOT = Path(__file__).resolve().parents[3]
+OUTPUT = Path(__file__).resolve().parents[1] / "outputs"
+REFERENCE = ROOT / "example/compare-single-vbml/outputs/reference_injection.npz"
+SETTINGS = dict(
+    data_seed=44,
+    sampler_seeds={"joint": 18, "marginal": 19},
+    chains=2,
+    warmup=1000,
+    minimum_draws_per_chain=800,
+    maximum_draws_per_chain=8000,
+    draws_per_block=100,
+    target_accept_prob=0.99,
+    maximum_tree_depth=10,
+    target_lens_ess=1000,
+    maximum_r_hat=1.01,
+    minimum_autocorrelation_times=50,
+)
+COLORS = {"joint": "#247BA0", "marginal": "#3D8067"}
+LABELS = {"joint": "Joint (6 parameters)", "marginal": "Marginal (4 parameters)"}
+
+
+def prior_parameters(formulation):
+    if formulation == "marginal":
+        return jnp.asarray(experiment.PRIOR_LOC), jnp.asarray(experiment.PRIOR_SCALE)
+    if formulation == "joint":
+        return jnp.r_[experiment.PRIOR_LOC, jnp.zeros(2)], jnp.r_[
+            experiment.PRIOR_SCALE, jnp.ones(2)
+        ]
+    raise ValueError("formulation must be 'joint' or 'marginal'")
+
+
+def domain_log_prob(theta):
+    """Use precisely the same finite-source domain in both formulations."""
+    return jnp.where(jnp.isfinite(experiment.log_prior(theta)), 0.0, -jnp.inf)
+
+
+def flux_from_white(white):
+    factor = jnp.linalg.cholesky(jnp.asarray(experiment.FLUX_PRIOR_COVARIANCE))
+    return jnp.asarray(experiment.FLUX_PRIOR_MEAN) + factor @ white
+
+
+def numpyro_model(data, lens_model, formulation, center, transform):
+    """Executed model: Gaussian priors expressed in MAP-scaled coordinates."""
+    location, scale = prior_parameters(formulation)
+    coordinate_prior = dist.MultivariateNormal(
+        solve_triangular(transform, location - center, lower=True),
+        scale_tril=solve_triangular(transform, jnp.diag(scale), lower=True),
+    )
+    coordinates = numpyro.sample("coordinates", coordinate_prior)
+    state = center + transform @ coordinates
+    theta = state[:4]
+    domain = domain_log_prob(theta)
+    numpyro.factor("domain", domain)
+    safe_theta = jnp.where(jnp.isfinite(domain), theta, experiment.PRIOR_LOC)
+    parameters = experiment.unpack(safe_theta)
+    magnification = experiment.magnification(lens_model, data.times, parameters)
+    if formulation == "joint":
+        source, blend = flux_from_white(state[4:])
+        numpyro.sample(
+            "observed_flux",
+            dist.Normal(source * magnification + blend, data.error).to_event(1),
+            obs=data.flux,
+        )
+    else:
+        numpyro.factor(
+            "observed_flux",
+            experiment.log_likelihood(magnification, data.flux, data.error),
+        )
+
+
+def negative_log_posterior(state, data, lens_model, formulation):
+    """Normalized density in (lens coordinates, optional prior-white fluxes)."""
+    location, scale = prior_parameters(formulation)
+    log_prior = dist.Normal(location, scale).log_prob(state).sum()
+    domain = domain_log_prob(state[:4])
+    safe_theta = jnp.where(jnp.isfinite(domain), state[:4], experiment.PRIOR_LOC)
+    values = experiment.magnification(lens_model, data.times, experiment.unpack(safe_theta))
+    if formulation == "joint":
+        source, blend = flux_from_white(state[4:])
+        log_likelihood = dist.Normal(source * values + blend, data.error).log_prob(data.flux).sum()
+    else:
+        log_likelihood = experiment.log_likelihood(values, data.flux, data.error)
+    return -log_prior - log_likelihood - domain
+
+
+def physical_states(states, formulation):
+    """Retain chain/draw axes; expose physical lens parameters and joint fluxes."""
+    states = np.asarray(states)
+    geometry = shared.physical(states[..., :4])
+    if formulation == "marginal":
+        return geometry
+    factor = np.linalg.cholesky(experiment.FLUX_PRIOR_COVARIANCE)
+    flux = experiment.FLUX_PRIOR_MEAN + states[..., 4:] @ factor.T
+    return np.concatenate((geometry, flux), axis=-1)
+
+
+def fit_initial(data, model, formulation):
+    """Each target pays for its own mode and exact local negative-log Hessian."""
+    start = perf_counter()
+    if formulation == "marginal":
+        result, _ = experiment.fit_event(model, data.times, data.flux, data.error)
+        if not result.success:
+            raise RuntimeError(f"Marginal MAP failed: {result.message}")
+        center = np.asarray(result.x)
+        hessian = np.asarray(result.marginal_hessian)
+        gradient_max = result.whitened_gradient_max
+        evaluations = result.profile_nfev + result.nfev
+    else:
+        times, flux = np.asarray(data.times), np.asarray(data.flux)
+        peak = int(np.argmax(flux))
+        baseline = float(np.median(flux))
+        half_peak = flux > baseline + (flux[peak] - baseline) / 2
+        width = np.ptp(times[half_peak]) if half_peak.sum() > 1 else 0.02
+        guess = np.r_[experiment.PRIOR_LOC, np.zeros(2)]
+        guess[0], guess[2] = times[peak], np.log(max(width / 2, 0.01))
+        values = experiment.magnification(model, data.times, experiment.unpack(guess[:4]))
+        conditional = experiment.flux_conditional(values, data.flux, data.error)
+        guess[4:] = np.linalg.solve(
+            np.linalg.cholesky(experiment.FLUX_PRIOR_COVARIANCE),
+            np.asarray(conditional.mean) - experiment.FLUX_PRIOR_MEAN,
+        )
+
+        def residual(state):
+            values = experiment.magnification(model, data.times, experiment.unpack(state[:4]))
+            source, blend = flux_from_white(state[4:])
+            return jnp.r_[
+                (source * values + blend - data.flux) / data.error,
+                (state[:4] - experiment.PRIOR_LOC) / experiment.PRIOR_SCALE,
+                state[4:],
+            ]
+
+        evaluate, jacobian = jax.jit(residual), jax.jit(jax.jacfwd(residual))
+        lower, upper = np.full(6, -np.inf), np.full(6, np.inf)
+        lower[3], upper[3] = np.log(1e-6), np.log(10)
+        result = least_squares(
+            lambda x: np.asarray(evaluate(x)),
+            guess,
+            jac=lambda x: np.asarray(jacobian(x)),
+            bounds=(lower, upper),
+            x_scale="jac",
+            ftol=1e-10,
+            xtol=1e-10,
+            gtol=1e-8,
+            max_nfev=400,
+        )
+        center = result.x
+
+        def objective(x):
+            return negative_log_posterior(x, data, model, formulation)
+
+        hessian = np.asarray(jax.jit(jax.hessian(objective))(center))
+        profile_scale = np.linalg.cholesky(np.linalg.inv(result.jac.T @ result.jac))
+        gradient = np.asarray(jax.jit(jax.grad(objective))(center))
+        gradient_max = float(np.max(abs(profile_scale.T @ gradient)))
+        evaluations = result.nfev
+        if not result.success or not np.isfinite(result.cost) or gradient_max >= 1e-5:
+            raise RuntimeError(f"Joint MAP failed: {result.message}; gradient={gradient_max}")
+    hessian = (hessian + hessian.T) / 2
+    np.linalg.cholesky(hessian)
+    covariance = np.linalg.inv(hessian)
+    transform = np.linalg.cholesky((covariance + covariance.T) / 2)
+    return SimpleNamespace(x=center, transform=transform), dict(
+        seconds=perf_counter() - start,
+        center=center.tolist(),
+        hessian=hessian.tolist(),
+        affine_transform=transform.tolist(),
+        whitened_gradient_max=float(gradient_max),
+        optimizer_evaluations=int(evaluations),
+        scope="Own target mode and exact Hessian; includes profile/least-squares initialization and JIT. Joint flux coordinates are prior-whitened.",
+    )
+
+
+def chain_diagnostics(physical, fields, formulation):
+    """Common lens ESS, plus convergence of every variable actually sampled."""
+    names = experiment.NAMES if formulation == "joint" else experiment.LENS_NAMES
+    details = summary(dict(zip(names, np.moveaxis(physical, -1, 0))), group_by_chain=True)
+    try:
+        tau = shared.autocorrelation(physical.transpose(1, 0, 2))
+    except RuntimeError:
+        # A short preliminary chain can have an unusable IAT estimate; this
+        # cannot count as convergence and does not relax any stopping rule.
+        tau = None
+    divergences = int(np.sum(fields["diverging"]))
+    depth = int(np.sum(fields["num_steps"] >= 2 ** SETTINGS["maximum_tree_depth"] - 1))
+    finite = all(np.isfinite(value).all() for value in fields.values())
+    if tau is None:
+        return dict(
+            minimum_lens_ess=0.0,
+            lens_ess=dict.fromkeys(experiment.LENS_NAMES, 0.0),
+            maximum_r_hat=None,
+            length_over_max_tau=None,
+            divergences=divergences,
+            tree_depth_saturations=depth,
+            sampler_statistics_finite=finite,
+            parameters={},
+            passed=False,
+            fatal=not finite or bool(divergences or depth),
+        )
+    lens_ess = physical.shape[0] * physical.shape[1] / tau[:4]
+    maximum_r_hat = float(max(row["r_hat"] for row in details.values()))
+    length_over_tau = float(physical.shape[1] / tau.max())
+    passed = bool(
+        finite
+        and not divergences
+        and not depth
+        and lens_ess.min() >= SETTINGS["target_lens_ess"]
+        and maximum_r_hat < SETTINGS["maximum_r_hat"]
+        and length_over_tau >= SETTINGS["minimum_autocorrelation_times"]
+    )
+    return dict(
+        minimum_lens_ess=float(lens_ess.min()),
+        lens_ess=dict(zip(experiment.LENS_NAMES, map(float, lens_ess))),
+        maximum_r_hat=maximum_r_hat if np.isfinite(maximum_r_hat) else None,
+        length_over_max_tau=length_over_tau,
+        divergences=divergences,
+        tree_depth_saturations=depth,
+        sampler_statistics_finite=finite,
+        parameters={
+            name: {
+                **{key: float(value) if np.isfinite(value) else None for key, value in row.items()},
+                "tau": float(tau[i]),
+            }
+            for i, (name, row) in enumerate(details.items())
+        },
+        passed=passed,
+        fatal=not finite or bool(divergences or depth),
+    )
+
+
+def sample(data, model, formulation, initial, output):
+    """Run two sequential chains with fixed settings and synchronized timers."""
+    setup_start = perf_counter()
+    center, transform = jnp.asarray(initial.x), jnp.asarray(initial.transform)
+    kernel = NUTS(
+        numpyro_model,
+        dense_mass=True,
+        target_accept_prob=SETTINGS["target_accept_prob"],
+        max_tree_depth=SETTINGS["maximum_tree_depth"],
+    )
+    samplers = [
+        MCMC(
+            kernel,
+            num_warmup=SETTINGS["warmup"],
+            num_samples=SETTINGS["draws_per_block"],
+            progress_bar=False,
+        )
+        for _ in range(SETTINGS["chains"])
+    ]
+    key = jax.random.key(SETTINGS["sampler_seeds"][formulation])
+    init_key, sample_key = jax.random.split(key)
+    positions = 0.1 * jax.random.normal(init_key, (2, len(initial.x)))
+    jax.block_until_ready(positions)
+    arguments = (data, model, formulation, center, transform)
+    setup_seconds = perf_counter() - setup_start
+    start = perf_counter()
+    for i, (sampler, key) in enumerate(zip(samplers, jax.random.split(sample_key, 2))):
+        sampler.warmup(key, *arguments, init_params={"coordinates": positions[i]})
+        jax.block_until_ready(sampler.last_state)
+        print(f"{formulation}: chain {i + 1} warmup complete", flush=True)
+    warmup_seconds = perf_counter() - start
+    production_seconds = 0.0
+    blocks, extras, history = [[], []], [[], []], []
+    for count in range(100, SETTINGS["maximum_draws_per_chain"] + 1, 100):
+        start = perf_counter()
+        for i, sampler in enumerate(samplers):
+            sampler.post_warmup_state = sampler.last_state
+            sampler.run(
+                sampler.last_state.rng_key,
+                *arguments,
+                extra_fields=("diverging", "num_steps", "accept_prob", "potential_energy"),
+            )
+            jax.block_until_ready(sampler.last_state)
+            blocks[i].append(sampler.get_samples()["coordinates"])
+            extras[i].append(sampler.get_extra_fields())
+        production_seconds += perf_counter() - start
+        coordinates = np.stack([np.concatenate(chain) for chain in blocks])
+        states = initial.x + coordinates @ initial.transform.T
+        physical = physical_states(states, formulation)
+        fields = {
+            name: np.stack([np.concatenate([block[name] for block in chain]) for chain in extras])
+            for name in extras[0][0]
+        }
+        diagnostics = chain_diagnostics(physical, fields, formulation)
+        history.append(
+            dict(
+                draws_per_chain=count,
+                sampling_seconds=setup_seconds + warmup_seconds + production_seconds,
+                **diagnostics,
+            )
+        )
+        print(
+            f"{formulation}: {count} draws/chain, lens ESS={diagnostics['minimum_lens_ess']:.0f}, "
+            f"R-hat={diagnostics['maximum_r_hat']}, divergences={diagnostics['divergences']}",
+            flush=True,
+        )
+        save_json(dict(history=history), f"progress_{formulation}", output)
+        if diagnostics["fatal"] or (
+            count >= SETTINGS["minimum_draws_per_chain"] and diagnostics["passed"]
+        ):
+            break
+    np.savez_compressed(
+        output / f"{formulation}_draws.npz",
+        sampled_coordinates=states,
+        affine_coordinates=coordinates,
+        physical=physical,
+        names=np.array(experiment.NAMES if formulation == "joint" else experiment.LENS_NAMES),
+        axis_order=np.array(["chain", "draw", "parameter"]),
+        **fields,
+    )
+    return physical, dict(
+        sampling_setup_seconds=setup_seconds,
+        warmup_seconds_including_compile=warmup_seconds,
+        production_seconds_including_compile=production_seconds,
+        sampling_seconds=setup_seconds + warmup_seconds + production_seconds,
+        draws_per_chain=count,
+        production_leapfrog_steps=int(fields["num_steps"].sum()),
+        mean_leapfrog_steps=float(fields["num_steps"].mean()),
+        maximum_leapfrog_steps=int(fields["num_steps"].max()),
+        mean_accept_probability=(
+            float(fields["accept_prob"].mean())
+            if np.isfinite(fields["accept_prob"]).all()
+            else None
+        ),
+        final_step_sizes=[float(sampler.last_state.adapt_state.step_size) for sampler in samplers],
+        history=history,
+        diagnostics=diagnostics,
+    )
+
+
+def mean_statistics(chains):
+    """MCSE from the actual ordered series, not the count of reconstructed fluxes."""
+    values = np.asarray(chains)
+    tau = shared.autocorrelation(values.transpose(1, 0, 2))
+    variance = values.var(axis=(0, 1))
+    ess = values.shape[0] * values.shape[1] / tau
+    return dict(mean=values.mean(axis=(0, 1)), sd=np.sqrt(variance), mcse=np.sqrt(variance / ess))
+
+
+def compare_posteriors(joint, marginal, conditional_means, conditional_covariances):
+    joint_statistics = mean_statistics(joint)
+    marginal_lens = mean_statistics(marginal)
+    marginal_flux = mean_statistics(conditional_means)
+    marginal_mean = np.r_[marginal_lens["mean"], marginal_flux["mean"]]
+    marginal_mcse = np.r_[marginal_lens["mcse"], marginal_flux["mcse"]]
+    flux_variance = conditional_covariances.mean(axis=(0, 1)).diagonal() + conditional_means.var(
+        axis=(0, 1)
+    )
+    marginal_sd = np.r_[marginal_lens["sd"], np.sqrt(flux_variance)]
+    return {
+        name: dict(
+            joint_mean=float(joint_statistics["mean"][i]),
+            marginal_mean=float(marginal_mean[i]),
+            joint_sd=float(joint_statistics["sd"][i]),
+            marginal_sd=float(marginal_sd[i]),
+            joint_mean_mcse=float(joint_statistics["mcse"][i]),
+            marginal_mean_mcse=float(marginal_mcse[i]),
+            mean_difference_over_combined_mcse=float(
+                (marginal_mean[i] - joint_statistics["mean"][i])
+                / np.hypot(marginal_mcse[i], joint_statistics["mcse"][i])
+            ),
+        )
+        for i, name in enumerate(experiment.NAMES)
+    }
+
+
+def plot(report):
+    fig, ax = plt.subplots(figsize=(6.5, 4.2), layout="constrained")
+    for offset, formulation in enumerate(("joint", "marginal")):
+        row = report["runs"][formulation]
+        ax.scatter(
+            [row["lens_ess_per_second"][name] for name in experiment.LENS_NAMES],
+            np.arange(4) + (offset - 0.5) * 0.18,
+            color=COLORS[formulation],
+            marker="o" if formulation == "joint" else "s",
+            label=LABELS[formulation],
+        )
+    ax.set(
+        xlabel="Lens ESS / s (setup + warmup + sampling)",
+        yticks=np.arange(4),
+        yticklabels=experiment.LABELS[:4],
+        title="Sampling efficiency",
+        xlim=(0, None),
+    )
+    ax.invert_yaxis()
+    ax.legend(fontsize=10)
+    ax.grid(axis="x", color="0.92", linewidth=0.7)
+    return fig
+
+
+def reconstruct_posterior(lens_draws, flux_mean, flux_covariance, *, seed=120):
+    """Append a correlated (f_s, f_b) draw to each matching lens draw."""
+    lens_draws = np.asarray(lens_draws)
+    flux_mean = np.asarray(flux_mean)
+    flux_covariance = np.asarray(flux_covariance)
+    noise = np.random.default_rng(seed).normal(size=flux_mean.shape)
+    factor = np.linalg.cholesky(flux_covariance)
+    flux_draws = flux_mean + np.einsum("...ij,...j->...i", factor, noise)
+    return np.concatenate((lens_draws, flux_draws), axis=-1)
+
+
+def corner_figure(joint, reconstructed, truth):
+    """Overlay paired six-parameter draws, with equal total weight per fit."""
+    import corner
+
+    values = [np.asarray(draws).reshape(-1, 6).copy() for draws in (joint, reconstructed)]
+    truth = np.array([truth[name] for name in experiment.NAMES])
+    for sample in values:
+        if not len(sample) or not np.isfinite(sample).all():
+            raise ValueError("Posterior draws must be nonempty and finite")
+        sample[:, 0] = (sample[:, 0] - truth[0]) * 1440
+        sample[:, 2] *= 24
+    truth[0] = 0
+    truth[2] *= 24
+    labels = [r"$\Delta t_0$ [min]", r"$u_0$", r"$t_E$ [h]", r"$\rho$", r"$f_s$", r"$f_b$"]
+    quantiles = np.array([np.quantile(sample, (0.001, 0.999), axis=0) for sample in values])
+    low = np.minimum(quantiles[:, 0].min(axis=0), truth)
+    high = np.maximum(quantiles[:, 1].max(axis=0), truth)
+    margin = 0.05 * (high - low)
+    if np.any(margin <= 0):
+        raise ValueError("Each plotted parameter must have a nonzero posterior range")
+    ranges = list(zip(low - margin, high + margin))
+    fig = None
+    for index, (formulation, sample) in enumerate(zip(("joint", "marginal"), values)):
+        fig = corner.corner(
+            sample,
+            fig=fig,
+            labels=labels,
+            range=ranges,
+            bins=32,
+            weights=np.full(len(sample), 1 / len(sample)),
+            color=COLORS[formulation],
+            truths=truth if index == 0 else None,
+            truth_color="0.4",
+            smooth=0.8,
+            smooth1d=0.8,
+            levels=(0.68, 0.95),
+            plot_datapoints=False,
+            plot_density=False,
+            fill_contours=False,
+            no_fill_contours=True,
+            max_n_ticks=3,
+            labelpad=0.12,
+            label_kwargs={"fontsize": 13},
+            hist_kwargs={"linewidth": 1.5},
+            contour_kwargs={"linewidths": 1.2},
+        )
+    handles = [
+        Line2D([], [], color=COLORS["joint"], lw=2, label="Joint sampling"),
+        Line2D([], [], color=COLORS["marginal"], lw=2, label="Marginalized + reconstructed fluxes"),
+        Line2D([], [], color="0.4", lw=1, label="Injected"),
+    ]
+    fig.legend(handles=handles, loc="upper right", bbox_to_anchor=(0.95, 0.94), fontsize=14)
+    return fig
+
+
+def lightcurve_figure(data):
+    """Show the measured event peak and its independent injected mean."""
+    hours = (np.asarray(data.times) - data.truth["t0"]) * 24
+    half_width = 3 * data.truth["rho"] * data.truth["t_e"] * 24
+    selected = np.abs(hours) <= half_width
+    fig, ax = plt.subplots(figsize=(6.5, 4.2), layout="constrained")
+    ax.errorbar(
+        hours[selected],
+        np.asarray(data.flux)[selected],
+        yerr=np.asarray(data.error)[selected],
+        fmt="o",
+        color="0.4",
+        markersize=3,
+        elinewidth=0.8,
+        label="Observations",
+    )
+    ax.plot(
+        hours[selected],
+        np.asarray(data.lens_flux)[selected],
+        color=COLORS["joint"],
+        linewidth=1.6,
+        label="Injected model",
+    )
+    ax.set(
+        xlabel=r"Time from $t_0$ [h]",
+        ylabel="Flux / baseline flux",
+        title="Finite-source light curve",
+        xlim=(-half_width, half_width),
+    )
+    ax.legend(fontsize=10)
+    return fig
+
+
+def save_plots(report, output, reference=REFERENCE):
+    """Reconstruct and plot saved posteriors without rerunning either sampler."""
+    if not reference.is_file():
+        raise FileNotFoundError("The measured light curve requires its reference injection cache")
+    data = experiment.synthetic_data(seed=report["settings"]["data_seed"], reference=reference)
+    data_hash = experiment.data_hash(data)
+    if data_hash != report["experiment"]["data_sha256"]:
+        raise ValueError("Light-curve observations differ from the measured inference data")
+    with (
+        np.load(output / "joint_draws.npz") as joint,
+        np.load(output / "marginal_draws.npz") as marginal,
+    ):
+        joint_draws = joint["physical"]
+        seed = report["runs"]["marginal"]["conditional_reconstruction"]["seed"]
+        reconstructed = reconstruct_posterior(
+            marginal["physical"],
+            marginal["conditional_flux_mean"],
+            marginal["conditional_flux_covariance"],
+            seed=seed,
+        )
+        np.testing.assert_array_equal(reconstructed, marginal["reconstructed_physical"])
+    style()
+    truth = report["experiment"]["physical_configuration"]["event"]
+    for name, figure in (
+        ("lightcurve", lightcurve_figure(data)),
+        ("comparison", plot(report)),
+        ("corner", corner_figure(joint_draws, reconstructed, truth)),
+    ):
+        save_figure(figure, name, output)
+        plt.close(figure)
+    report["plotting_provenance"] = dict(
+        source_file="../code/compare.py",
+        source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        input_sha256={
+            name: hashlib.sha256((output / name).read_bytes()).hexdigest()
+            for name in ("joint_draws.npz", "marginal_draws.npz")
+        },
+        conditional_flux_seed=seed,
+        reproduced_saved_flux_draws_exactly=True,
+        lightcurve_data_sha256=data_hash,
+        scope="Figures use the saved chains, conditional moments and matching injected observations; sampling results, timings and diagnostics are unchanged. One correlated flux pair per retained lens draw.",
+    )
+
+
+def replot(output, reference=REFERENCE):
+    report = json.loads((output / "report.json").read_text())
+    if not report["complete"]:
+        raise ValueError("Only a completed comparison can be replotted")
+    for name, expected in report["artifact_sha256"].items():
+        if hashlib.sha256((output / name).read_bytes()).hexdigest() != expected:
+            raise ValueError(f"Artifact checksum mismatch: {name}")
+    save_plots(report, output, reference)
+    for name in (
+        "lightcurve.png",
+        "lightcurve.pdf",
+        "comparison.png",
+        "comparison.pdf",
+        "corner.png",
+        "corner.pdf",
+    ):
+        report["artifact_sha256"][name] = hashlib.sha256((output / name).read_bytes()).hexdigest()
+    save_json(report, "report", output)
+
+
+def provenance(model, data):
+    result = experiment.experiment_metadata(model, data)
+    result.pop("sampled_parameter_names")
+    result["lens_priors_transformed"] = result.pop("priors_transformed")
+    result["marginalization"] = (
+        "Controlled comparison of joint and marginalized versions of one Gaussian-flux target"
+    )
+    result.update(
+        study_source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        shared_source_sha256={
+            module.__name__: hashlib.sha256(Path(inspect.getfile(module)).read_bytes()).hexdigest()
+            for module in (experiment, shared)
+        },
+        supporting_source_sha256={
+            str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in (
+                ROOT / "src/singlens/model.py",
+                ROOT / "src/singlens/photometry/likelihood.py",
+                ROOT / "example/_common.py",
+                ROOT / "example/_physical.py",
+            )
+        },
+    )
+    return result
+
+
+def validate_target(data, model, formulation, initial):
+    """Check the actual NumPyro density and derivatives after timed sampling."""
+    center, factor = jnp.asarray(initial.x), jnp.asarray(initial.transform)
+    logdet = jnp.linalg.slogdet(factor)[1]
+
+    def executed(state):
+        value, _ = log_density(
+            numpyro_model,
+            (data, model, formulation, center, factor),
+            {},
+            {"coordinates": solve_triangular(factor, state - center, lower=True)},
+        )
+        return value - logdet
+
+    def objective(state):
+        return negative_log_posterior(state, data, model, formulation)
+
+    point = center + factor @ jnp.linspace(-0.2, 0.3, len(center))
+    actual, derivative = jax.value_and_grad(executed)(point)
+    expected, expected_derivative = jax.value_and_grad(objective)(point)
+    density_error = float(abs(actual + expected))
+    gradient_error = float(jnp.max(abs(derivative + expected_derivative)))
+    theta = point[:4]
+    values = experiment.magnification(model, data.times, experiment.unpack(theta))
+    conditional = experiment.flux_conditional(values, data.flux, data.error)
+    flux_chol = jnp.linalg.cholesky(jnp.asarray(experiment.FLUX_PRIOR_COVARIANCE))
+    differences = []
+    for offset in (jnp.array([0.2, -0.3]), jnp.array([-0.8, 0.5])):
+        beta = conditional.mean + jnp.linalg.cholesky(conditional.covariance) @ offset
+        white = jnp.linalg.solve(flux_chol, beta - experiment.FLUX_PRIOR_MEAN)
+        conditional_log_prob = (
+            dist.MultivariateNormal(
+                conditional.mean, covariance_matrix=conditional.covariance
+            ).log_prob(beta)
+            + jnp.linalg.slogdet(flux_chol)[1]
+        )
+        joint = -negative_log_posterior(jnp.r_[theta, white], data, model, "joint")
+        marginal = -negative_log_posterior(theta, data, model, "marginal")
+        differences.append(float(abs(joint - conditional_log_prob - marginal)))
+    result = dict(
+        numpyro_density_absolute_error=density_error,
+        numpyro_gradient_max_absolute_error=gradient_error,
+        joint_minus_conditional_minus_marginal_max_absolute_error=max(differences),
+        density_tolerance=1e-7,
+        gradient_tolerance=1e-5,
+        passed=bool(density_error < 1e-7 and max(differences) < 1e-7 and gradient_error < 1e-5),
+        scope="Actual affine NumPyro model versus normalized objective, and normalized joint-minus-conditional identity at two flux offsets. Outside all fitting/sampling timers; independent small-data Gaussian and finite-difference checks are in the focused tests.",
+    )
+    if not result["passed"]:
+        raise RuntimeError(f"Target validation failed: {result}")
+    return result
+
+
+def run_worker(args):
+    """One formulation per fresh interpreter; startup is outside reported timers."""
+    formulation = args.worker
+    data = experiment.synthetic_data(seed=SETTINGS["data_seed"], reference=args.reference_data)
+    jax.block_until_ready(data)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    start = perf_counter()
+    model = experiment.make_model("table")
+    jax.block_until_ready(
+        (model.solver._coefficients, model.solver._knots_rho, model.solver._knots_z)
+    )
+    setup_seconds = perf_counter() - start
+    worker = dict(
+        complete=False,
+        experiment=provenance(model, data),
+        settings=SETTINGS,
+        formulation=formulation,
+        sampled_parameter_names=list(
+            experiment.NAMES if formulation == "joint" else experiment.LENS_NAMES
+        ),
+        sampled_coordinate_names=list(experiment.TRANSFORM_NAMES)
+        + (["flux_white_0", "flux_white_1"] if formulation == "joint" else []),
+        model_setup_seconds=setup_seconds,
+    )
+    save_json(worker, f"{formulation}_report", args.output_dir)
+    initial, initialization = fit_initial(data, model, formulation)
+    worker["initialization"] = initialization
+    save_json(worker, f"{formulation}_report", args.output_dir)
+    values, timing = sample(data, model, formulation, initial, args.output_dir)
+    total = setup_seconds + initialization["seconds"] + timing["sampling_seconds"]
+    worker.update(
+        initialization=initialization,
+        **timing,
+        total_seconds=total,
+        lens_ess_per_second={
+            key: value / total for key, value in timing["diagnostics"]["lens_ess"].items()
+        },
+    )
+    save_json(worker, f"{formulation}_report", args.output_dir)
+    if not timing["diagnostics"]["passed"]:
+        raise RuntimeError(f"{formulation} did not pass convergence; partial report/draws saved")
+    worker["target_validation"] = validate_target(data, model, formulation, initial)
+    if formulation == "marginal":
+        posterior = shared.Posterior(model, data, "singlens")
+        reconstructed, info, means, covariances = shared.reconstruct_flux(
+            posterior, values, seed=120
+        )
+        worker["conditional_reconstruction"] = info
+        archive = args.output_dir / "marginal_draws.npz"
+        with np.load(archive) as saved:
+            contents = {key: saved[key] for key in saved.files}
+        np.savez_compressed(
+            archive,
+            **contents,
+            reconstructed_physical=reconstructed,
+            conditional_flux_mean=means,
+            conditional_flux_covariance=covariances,
+            reconstructed_names=np.array(experiment.NAMES),
+        )
+    else:
+        worker["realized_negative_flux_fraction"] = {
+            name: float(np.mean(values[..., index] < 0))
+            for index, name in enumerate(experiment.NAMES[4:], start=4)
+        }
+    worker["complete"] = True
+    save_json(worker, f"{formulation}_report", args.output_dir)
+
+
+def run_comparison(args):
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    # Invalidate final artifacts first; partial worker reports remain inspectable.
+    for name in (
+        "lightcurve.png",
+        "lightcurve.pdf",
+        "comparison.png",
+        "comparison.pdf",
+        "corner.png",
+        "corner.pdf",
+        "report.json",
+    ):
+        (args.output_dir / name).unlink(missing_ok=True)
+    workers = {}
+    wall_times = {}
+    for formulation in ("joint", "marginal"):
+        command = [
+            sys.executable,
+            "-m",
+            "example.flux_marginalization.code.compare",
+            "--worker",
+            formulation,
+            "--reference-data",
+            str(args.reference_data.resolve()),
+            "--output-dir",
+            str(args.output_dir.resolve()),
+        ]
+        start = perf_counter()
+        subprocess.run(command, cwd=ROOT, check=True)
+        wall_times[formulation] = perf_counter() - start
+        worker = json.loads((args.output_dir / f"{formulation}_report.json").read_text())
+        if not worker["complete"] or not worker["diagnostics"]["passed"]:
+            raise RuntimeError(f"Incomplete {formulation} result cannot enter the comparison")
+        workers[formulation] = worker
+    common = workers["joint"]["experiment"]
+    for key in (
+        "data_sha256",
+        "reference_data_sha256",
+        "reference_provenance",
+        "physical_configuration",
+        "flux_prior",
+        "lens_priors_transformed",
+        "fit_solver",
+        "versions",
+        "hardware",
+        "platform",
+        "device_kind",
+        "x64",
+        "source_sha256",
+        "study_source_sha256",
+        "shared_source_sha256",
+        "supporting_source_sha256",
+    ):
+        if common[key] != workers["marginal"]["experiment"][key]:
+            raise RuntimeError(f"The two formulations differ in {key}")
+    report = dict(
+        complete=False,
+        experiment=common,
+        settings=SETTINGS,
+        worker_wall_seconds_including_startup_io_validation=wall_times,
+        timing_scope="Fresh sequential subprocess per formulation. Each pays its actual model construction, own MAP/exact Hessian, sampler setup, JIT, warmup and production. Interpreter/import startup, data loading, diagnostics, IO and conditional reconstruction are excluded; reconstruction is separately timed. One event and noise realization, not a universal speedup.",
+        convergence_scope="Common ESS>=1000 for four physical lens parameters. R-hat<1.01 and >=50 autocorrelation times also required for the joint model's sampled fluxes. Zero divergences, zero maximum-depth saturations, finite sampler statistics, fixed caps/settings; failures are retained rather than relaxed.",
+        agreement_scope="Distinct sampler seeds; differences of posterior means are scaled by combined chain MCSE. Marginal flux means use conditional-mean chains; their posterior variance includes conditional covariance. Finite-chain agreement is a diagnostic, not proof of equality or global posterior exploration.",
+        runs=workers,
+    )
+    with (
+        np.load(args.output_dir / "joint_draws.npz") as joint,
+        np.load(args.output_dir / "marginal_draws.npz") as marginal,
+    ):
+        comparison = compare_posteriors(
+            joint["physical"],
+            marginal["physical"],
+            marginal["conditional_flux_mean"],
+            marginal["conditional_flux_covariance"],
+        )
+    report["posterior_comparison"] = comparison
+    maximum = max(abs(row["mean_difference_over_combined_mcse"]) for row in comparison.values())
+    report["posterior_mean_agreement"] = dict(
+        maximum_absolute_difference_over_combined_mcse=maximum,
+        threshold=4.0,
+        passed=bool(maximum <= 4),
+        scope="A finite Monte Carlo diagnostic across six means, not a formal proof or simultaneous confidence guarantee",
+    )
+    report["minimum_lens_ess_per_second_ratio_marginal_over_joint"] = min(
+        report["runs"]["marginal"]["lens_ess_per_second"].values()
+    ) / min(report["runs"]["joint"]["lens_ess_per_second"].values())
+    if not report["posterior_mean_agreement"]["passed"]:
+        save_json(report, "agreement_failure", args.output_dir)
+        raise RuntimeError("Posterior mean agreement failed; inspect agreement_failure.json")
+    save_plots(report, args.output_dir, args.reference_data)
+    report["artifact_sha256"] = {
+        name: hashlib.sha256((args.output_dir / name).read_bytes()).hexdigest()
+        for name in (
+            "lightcurve.png",
+            "lightcurve.pdf",
+            "comparison.png",
+            "comparison.pdf",
+            "corner.png",
+            "corner.pdf",
+            "joint_draws.npz",
+            "marginal_draws.npz",
+            "joint_report.json",
+            "marginal_report.json",
+        )
+    }
+    report["complete"] = True
+    save_json(report, "report", args.output_dir)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--reference-data", type=Path, default=REFERENCE)
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT)
+    parser.add_argument(
+        "--plot-only", action="store_true", help="Plot saved results without sampling"
+    )
+    parser.add_argument("--worker", choices=("joint", "marginal"), help=argparse.SUPPRESS)
+    args = parser.parse_args()
+    jax.config.update("jax_enable_x64", True)
+    if args.plot_only and args.worker:
+        parser.error("--plot-only cannot be combined with --worker")
+    if args.plot_only:
+        replot(args.output_dir, args.reference_data)
+    elif args.worker:
+        run_worker(args)
+    else:
+        run_comparison(args)
+
+
+if __name__ == "__main__":
+    main()

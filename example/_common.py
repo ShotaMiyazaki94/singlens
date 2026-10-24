@@ -2,6 +2,7 @@
 
 import hashlib
 import importlib.metadata
+import importlib.resources
 import importlib.util
 import json
 import platform
@@ -15,7 +16,7 @@ import jax
 import matplotlib.pyplot as plt
 
 import singlens
-from singlens import FFTConfig
+from singlens.lensing import BasisTable, FFTConfig
 
 COLORS = ["#247BA0", "#E07A5F", "#3D8067", "#8765A5", "#C59A32"]
 
@@ -98,6 +99,60 @@ def metadata():
         "x64": jax.config.jax_enable_x64,
         "fft_defaults": asdict(FFTConfig()),
     }
+
+
+@cache
+def _bundled_table_provenance():
+    resources = importlib.resources.files("singlens.data")
+    manifest_bytes = resources.joinpath("finite_source_table.json").read_bytes()
+    manifest = json.loads(manifest_bytes)
+    artifact = manifest["artifact"]
+    checksum = hashlib.sha256(resources.joinpath(artifact["file"]).read_bytes()).hexdigest()
+    if checksum != artifact["zip_sha256"]:
+        raise RuntimeError("Bundled finite-source table does not match its provenance manifest")
+    return {
+        "artifact": {
+            key: artifact[key]
+            for key in ("file", "zip_sha256", "numeric_payload_sha256", "format_version")
+        }
+        | {"manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest()},
+        "generation": manifest["generation"],
+        "validation_report": manifest["validation"]["report"],
+    }
+
+
+def model_solver_metadata(model):
+    """Record the solver selected on a Model, including packaged-table provenance."""
+    solver = model.solver
+    result = {"source": model.source, "configuration": {}}
+    if model.source == "point":
+        return result | {"solver": "point"}
+    if isinstance(solver, FFTConfig):
+        return result | {"solver": "fft", "configuration": asdict(solver)}
+    if not isinstance(solver, BasisTable):
+        raise TypeError("Expected a Model with an FFTConfig or BasisTable solver")
+    from singlens.lensing.basis_table import _bundled_basis_table
+
+    bundled = solver is _bundled_basis_table(jax.config.x64_enabled)
+    result.update(
+        solver="table",
+        origin="bundled" if bundled else "custom",
+        configuration={
+            "rho": [float(solver.rho_grid[0]), float(solver.rho_grid[-1])],
+            "u_over_rho": [float(solver.z_grid[0]), float(solver.z_grid[-1])],
+            "rho_count": len(solver.rho_grid),
+            "u_over_rho_count": len(solver.z_grid),
+            "coefficient_shape": list(solver._coefficients.shape),
+            "dtype": str(solver._coefficients.dtype),
+            "coordinate": solver.coordinate,
+            "representation": solver.representation,
+            "has_astrometry": solver.has_astrometry,
+            "outside_domain": "NaN; rho=0 uses the analytic point-source limit",
+        },
+    )
+    if bundled:
+        result.update(_bundled_table_provenance())
+    return result
 
 
 def save_figure(fig, name, output):

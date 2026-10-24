@@ -21,14 +21,16 @@ def lightcurve_figure():
     times = 8000.0 + jnp.linspace(-40.0, 40.0, 1001)
     geometry = sl.AnnualParallax(ra_deg=266.0, dec_deg=-29.0, t_ref=8000.0)
     event = dict(t0=8000.0, u0=0.05, t_e=80.0, pi_e_n=0.2, pi_e_e=-0.1)
-    for label, source in [
-        ("Point", {}),
-        ("Uniform", dict(rho=0.1)),
-        ("Linear (a₁ = 0.5)", dict(rho=0.1, a1=0.5)),
+    for label, source, source_params in [
+        ("Point", "point", {}),
+        ("Uniform", "uniform", dict(rho=0.1)),
+        ("Linear (a₁ = 0.5)", "linear", dict(rho=0.1, a1=0.5)),
     ]:
+        model = sl.Model(source=source, parallax=geometry)
+        params = sl.Parameters(**event, **source_params)
         ax.plot(
             times - 8000.0,
-            sl.magnification(times, **event, **source, parallax=geometry),
+            model.magnification(times, params),
             label=label,
         )
     ax.set(title="Annual parallax", xlabel="HJD − 2458000 [day]", ylabel="Magnification")

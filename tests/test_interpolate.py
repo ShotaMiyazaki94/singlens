@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import CubicSpline
 
-from singlens import UniformDisk
+from singlens.lensing import UniformDisk
 from singlens.numerics.interpolate import cubic_interp
 
 

@@ -1,200 +1,292 @@
 # Benchmark measurement details
 
-[Benchmark results](benchmarks.md) give the accuracy, runtime, and inference
-comparisons. This page provides the reference calculation and backend setup.
-Run the scripts below from the repository root with `.[examples,validation]` installed:
+Reproduce the [benchmarks](benchmarks.md) from a source checkout:
 
 ```bash
+python -m pip install -e '.[examples,validation]'
+python tools/fetch_example_data.py --bootstrap
 JAX_PLATFORMS=cpu python example/compare-single-vbml/code/accuracy.py
 JAX_PLATFORMS=cpu python example/compare-single-vbml/code/benchmark.py
-JAX_PLATFORMS=cpu python example/compare-single-vbml/code/inference_speed.py
+JAX_PLATFORMS=cpu MPLBACKEND=Agg python -m example.parallax_inference.code.run_suite
 ```
 
-The inference benchmark automatically builds a VBM array adapter. It requires
-a C++17 compiler and a VBMicrolensing 5.x wheel on macOS or Linux.
-See [VBM inference interface](#vbm-inference-interface) for the alternative
-Python interface.
+Run sequentially without competing intensive work. Accuracy and runtime
+results go to `example/compare-single-vbml/outputs/`; inference results go to
+`example/parallax_inference/outputs/`. Each command accepts `--output-dir PATH`.
+Reports record hardware, versions, source hashes, and numerical settings.
+Methods run one at a time with access to the same CPU host. They may use
+different execution layouts; these are whole-machine comparisons, not
+single-core measurements. Reports record worker counts, thread settings,
+CPU time, and wall time. Their ratio measures average CPU utilization.
+ESS per CPU-hour is `3600 * ESS / CPU_seconds`, using measured CPU time
+summed over all threads and worker processes.
+
+## Method settings
+
+The main comparison uses one fixed configuration per method:
+
+- **Table:** the packaged joint basis table, selected by `Model(source=...)`.
+  Reports record its artifact hash, grid, and domain.
+- **FFTLog:** `solver="fft"`, with the supported 4096-bin configuration.
+- **VBMicrolensing:** `Tol=RelTol=1e-3`; linear limb darkening uses
+  `minannuli=2`, uniform sources use 1.
+
+These settings are compared at their measured errors, not at matched
+accuracy. Additional FFT resolutions, a tighter VBM tolerance, and MulensModel
+are numerical diagnostics in the reports, outside the main three-method plots.
 
 ## Accuracy reference
 
-Integrate in lens-centered polar coordinates. The area element cancels the
-point-source magnification's $1/u$ singularity. Each ray intersects the source
-on a finite interval; the uniform part has an analytic radial integral and
-the limb-darkened part is integrated numerically. This avoids FFTs and
-microlensing lookup tables in the reference:
-
-```python
-import jax
-
-jax.config.update("jax_enable_x64", True)
-import jax.numpy as jnp
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.integrate import quad
-import singlens as sl
-```
+Lens-centered polar integration cancels the point-source singularity with the
+area element. Radial source intervals are integrated analytically for uniform
+brightness and numerically for limb darkening, independently of the tested
+FFTs and microlensing tables:
 
 ```{literalinclude} ../example/compare-single-vbml/code/accuracy.py
 :language: python
 :pyobject: integral
 ```
 
-The shared separation grid includes source contact and approximation boundaries:
-
-```{literalinclude} ../example/compare-single-vbml/code/accuracy.py
-:language: python
-:start-at: RATIOS =
-:end-at: RADII =
-```
-
-For `rho=.01` and `a1=.5`, compare all FFT resolutions against the tighter integral:
-
-```python
-rho, a1 = 0.01, 0.5
-u = jnp.asarray(RATIOS * rho)
-reference = np.array([integral(float(x), rho, a1=a1, tolerance=1e-11) for x in u])
-bins = [512, 1024, 2048, 4096, 8192, 16384]
-errors = []
-for n_fft in bins:
-    model = sl.Model(source="linear", fft=sl.FFTConfig(n_fft=n_fft))
-    actual = np.asarray(jax.jit(model.magnification_at)(u, rho=rho, a1=a1))
-    errors.append(np.max(np.abs(actual / reference - 1)))
-```
-
-Repeat for each `rho` in `RADII`. For a uniform source use
-`Model(source="uniform")`, omit `a1` in its evaluation, and set `a1=0` in the
-reference. Comparing quadrature tolerances `1e-9` and `1e-11` changes the
-reference by at most `2.42e-12` relative on this grid. Each FFT size uses the
-same 105 separations and six source radii (`1e-6`, `1e-5`, `1e-4`, `.01`,
-`.1`, `1`).
-
-### Why accuracy levels off
-
-singlens applies a fixed high-frequency damping filter in its FFTLog
-calculation. Increasing `n_fft` refines the grid but leaves this filter
-unchanged. Once discretization error is small, the remaining smoothing bias
-near source contact ($u/\rho\simeq1$) limits further accuracy gains.
+The grid has 105 separations at each of eight radii from `1e-6` to 10,
+including alignment, contact, and FFT approximation boundaries. References
+are recomputed with quadrature tolerances `1e-9` and `1e-11`; the largest
+relative change is `2.93e-12`. Uniform sources use `a1=0`, linear sources `a1=.5`.
 
 ### Reference package settings
 
-VBM uses precomputed ESPL tables. Both `Tol` (absolute) and `RelTol`
-(relative) are set to the tolerance displayed in the results table;
-linear limb darkening uses `minannuli=2`. These control the calculation's
-stopping rule and do not bound the table's approximation error. The
-uniform-source error near contact remains when the tolerance is tightened.
-The `0.9872%` linear-source error at tolerance `1e-6` occurs at
-`u/rho=1e-6`, very close to alignment.
+VBM tolerances control integration and point-source switching, not the
+interpolation error of its ESPL table. The smallest radius, `rho=1e-6`, lies
+below its [documented table range](https://github.com/valboz/VBMicrolensing/blob/main/docs/python/SingleLenses.md).
+Non-finite external-library results are counted and excluded from the error
+maxima; VBM's linear-source values are missing at exact alignment. Raw data
+retain the missing points. Thus a reported maximum does not
+imply support for the entire sampled grid.
 
-The `rho=1e-6` cases are below VBM's documented table range. At exact
-alignment, VBM's limb-darkened call is non-finite in this experiment and
-MulensModel's table methods raise. Their maxima therefore use 104 valid
-points; uniform VBM and singlens use all 105. The downloadable reports mark
-missing points explicitly. See VBM's
-[single-lens documentation](https://github.com/valboz/VBMicrolensing/blob/main/docs/python/SingleLenses.md).
-
-MulensModel uses Gould94 for uniform sources and Yoo04 for linear limb
-darkening. These small-source approximations are especially accurate at
-`rho=.01`, but their accuracy changes for larger sources. All tested radii
-are included in the [accuracy report](benchmarks.md#accuracy-versus-fft-bins).
+The supplementary MulensModel calculation uses Gould94 for uniform sources
+and Yoo04 for linear limb darkening, with `gamma=2*a1/(3-a1)`. These are
+small-source approximations. Neither package is silently replaced by another
+method when its output is missing.
 
 ## Native batch interfaces
 
-Use the imports above and `median_runtime` from
-[the runtime measurement](benchmarks.md#time-the-same-light-curve).
-The same event and times are passed to all three native batch interfaces;
-only the magnification backend changes. VBM receives natural logarithms,
-whereas MulensModel receives physical event parameters and its normalized
-limb coefficient `gamma = 2*a1/(3-a1)`.
+All methods use identical events and epochs. singlens calls
+`jax.jit(model.magnification)` and synchronizes the returned array. VBM uses
+`ESPLLightCurve`, receiving natural-log parameters in the order
+`log(u0), log(t_e), t0, log(rho)` and physical `a1`.
+Inputs and models are prepared before timing; method order is shuffled with
+seed 72. Each batch has three warmups and 100 measured repeats. Reports
+separate first-call cost from median warm runtime and retain every repeat.
 
-```python
-import VBMicrolensing
-import MulensModel as mm
+Table interpolates the packaged bases. FFTLog constructs a transform grid
+for each event evaluation; VBM uses its native tables and radial integration.
+The {download}`batch benchmark <../example/compare-single-vbml/code/benchmark.py>`
+contains the exact interfaces and timing loop.
 
-params = sl.Parameters(t0=0.0, u0=0.005, t_e=20.0, rho=0.01, a1=0.5)
-model = sl.Model(source="linear")
-evaluate = jax.jit(model.magnification)
+(inference)=
+## Inference
 
-vbm = VBMicrolensing.VBMicrolensing()
-vbm.Tol = vbm.RelTol = 1e-3
-vbm.a1, vbm.minannuli = 0.5, 2
-# VBM's batch interface takes natural logs in this order.
-vbm_params = [np.log(0.005), np.log(20.0), 0.0, np.log(0.01)]
+The [annual-parallax benchmark](benchmarks.md#inference) compares
+**singlens Table + NumPyro NUTS** and **VBMicrolensing + emcee**.
+singlens constructs `Model(source="linear", solver="table")`; VBM uses
+`ESPLMag2` with `Tol=RelTol=1e-3` and `minannuli=2`. Both receive the same
+parallax-adjusted separations at each exposure node and sample all nine
+parameters, including source and blend fluxes.
+Three sequential processes use noise seeds
+43–45 and alternate sampler order. The physical mean, uncertainties, and
+priors are fixed; only the Gaussian noise draw changes.
 
-mulens = mm.Model(dict(t_0=0.0, u_0=0.005, t_E=20.0, rho=0.01))
-mulens.default_magnification_method = "finite_source_LD_Yoo04"
-gamma = 2 * 0.5 / (3 - 0.5)
+### Observation model
 
-counts = [10, 30, 100, 300, 1000]
-timings = {name: [] for name in ("singlens", "VBM", "MulensModel")}
-for count in counts:
-    times = np.linspace(-1.0, 1.0, count)
-    device_times = jax.block_until_ready(jnp.asarray(times))
-    vbm_times = times.tolist()
-    calls = {
-        "singlens": lambda: evaluate(device_times, params).block_until_ready(),
-        "VBM": lambda: vbm.ESPLLightCurve(vbm_params, vbm_times)[0],
-        "MulensModel": lambda: mulens.get_magnification(times, gamma=gamma),
-    }
-    for name, call in calls.items():
-        timings[name].append(median_runtime(call))
+The observer is Earth's geocenter at RA $266^\circ$, Dec $-29^\circ$,
+using JD TDB minus 2454222.0. The trajectory includes annual parallax from
+the bundled Earth ephemeris. Independent source integration generates the
+photometric mean, with lens-centered quadrature near the source and
+source-centered quadrature outside it. Spatial convergence and overlap
+checks accompany each reference dataset.
 
-fig, ax = plt.subplots(figsize=(14, 6), layout="constrained")
-for name, seconds in timings.items():
-    ax.loglog(counts, 1e6 * np.asarray(seconds), "o-", label=name)
-ax.set(xlabel="Finite-source evaluations per batch", ylabel="Total batch time [µs]")
-ax.legend()
+Nine nodes average the injection over each top-hat exposure; both fitted
+models use three nodes. Exposure times and errors are fixed before fitting.
+The apparent source brightness and angular radius are specified separately;
+the illustrative detector and ground-network schedule are not an instrument
+forecast. The {download}`experiment definition
+<../example/parallax_inference/code/experiment.py>` records the physical
+relations, observing assumptions, and exposure-refinement checks.
+
+### Model and priors
+
+The seven lens coordinates are
+`(t0, log(abs(u0)/rho), log(rho*t_e), log(rho), pi_e_n, pi_e_e, logit(a1))`.
+Independent Normal priors have locations
+`(0, log(.5), log(.3), log(.005), 0, 0, 0)` and scales
+`(.2, .7, .5, .7, .3, .3, 1)`, with `1e-6 <= rho <= 10`.
+Times are in days. These are priors in the stated coordinates, conditional
+on the positive impact-parameter branch.
+
+Two additional standard-Normal coordinates map through the flux-prior
+Cholesky factor to $f_s,f_b$. The NumPyro model samples all nine coordinates;
+emcee evaluates the same joint Gaussian likelihood and priors using VBM
+magnifications:
+
+```{literalinclude} ../example/parallax_inference/code/posterior.py
+:language: python
+:pyobject: numpyro_model
 ```
 
-The uniform comparison uses `source="uniform"`, VBM `a1=0`, and
-MulensModel's `finite_source_uniform_Gould94` method. The recorded experiment
-also shuffles measurement order; timing variation between machines is expected.
+Both samplers start from the same Table-model joint MAP and use its Hessian
+for a constant affine transformation. A separate search starts from three parallax
+directions for each sign of $u_0$. Its competing solutions are recorded
+outside the timers; the chains compare the $u_0>0$ solution.
 
-## VBM inference interface
+(flux-marginalization)=
+### Flux prior
 
-The default `--vbm-interface array` passes annual-parallax separations to the
-installed library's `ESPLMag2` using NumPy arrays. VBM calls are serial, with
-the numerical core, ESPL table, and tolerance settings unchanged. Numerical
-agreement with the stock Python interface is checked on posterior states.
+For exposure-averaged magnification $A_i$, flux has mean $f_s A_i+f_b$
+and its recorded Gaussian error. Both samplers explicitly sample $f_s,f_b$
+under this proper prior in total-baseline flux units:
 
-Use `--vbm-interface python` to select the stock `ESPLLightCurve` interface.
-The standalone magnification benchmark always uses native light-curve APIs;
-the inference results identify the selected interface in the JSON report.
+$$
+\begin{pmatrix}f_s\\f_b\end{pmatrix}
+\sim\mathcal N\!\left[
+\begin{pmatrix}0.8\\0.2\end{pmatrix},
+\begin{pmatrix}0.0272&-0.0252\\-0.0252&0.0257\end{pmatrix}
+\right].
+$$
 
-## Sampling protocol
+Total baseline flux therefore has mean 1 and standard deviation .05.
+The prior permits signed coefficients.
 
-All three runs start from one fit that maximizes the singlens posterior
-(the maximum a posteriori, or MAP, fit), using the data and stated priors.
-Injected parameter values are not used for initialization. The fit's
-measured cost is included in every method's total time. Timing also includes
-backend setup (including one VBM adapter build and load), likelihood compilation,
-warmup, and production sampling. Preparing inputs,
-convergence checks, file IO, plots, and numerical validation are outside
-the timer. VBM uses `Tol=RelTol=1e-3` and `minannuli=2`.
+Fluxes enter the Gaussian likelihood as sampled parameters; there is no
+flux marginalization or conditional reconstruction in this benchmark.
+ESS and stopping rules include all nine parameters. The separate
+[flux marginalization example](examples/flux-marginalization.md) compares
+joint and marginalized sampling under the same flux prior.
 
-| Method | Independent runs | Warmup per run | Retained steps per run |
-| --- | --- | ---: | ---: |
-| singlens + NUTS | 2 sequential chains | 500 | 1700 |
-| VBM + emcee | 2 ensembles, each with 32 walkers | 1000 | 8000 |
-| singlens + emcee | 2 ensembles, each with 32 walkers | 1000 | 8500 |
+### Sampling protocol
 
-Every method must reach minimum parameter ESS ≥ 5000. NUTS also requires
-R̂ < 1.01 and no divergences. For emcee, production must cover at least 50
-estimated autocorrelation times, and each parameter's autocorrelation
-estimate must change by less than 10% as sampling is extended.
-Separate ensemble means must agree within four combined Monte Carlo
-standard errors, which estimate uncertainty due to finite sampling.
-Walkers within an ensemble are not treated as independent chains for R̂.
+HMC uses **NumPyro 0.22.0's `numpyro.infer.NUTS`**, which adapts the trajectory
+length with the No-U-Turn criterion. Its `potential_fn` is the negative log
+posterior in the shared affine coordinates; gradients come from JAX autodiff
+through Table interpolation, the joint flux likelihood, and priors.
+Sixteen chains run with `chain_method="parallel"`, 500 warmup steps each,
+dense mass adaptation, and target acceptance 0.95. The suite configures
+16 JAX CPU devices before starting each process.
 
-ESS is computed from every retained step in physical parameter coordinates
-using the same autocorrelation estimator for all methods. Negative
-autocorrelation can make ESS larger than the retained draw count. The emcee files
-available for download keep every tenth step for plotting; rerun the script
-to obtain the unthinned chains used for ESS. Seeds, package versions,
-timings, and diagnostics are recorded in the
-{download}`inference report <../example/compare-single-vbml/outputs/inference_speed.json>`.
+**emcee 3.1.6's `EnsembleSampler`** uses its default `StretchMove`,
+with two independent 32-walker ensembles and 1,000 warmup steps each.
+VBM evaluates batches of walker proposals in 16 spawned processes. Each
+worker uses an array binding to the installed library; its numerical core
+and tables are unchanged. Separate processes isolate VBM's shared scratch state.
+The common joint log likelihood and priors are evaluated in JAX without
+gradients. The binding is checked against VBM's stock API; its build/load
+cost in every worker, process startup, IPC, and shutdown enter the VBM total.
+Both continue until estimated minimum ESS
+reaches 5,000 and convergence checks pass, with caps of 12,000 NUTS draws
+per chain or 32,000 emcee production steps per ensemble.
 
-Numerical accuracy is checked separately from sampler convergence. Tightening
-VBM to `Tol=RelTol=1e-6`, `minannuli=4` changes the log posterior by about
-−1.7 to +1.7 on sampled states. The largest singlens–VBM posterior mean
-difference is 0.17 pooled posterior standard deviations. The speed comparison
-therefore uses the stated settings without claiming equal achieved accuracy.
+ESS uses `emcee.autocorr.integrated_time(c=5, tol=0)` on unthinned physical
+parameter chains for both samplers. Every series must span at least 50
+estimated autocorrelation times. NUTS additionally requires
+$\widehat R<1.01$, zero divergences, and no maximum-depth saturation.
+Emcee requires less than 10% change in autocorrelation estimates and
+ensemble means within four combined Monte Carlo standard errors.
+Walkers in one ensemble are not treated as independent chains for
+$\widehat R$.
+
+The shared model/MAP/Hessian preparation is charged to each method, along
+with its compilation, warmup, and production. Data generation, diagnostics,
+signed-mode searches, numerical checks, posterior selection, plots, and IO
+are excluded. Timings use synchronized sequential CPU runs; they are
+in-process measurements. The {download}`comparison script
+<../example/parallax_inference/code/compare.py>` defines the timers and
+stopping rules. Replace `run_suite` with `compare` in the reproduction
+command to run one realization.
+
+Execution layouts were chosen using a separate noise draw, seed 99.
+Short NUTS runs compared sequential, parallel, and vectorized chains;
+VBM batch timings compared 1–16 workers. The selected layouts were fastest
+among those tested on this host. The suite sets BLAS/OpenMP thread limits
+to 1; JAX/XLA remains parallel and CPU affinity is not imposed.
+Measured CPU time divided by wall time is 10.8–12.2 for NUTS and 8.7–9.1 for
+VBM/emcee.
+Download the {download}`execution calibration
+<../example/parallax_inference/outputs/execution.json>` or reproduce it with
+the {download}`calibration script <../example/parallax_inference/code/execution.py>`.
+
+### Validation and downloads
+
+Independent source integration checks sampled truth and joint MAP epochs;
+exposure refinement also checks posterior draws. JAX directional derivatives
+are checked against refined finite differences in MAP/Hessian coordinates.
+VBM errors, sensitivity to tighter tolerances, and agreement with the stock
+API are recorded separately. These checks describe sampled states; the two
+solvers retain fixed settings at their achieved accuracies.
+The largest posterior-mean difference is 0.33 pooled posterior standard
+deviations (22 combined Monte Carlo standard errors). Sampler convergence
+does not establish agreement between these numerical targets.
+
+Download the joint draws selected for plotting for
+{download}`NUTS <../example/parallax_inference/outputs/nuts_posterior.npz>` and
+{download}`emcee <../example/parallax_inference/outputs/emcee_posterior.npz>`.
+The {download}`representative report <../example/parallax_inference/outputs/comparison.json>`
+retains convergence summaries and parameter statistics.
+The reproduction command generates complete unthinned nine-parameter
+`nuts_chains.npz` and `emcee_chains.npz` archives, sample-level
+`nuts_diagnostics.json`, and completion manifests in each local seed directory.
+These products are excluded from Git and source distributions; they are
+required for local `--aggregate-only` validation.
+
+The {download}`three-seed summary <../example/parallax_inference/outputs/suite.json>`
+records paired efficiency ranges. Individual reports are available for seeds
+{download}`43 <../example/parallax_inference/outputs/seed-43/comparison.json>`,
+{download}`44 <../example/parallax_inference/outputs/seed-44/comparison.json>`, and
+{download}`45 <../example/parallax_inference/outputs/seed-45/comparison.json>`.
+Public seed directories retain reports, convergence summaries, and selected joint draws;
+the representative figures use seed 43.
+Three fixed noise draws assess sensitivity to noise, not population coverage.
+
+## FFTLog resolution
+
+Numerical-resolution studies are separate from ordinary method selection.
+The accuracy script also produces the following FFT-only diagnostic:
+
+```{figure} ../example/compare-single-vbml/outputs/accuracy_fft_resolution.png
+:alt: FFTLog convergence versus transform resolution at several source radii
+
+Maximum sampled relative errors at fixed source radii. The dashed line marks
+0.1%; small-source curves can overlap because they use the same limiting
+approximation.
+```
+
+### Why accuracy levels off
+
+FFTLog uses a fixed high-frequency damping filter. More bins refine the grid
+without reducing smoothing bias near contact. A finer transform therefore
+need not improve the final model once discretization error is small.
+
+```{figure} ../example/compare-single-vbml/outputs/runtime_vs_bins.png
+:alt: FFTLog runtime versus transform resolution for a fixed 100-epoch batch
+
+Median runtime for 100 epochs per batch, with identical geometry and the
+same synchronized timing procedure as the main comparison.
+```
+
+Download the {download}`resolution accuracy report
+<../example/compare-single-vbml/outputs/accuracy_fft_resolution.json>` and
+{download}`resolution timings <../example/compare-single-vbml/outputs/runtime_vs_bins.json>`.
+The [numerical development guide](https://github.com/ShotaMiyazaki94/singlens/blob/main/tools/validation/README.md#fft-resolution-checks)
+shows how to change advanced settings and check derivatives.
+
+## FFTLog reference results
+
+The original FFTLog-centered JSON summaries and artifact hashes are preserved in
+[the reference archive](https://github.com/ShotaMiyazaki94/singlens/tree/main/example/compare-single-vbml/reference/fftlog).
+Historical raw data, posterior archives, and figures remain local; they are
+excluded from the public repository and source distributions. These summaries
+are separate from current three-method measurements.
+
+The maintained `solver="fft"` implementation follows
+[Sugiyama (2022)](https://arxiv.org/abs/2203.06637), with the filter and endpoint
+changes described in
+[numerical maintenance](https://github.com/ShotaMiyazaki94/singlens/blob/main/CONTRIBUTING.md#fft-domain-and-regularization).
+The archive records singlens's FFTLog implementation, rather than claiming
+bitwise reproduction of the paper's code.

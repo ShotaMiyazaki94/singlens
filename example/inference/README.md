@@ -1,56 +1,62 @@
-# Roman-like parallax injection–recovery
+# Photometry + GP
+
+Infer a finite-source event and stellar variability from synthetic Roman-like
+photometry. A 0.5-Earth-mass lens crosses an active K dwarf, giving
+$t_E=1.77$ hours and $\rho=0.614$. The [tutorial](../../docs/tutorials/inference.ipynb)
+shows the priors, NumPyro model, diagnostics, and saved posterior figures.
+
+## Run
+
+Install the example dependencies and run from the repository root:
 
 ```bash
 python -m pip install -e '.[examples]'
-python example/inference/code/inference.py --hmc
+python tools/fetch_example_data.py --bootstrap
+python -m example.inference.code.active_ffp --warmup 600 --samples 1600 --progress
+python -m example.inference.code.active_plots
+python -m example.inference.code.active_spots
 ```
 
-Run from the repository root. The script simulates one 72-day season with
-12-minute cadence (8640 observations), then jointly fits a linearly limb-darkened
-parallax event and a source-variability GP using tinygp and NumPyro NUTS.
-`--warmup` and `--samples` default to 500 and 800 for each of two chains.
-Without `--hmc`, only the data and MAP fit are produced.
+Two sequential NUTS chains jointly sample nine event, blend, and GP
+parameters. `--output PATH` changes the inference destination;
+`--input PATH` selects results for plotting. Documentation builds only load
+saved products; they do not run NUTS.
 
-The [reference experiment](https://github.com/ShotaMiyazaki94/test_microjax/tree/979fa9b33b69c4ba89eb7ad70ebae3d23da349cc/Roman_recovery)
-supplies the cadence, W149 source magnitude 24.744, source fraction 0.395,
-and magnitude-error table. We assume an **active low-mass dwarf**, with
-**1% intrinsic flux RMS, a 5-day rotation period, and 20-day coherence**.
-Near-infrared spot modulation on these scales is motivated by
-[Goulding et al. (2012)](https://doi.org/10.1111/j.1365-2966.2012.21932.x).
-These variability parameters are scenario choices, not a calibrated W149
-prediction or a population forecast.
+## Model
 
-The damped-oscillator GP models intrinsic source flux: `F(t) = A(t) * (f_s + g(t)) + f_b`.
-The stellar variability is magnified along with the source. At baseline,
-blending dilutes its 1% RMS to about 4.3 mmag; at high magnification it approaches
-10.9 mmag. This disk-integrated approximation does not model individual spot
-crossings. The magnitude-error table sets the white photometric noise.
+`F(t) = A(t) * (f_s + g(t)) + f_b + noise`: magnification scales both the
+source mean and its GP covariance. The fit uses
+`Model(source="linear", solver="fft")`, fixes the limb coefficient at 0.4,
+and averages over each exposure. Two damped oscillators model rotation and
+its first harmonic; tinygp integrates out the latent GP. See
+[`active_ffp.py`](code/active_ffp.py) for the likelihood and NumPyro model,
+and [`active_coordinates.py`](code/active_coordinates.py) for the sampling
+coordinates and prior Jacobian.
 
-The event has `t0=.2`, `u0=.005`, `t_e=16.235`, `rho=.01`,
-`pi_e_n=.2`, `pi_e_e=-.1`, and `a1=.5`. Times are HJD − 2458000; fixed geometry is
-RA 266°, Dec −29°, reference epoch 0. Injection and recovery use 4096 FFT bins.
-All twelve event, parallax, limb-darkening, flux, and GP parameters are inferred
-using known white-noise variances. The selected `u0>0` branch does not explore
-all parallax degeneracies.
+A gapless 70.5-day season has 12.1-minute cadence and known Gaussian errors,
+including an assumed 1 mmag floor. The tutorial gives the source and detector
+assumptions. This is one synthetic realization, not an instrument forecast
+or a lens-mass measurement. The [frozen-spot check](outputs/active_ffp/spatial_spot_check.pdf)
+tests the scalar-GP approximation with known local variability.
 
-The [inference tutorial](../../docs/tutorials/inference.ipynb) writes out the
-GP kernel, NumPyro model and priors, NUTS sampling, conditional GP predictions,
-and posterior plots. Set `RUN_SAMPLING = True` in the notebook to run NUTS;
-the default displays the saved recovery. `gp_sigma` is in
-unmagnified source-flux units; `gp_scale` and `gp_period` are the coherence
-time and rotation period in days.
+## Saved results
 
-- [Recovery](outputs/recovery.png): magnitudes and residuals relative to the
-  **true lens curve only**. Both panels show the lens + conditional GP
-  posterior median and pointwise 90% interval, excluding new measurement
-  noise. Residuals retain the simulated GP and white noise. Dark points show
-  0.1-day weighted bins with white-noise-only error bars; all original data
-  enter the fit.
-- [Corner](outputs/corner.png): all twelve parameters, truth, 68%/95% contours,
-  and marginal 5/50/95% quantiles.
-- [Trace](outputs/trace.png): both post-warmup chains and truth.
+- [Full season](outputs/active_ffp/recovery.png): light curve, variability,
+  and residuals.
+- [Event zoom](outputs/active_ffp/event_zoom.png): finite-source fit and a
+  separately refitted point-source + GP model.
+- [Corner](outputs/active_ffp/corner.png): nine-parameter posterior and injection.
 
-Figures also have PDF versions. `synthetic_event.csv`, `posterior.npz`,
-`recovery.csv`, `hmc.json`, and `optimization.json` retain the data, chains,
-credible intervals, diagnostics, and initialization. Use `--output-dir PATH`
-to change the destination. A single realization does not establish coverage.
+Bands include parameter and conditional-GP uncertainty, without new
+measurement noise. All observations enter the fit. The separate-MAP
+likelihood difference is a diagnostic, not a calibrated detection significance.
+
+`outputs/active_ffp/` contains observations, posterior samples, conditional
+predictions, figures, and provenance. The plot loader checks file hashes
+and convergence; `--map-only` produces no posterior figures.
+
+The frozen-spot check retains its report and figures publicly; its intermediate
+`spatial_spot_check.npz` arrays are regenerated locally. Earlier `inference.py`
+results retain only `outputs/optimization.json` and `outputs/hmc.json` summaries.
+Raw observations, the posterior archive, and figures from that earlier run
+remain local and are excluded from Git and source distributions.
